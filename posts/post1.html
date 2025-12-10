@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的第一篇博客 | Potato的博客</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        /* 文章详情页专属样式 */
+        .post-detail {
+            padding: 4rem 0;
+            background-color: white;
+        }
+
+        .post-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .post-detail-title {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .post-meta {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+
+        .post-content {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            color: #34495e;
+            font-size: 1.1rem;
+        }
+
+        .post-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .post-content h3 {
+            margin: 2rem 0 1rem;
+            color: #2c3e50;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <h1 class="logo"><a href="../index.html">Potato的博客</a></h1>
+            <ul class="nav-links">
+                <li><a href="../index.html#home">首页</a></li>
+                <li><a href="../index.html#posts" class="active">文章</a></li>
+                <li><a href="../index.html#about">关于我</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 文章详情 -->
+    <section class="post-detail">
+        <div class="container">
+            <a href="../index.html#posts" class="back-btn"><i class="fa fa-arrow-left"></i> 返回文章列表</a>
+            
+            <div class="post-header">
+                <h1 class="post-detail-title">我的第一篇博客</h1>
+                <div class="post-meta">发布于 2025-12-10 | 作者：Potato</div>
+            </div>
+
+            <div class="post-content">
+                <p>大家好！这是我用GitHub Pages搭建的第一篇静态博客，整个过程非常简单，不需要服务器，免费且稳定。</p>
+                
+                <h3>为什么选择GitHub Pages？</h3>
+                <p>1. 完全免费，没有存储和带宽限制（合理使用）；</p>
+                <p>2. 部署简单，只需把静态文件上传到GitHub仓库即可；</p>
+                <p>3. 支持自定义域名（可选）；</p>
+                <p>4. 基于Git版本控制，方便管理博客内容。</p>
+                
+                <h3>博客技术栈</h3>
+                <p>本次博客使用纯HTML/CSS/JS开发，没有使用任何框架，保持极简风格。如果需要更复杂的功能，可以考虑使用Hexo、Jekyll等静态博客生成器。</p>
+                
+                <p>后续我会继续更新更多文章，分享技术和生活～</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Potato的博客 | 托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+        </div>
+    </footer>
+
+    <!-- 回到顶部按钮 -->
+    <button id="back-to-top" class="back-to-top"><i class="fa fa-arrow-up"></i></button>
+
+    <script src="../js/script.js"></script>
+</body>
+</html>

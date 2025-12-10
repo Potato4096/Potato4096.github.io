@@ -3,560 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>现代静态网页设计</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: #333;
-            line-height: 1.6;
-        }
-        
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        /* 导航栏样式 */
-        header {
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-        }
-        
-        .logo {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1a2a6c;
-            text-decoration: none;
-        }
-        
-        .nav-links {
-            display: flex;
-            list-style: none;
-        }
-        
-        .nav-links li {
-            margin-left: 30px;
-        }
-        
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 600;
-            font-size: 18px;
-            transition: color 0.3s;
-        }
-        
-        .nav-links a:hover {
-            color: #1a2a6c;
-        }
-        
-        /* 英雄区域样式 */
-        .hero {
-            height: 80vh;
-            display: flex;
-            align-items: center;
-            color: white;
-            text-align: center;
-            position: relative;
-        }
-        
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            animation: fadeInDown 1s ease;
-        }
-        
-        .hero p {
-            font-size: 1.5rem;
-            margin-bottom: 30px;
-            animation: fadeInUp 1s ease 0.3s both;
-        }
-        
-        .btn {
-            display: inline-block;
-            background: #fff;
-            color: #1a2a6c;
-            padding: 12px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-            transition: all 0.3s;
-            animation: fadeIn 1s ease 0.6s both;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-            background: #1a2a6c;
-            color: white;
-        }
-        
-        /* 卡片区域样式 */
-        .section {
-            padding: 80px 0;
-        }
-        
-        .section-title {
-            text-align: center;
-            margin-bottom: 50px;
-            color: white;
-        }
-        
-        .section-title h2 {
-            font-size: 2.5rem;
-            position: relative;
-            display: inline-block;
-            padding-bottom: 15px;
-        }
-        
-        .section-title h2:after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 3px;
-            background: white;
-        }
-        
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            transition: transform 0.3s;
-        }
-        
-        .card:hover {
-            transform: translateY(-15px);
-        }
-        
-        .card-img {
-            height: 200px;
-            overflow: hidden;
-        }
-        
-        .card-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s;
-        }
-        
-        .card:hover .card-img img {
-            transform: scale(1.1);
-        }
-        
-        .card-content {
-            padding: 25px;
-        }
-        
-        .card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: #1a2a6c;
-        }
-        
-        /* 统计区域 */
-        .stats {
-            background: rgba(255, 255, 255, 0.85);
-            padding: 60px 0;
-            border-radius: 15px;
-            margin: 40px 0;
-        }
-        
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            text-align: center;
-        }
-        
-        .stat-item i {
-            font-size: 3rem;
-            color: #1a2a6c;
-            margin-bottom: 15px;
-        }
-        
-        .stat-item h3 {
-            font-size: 2.5rem;
-            color: #1a2a6c;
-            margin-bottom: 10px;
-        }
-        
-        /* 联系表单 */
-        .contact-form {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 15px;
-            max-width: 700px;
-            margin: 0 auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #1a2a6c;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border 0.3s;
-        }
-        
-        .form-control:focus {
-            border-color: #1a2a6c;
-            outline: none;
-        }
-        
-        textarea.form-control {
-            min-height: 150px;
-            resize: vertical;
-        }
-        
-        /* 页脚样式 */
-        footer {
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 50px 0 20px;
-            margin-top: 80px;
-        }
-        
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        
-        .footer-column h3 {
-            font-size: 1.4rem;
-            margin-bottom: 20px;
-            position: relative;
-            padding-bottom: 10px;
-        }
-        
-        .footer-column h3:after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 2px;
-            background: white;
-        }
-        
-        .footer-column p, .footer-column a {
-            color: #ccc;
-            margin-bottom: 10px;
-            display: block;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .footer-column a:hover {
-            color: white;
-        }
-        
-        .social-icons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .social-icons a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: #333;
-            border-radius: 50%;
-            color: white;
-            transition: all 0.3s;
-        }
-        
-        .social-icons a:hover {
-            background: #1a2a6c;
-            transform: translateY(-5px);
-        }
-        
-        .copyright {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #444;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-        
-        /* 动画 */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .nav-links {
-                margin-top: 20px;
-                flex-direction: column;
-            }
-            
-            .nav-links li {
-                margin: 10px 0;
-            }
-            
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .hero p {
-                font-size: 1.2rem;
-            }
-            
-            .section-title h2 {
-                font-size: 2rem;
-            }
-        }
-    </style>
+    <title>Potato的博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 可选：引入图标库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
 </head>
 <body>
     <!-- 导航栏 -->
-    <header>
+    <nav class="navbar">
         <div class="container">
-            <nav class="navbar">
-                <a href="#" class="logo">Design<span style="color: #fdbb2d;">Pro</span></a>
-                <ul class="nav-links">
-                    <li><a href="#home">首页</a></li>
-                    <li><a href="#services">服务</a></li>
-                    <li><a href="#portfolio">作品</a></li>
-                    <li><a href="#about">关于</a></li>
-                    <li><a href="#contact">联系</a></li>
-                </ul>
-            </nav>
+            <h1 class="logo"><a href="/">Potato的博客</a></h1>
+            <ul class="nav-links">
+                <li><a href="#home" class="active">首页</a></li>
+                <li><a href="#posts">文章</a></li>
+                <li><a href="#about">关于我</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 首页头部 -->
+    <header id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <img src="images/avatar.png" alt="Potato头像" class="avatar">
+                <h2>Hi，我是Potato 👋</h2>
+                <p>记录生活、分享技术的小角落</p>
+            </div>
         </div>
     </header>
 
-    <!-- 英雄区域 -->
-    <section class="hero" id="home">
-        <div class="hero-content">
-            <h1>创造卓越的网页体验</h1>
-            <p>我们致力于打造美观、高效、用户友好的现代网站</p>
-            <a href="#contact" class="btn">联系我们</a>
-        </div>
-    </section>
-
-    <!-- 服务区域 -->
-    <section class="section" id="services">
+    <!-- 文章列表 -->
+    <section id="posts" class="posts-section">
         <div class="container">
-            <div class="section-title">
-                <h2>我们的服务</h2>
-            </div>
-            <div class="cards">
-                <div class="card">
-                    <div class="card-img">
-                        <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="网页设计">
-                    </div>
-                    <div class="card-content">
-                        <h3>网页设计</h3>
-                        <p>创造直观、美观的界面设计，专注于用户体验和视觉吸引力，确保您的网站在各种设备上完美呈现。</p>
-                    </div>
+            <h2 class="section-title">我的文章</h2>
+            <div class="posts-list">
+                <!-- 文章卡片 -->
+                <div class="post-card">
+                    <h3 class="post-title"><a href="posts/post1.html">我的第一篇博客</a></h3>
+                    <p class="post-date">发布于 2025-12-10</p>
+                    <p class="post-excerpt">这是我用GitHub Pages搭建的第一篇静态博客，简单又好用～</p>
+                    <a href="posts/post1.html" class="read-more">阅读全文 <i class="fa fa-arrow-right"></i></a>
                 </div>
-                <div class="card">
-                    <div class="card-img">
-                        <img src="https://images.unsplash.com/photo-1558655146-d09347e92766?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="开发">
-                    </div>
-                    <div class="card-content">
-                        <h3>前端开发</h3>
-                        <p>使用HTML5、CSS3和JavaScript构建响应式、高性能的网站，确保快速加载和流畅的用户体验。</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-img">
-                        <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="优化">
-                    </div>
-                    <div class="card-content">
-                        <h3>性能优化</h3>
-                        <p>优化网站加载速度和性能，提高搜索引擎排名，确保用户获得快速流畅的浏览体验。</p>
-                    </div>
-                </div>
+                <!-- 可添加更多文章卡片 -->
             </div>
         </div>
     </section>
 
-    <!-- 统计区域 -->
-    <div class="container">
-        <div class="stats">
-            <div class="stats-container">
-                <div class="stat-item">
-                    <i class="fas fa-project-diagram"></i>
-                    <h3>250+</h3>
-                    <p>完成项目</p>
-                </div>
-                <div class="stat-item">
-                    <i class="fas fa-users"></i>
-                    <h3>120+</h3>
-                    <p>满意客户</p>
-                </div>
-                <div class="stat-item">
-                    <i class="fas fa-code"></i>
-                    <h3>500k+</h3>
-                    <p>代码行数</p>
-                </div>
-                <div class="stat-item">
-                    <i class="fas fa-coffee"></i>
-                    <h3>1000+</h3>
-                    <p>咖啡杯数</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 联系区域 -->
-    <section class="section" id="contact">
+    <!-- 关于我 -->
+    <section id="about" class="about-section">
         <div class="container">
-            <div class="section-title">
-                <h2>联系我们</h2>
-            </div>
-            <div class="contact-form">
-                <form>
-                    <div class="form-group">
-                        <label for="name">姓名</label>
-                        <input type="text" id="name" class="form-control" placeholder="请输入您的姓名">
-                    </div>
-                    <div class="form-group">
-                        <label for="email">邮箱</label>
-                        <input type="email" id="email" class="form-control" placeholder="请输入您的邮箱">
-                    </div>
-                    <div class="form-group">
-                        <label for="message">留言</label>
-                        <textarea id="message" class="form-control" placeholder="请输入您的留言"></textarea>
-                    </div>
-                    <button type="submit" class="btn">发送信息</button>
-                </form>
+            <h2 class="section-title">关于我</h2>
+            <div class="about-content">
+                <p>我是Potato，一个喜欢分享的程序员/爱好者～</p>
+                <p>本博客基于纯HTML/CSS/JS搭建，托管在GitHub Pages上，免费且稳定。</p>
+                <div class="social-links">
+                    <a href="https://github.com/你的用户名" target="_blank"><i class="fa fa-github"></i> GitHub</a>
+                    <a href="#" target="_blank"><i class="fa fa-wechat"></i> 微信</a>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- 页脚 -->
-    <footer>
+    <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h3>关于我们</h3>
-                    <p>我们是一支充满激情的设计与开发团队，致力于为客户提供高品质的网站解决方案。</p>
-                    <div class="social-icons">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>快速链接</h3>
-                    <a href="#home">首页</a>
-                    <a href="#services">服务</a>
-                    <a href="#portfolio">作品集</a>
-                    <a href="#about">关于我们</a>
-                    <a href="#contact">联系我们</a>
-                </div>
-                <div class="footer-column">
-                    <h3>联系方式</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> 北京市朝阳区创意产业园</p>
-                    <p><i class="fas fa-phone"></i> +86 123 4567 8910</p>
-                    <p><i class="fas fa-envelope"></i> contact@example.com</p>
-                    <p><i class="fas fa-clock"></i> 周一至周五: 9:00 - 18:00</p>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; 2023 DesignPro 网页设计工作室. 保留所有权利</p>
-            </div>
+            <p>&copy; 2025 Potato的博客 | 托管于 <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
         </div>
     </footer>
+
+    <!-- 回到顶部按钮 -->
+    <button id="back-to-top" class="back-to-top"><i class="fa fa-arrow-up"></i></button>
+
+    <script src="js/script.js"></script>
 </body>
 </html>
