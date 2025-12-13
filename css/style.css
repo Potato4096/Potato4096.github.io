@@ -1,3 +1,52 @@
+/* 主题变量定义 */
+:root {
+  /* 默认亮色主题 */
+  --primary-color: #3498db;
+  --primary-dark: #2980b9;
+  --bg-color: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --text-tertiary: #505961;
+  --card-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* 暗色主题 */
+[data-theme="dark"] {
+  --primary-color: #4da6ff;
+  --primary-dark: #3584e4;
+  --bg-color: #1a202c;
+  --bg-secondary: #2d3748;
+  --text-primary: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --text-tertiary: #cbd5e0;
+  --card-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* 蓝色主题 */
+[data-theme="blue"] {
+  --primary-color: #2563eb;
+  --primary-dark: #1d4ed8;
+  --bg-color: #f0f9ff;
+  --bg-secondary: #e0f2fe;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #1e293b;
+  --card-shadow: 0 2px 10px rgba(37, 99, 235, 0.15);
+}
+
+/* 绿色主题 */
+[data-theme="green"] {
+  --primary-color: #10b981;
+  --primary-dark: #059669;
+  --bg-color: #f0fdf4;
+  --bg-secondary: #dcfce7;
+  --text-primary: #134e4a;
+  --text-secondary: #365314;
+  --text-tertiary: #0f766e;
+  --card-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+}
+
 /* 全局重置 */
 * {
     margin: 0;
@@ -15,7 +64,7 @@
 
 /* 导航栏 */
 .navbar {
-    background-color: #2c3e50;
+    background-color: var(--text-primary);
     padding: 1rem 0;
     position: sticky;
     top: 0;
@@ -52,12 +101,26 @@
 }
 
 .nav-links a.active, .nav-links a:hover {
-    color: #3498db;
+    color: var(--primary-color);
+}
+
+/* 主题切换器样式 */
+.theme-switcher {
+    margin-left: 2rem;
+}
+
+#theme-select {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    border: 1px solid var(--primary-color);
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 /* 首页头部 */
 .hero {
-    background-color: #f5f7fa;
+    background-color: var(--bg-secondary);
     padding: 4rem 0;
     text-align: center;
 }
@@ -67,18 +130,18 @@
     height: 150px;
     border-radius: 50%;
     margin-bottom: 1rem;
-    border: 5px solid #3498db;
+    border: 5px solid var(--primary-color);
 }
 
 .hero-content h2 {
     font-size: 2rem;
     margin-bottom: 0.5rem;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .hero-content p {
     font-size: 1.2rem;
-    color: #7f8c8d;
+    color: var(--text-secondary);
 }
 
 /* 通用章节样式 */
@@ -86,7 +149,7 @@
     text-align: center;
     margin-bottom: 2rem;
     font-size: 1.8rem;
-    color: #2c3e50;
+    color: var(--text-primary);
     position: relative;
 }
 
@@ -95,14 +158,14 @@
     display: block;
     width: 80px;
     height: 3px;
-    background-color: #3498db;
+    background-color: var(--primary-color);
     margin: 0.5rem auto;
 }
 
 /* 文章列表 */
 .posts-section {
     padding: 4rem 0;
-    background-color: white;
+    background-color: var(--bg-color);
 }
 
 .posts-list {
@@ -114,7 +177,7 @@
 .post-card {
     padding: 2rem;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: var(--card-shadow);
     transition: transform 0.3s;
 }
 
@@ -123,7 +186,7 @@
 }
 
 .post-title a {
-    color: #2c3e50;
+    color: var(--text-primary);
     text-decoration: none;
     font-size: 1.3rem;
     margin-bottom: 0.5rem;
@@ -131,23 +194,23 @@
 }
 
 .post-title a:hover {
-    color: #3498db;
+    color: var(--primary-color);
 }
 
 .post-date {
-    color: #7f8c8d;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     margin-bottom: 1rem;
 }
 
 .post-excerpt {
-    color: #505961;
+    color: var(--text-tertiary);
     line-height: 1.6;
     margin-bottom: 1.5rem;
 }
 
 .read-more {
-    color: #3498db;
+    color: var(--primary-color);
     text-decoration: none;
     font-weight: 500;
     display: inline-block;
@@ -160,7 +223,7 @@
 /* 关于我 */
 .about-section {
     padding: 4rem 0;
-    background-color: #f5f7fa;
+    background-color: var(--bg-secondary);
 }
 
 .about-content {
@@ -168,7 +231,7 @@
     margin: 0 auto;
     text-align: center;
     line-height: 1.8;
-    color: #505961;
+    color: var(--text-tertiary);
     font-size: 1.1rem;
 }
 
@@ -179,29 +242,29 @@
 .social-links a {
     display: inline-block;
     margin: 0 1rem;
-    color: #2c3e50;
+    color: var(--text-primary);
     text-decoration: none;
     padding: 0.5rem 1rem;
-    border: 1px solid #3498db;
+    border: 1px solid var(--primary-color);
     border-radius: 4px;
     transition: all 0.3s;
 }
 
 .social-links a:hover {
-    background-color: #3498db;
+    background-color: var(--primary-color);
     color: white;
 }
 
 /* 页脚 */
 .footer {
-    background-color: #2c3e50;
+    background-color: var(--text-primary);
     color: white;
     text-align: center;
     padding: 2rem 0;
 }
 
 .footer a {
-    color: #3498db;
+    color: var(--primary-color);
     text-decoration: none;
 }
 
@@ -214,7 +277,7 @@
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background-color: #3498db;
+    background-color: var(--primary-color);
     color: white;
     border: none;
     width: 40px;
@@ -229,7 +292,7 @@
 }
 
 .back-to-top:hover {
-    background-color: #2980b9;
+    background-color: var(--primary-dark);
 }
 
 /* 响应式适配 */
@@ -245,6 +308,11 @@
     .nav-links li {
         margin-left: 1rem;
         margin-right: 1rem;
+    }
+    
+    .theme-switcher {
+        margin-left: 0;
+        margin-top: 1rem;
     }
 
     .hero-content h2 {

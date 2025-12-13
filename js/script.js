@@ -55,4 +55,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // 主题切换功能
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('preferred-theme', theme);
+    }
+
+    // 初始化主题
+    function initTheme() {
+        // 检查本地存储中是否有保存的主题偏好
+        const savedTheme = localStorage.getItem('preferred-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // 如果有保存的主题，使用它；否则根据系统偏好
+        if (savedTheme) {
+            setTheme(savedTheme);
+            const themeSelect = document.getElementById('theme-select');
+            if (themeSelect) themeSelect.value = savedTheme;
+        } else if (prefersDark) {
+            setTheme('dark');
+            const themeSelect = document.getElementById('theme-select');
+            if (themeSelect) themeSelect.value = 'dark';
+        }
+    }
+
+    // 主题切换事件监听
+    const themeSelect = document.getElementById('theme-select');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', function() {
+            setTheme(this.value);
+        });
+    }
+
+    // 初始化主题
+    initTheme();
 });
