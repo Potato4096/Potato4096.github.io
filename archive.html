@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>归档 - Potato's Blog</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="index.html">Potato's Blog</a></h1>
+      <nav>
+        <a href="index.html" data-page="home">首页</a>
+        <a href="archive.html" data-page="archive">归档</a>
+        <a href="categories.html" data-page="categories">分类</a>
+        <a href="search.html" data-page="search">搜索</a>
+      </nav>
+    </header>
+
+    <div id="archive"></div>
+
+    <footer>© 2026 Potato's Blog</footer>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    setActiveNav('archive');
+    loadPosts().then(posts => {
+      const groups = {};
+      posts.forEach(p => {
+        const year = p.date.slice(0, 4);
+        if (!groups[year]) groups[year] = [];
+        groups[year].push(p);
+      });
+      const container = document.getElementById('archive');
+      Object.keys(groups).sort().reverse().forEach(year => {
+        container.innerHTML += `<div class="archive-year">
+          <h2>${year}</h2>
+          <ul class="archive-list">
+            ${groups[year].map(p => `<li>
+              <span class="date">${p.date.slice(5)}</span>
+              <a href="post.html?slug=${p.slug}">${p.title}</a>
+            </li>`).join('')}
+          </ul>
+        </div>`;
+      });
+    });
+  </script>
+</body>
+</html>

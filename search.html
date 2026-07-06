@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搜索 - Potato's Blog</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="index.html">Potato's Blog</a></h1>
+      <nav>
+        <a href="index.html" data-page="home">首页</a>
+        <a href="archive.html" data-page="archive">归档</a>
+        <a href="categories.html" data-page="categories">分类</a>
+        <a href="search.html" data-page="search">搜索</a>
+      </nav>
+    </header>
+
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="搜索文章标题、标签、摘要..." autofocus>
+    </div>
+
+    <div class="search-results" id="search-results"></div>
+
+    <footer>© 2026 Potato's Blog</footer>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    setActiveNav('search');
+    const input = document.getElementById('search-input');
+    const results = document.getElementById('search-results');
+
+    loadPosts().then(() => {
+      results.innerHTML = '<p class="no-results">输入关键词开始搜索</p>';
+    });
+
+    input.addEventListener('input', function() {
+      const kw = this.value.trim();
+      if (!kw) {
+        results.innerHTML = '<p class="no-results">输入关键词开始搜索</p>';
+        return;
+      }
+      const filtered = filterPosts(postsData, kw);
+      if (!filtered.length) {
+        results.innerHTML = '<p class="no-results">未找到相关文章</p>';
+        return;
+      }
+      results.innerHTML = '<ul class="post-list">' + filtered.map(renderPostItem).join('') + '</ul>';
+    });
+  </script>
+</body>
+</html>

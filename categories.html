@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分类 - Potato's Blog</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="index.html">Potato's Blog</a></h1>
+      <nav>
+        <a href="index.html" data-page="home">首页</a>
+        <a href="archive.html" data-page="archive">归档</a>
+        <a href="categories.html" data-page="categories">分类</a>
+        <a href="search.html" data-page="search">搜索</a>
+      </nav>
+    </header>
+
+    <div class="categories-layout">
+      <div class="category-sidebar">
+        <h3>分类</h3>
+        <ul class="category-list" id="category-list"></ul>
+      </div>
+      <div class="category-posts">
+        <h2 id="category-title">全部文章</h2>
+        <ul class="post-list" id="post-list"></ul>
+      </div>
+    </div>
+
+    <footer>© 2026 Potato's Blog</footer>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    setActiveNav('categories');
+    let allPosts = [];
+
+    function renderCategoryPosts(category) {
+      const filtered = category === 'all' ? allPosts : allPosts.filter(p => p.category === category);
+      document.getElementById('category-title').textContent = category === 'all' ? '全部文章' : category;
+      document.getElementById('post-list').innerHTML = filtered.map(renderPostItem).join('');
+      document.querySelectorAll('.category-list a').forEach(a => {
+        a.classList.toggle('active', a.dataset.category === category);
+      });
+    }
+
+    loadPosts().then(posts => {
+      allPosts = posts;
+      const cats = [...new Set(posts.map(p => p.category))];
+      const list = document.getElementById('category-list');
+      list.innerHTML = `<li><a href="#" data-category="all" class="active" onclick="renderCategoryPosts('all');return false">全部</a></li>` +
+        cats.map(c => `<li><a href="#" data-category="${c}" onclick="renderCategoryPosts('${c}');return false">${c}</a></li>`).join('');
+      renderCategoryPosts('all');
+    });
+  </script>
+</body>
+</html>

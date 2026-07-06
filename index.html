@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potato's Blog</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="index.html">Potato's Blog</a></h1>
+      <nav>
+        <a href="index.html" data-page="home">首页</a>
+        <a href="archive.html" data-page="archive">归档</a>
+        <a href="categories.html" data-page="categories">分类</a>
+        <a href="search.html" data-page="search">搜索</a>
+      </nav>
+    </header>
+
+    <ul class="post-list" id="post-list"></ul>
+    <a class="more-link" href="archive.html">查看全部文章 →</a>
+
+    <footer>© 2026 Potato's Blog</footer>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    setActiveNav('home');
+    loadPosts().then(posts => {
+      const list = document.getElementById('post-list');
+      list.innerHTML = posts.slice(0, 5).map(renderPostItem).join('');
+    });
+  </script>
+</body>
+</html>

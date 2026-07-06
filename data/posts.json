@@ -1,0 +1,18 @@
+[
+  {
+    "slug": "hello-world",
+    "title": "Hello World",
+    "date": "2026-07-06",
+    "category": "随笔",
+    "tags": ["博客", "开始"],
+    "summary": "这是 Potato's Blog 的第一篇文章，记录博客搭建的起点。"
+  },
+  {
+    "slug": "css-flexbox-guide",
+    "title": "CSS Flexbox 完全指南",
+    "date": "2026-07-06",
+    "category": "前端",
+    "tags": ["CSS", "Flexbox", "布局"],
+    "summary": "一篇关于 CSS Flexbox 布局的完整指南，从基础概念到实战技巧。"
+  }
+]
