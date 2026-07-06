@@ -4,18 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>文章 - Potato's Blog</title>
-  <link rel="icon" href="favicon.ico">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
+  <script>!function(){var t=localStorage.getItem('theme'),d=matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',t||(d?'dark':'light'))}()</script>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1><a href="index.html">Potato's Blog</a></h1>
+      <div class="header-row">
+        <h1><a href="index.html">Potato's Blog</a></h1>
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">☾</button>
+      </div>
       <nav>
-        <a href="index.html" data-page="home">首页</a>
-        <a href="archive.html" data-page="archive">归档</a>
-        <a href="categories.html" data-page="categories">分类</a>
-        <a href="search.html" data-page="search">搜索</a>
+        <a href="index.html" data-page="home"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 首页</a>
+        <a href="archive.html" data-page="archive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> 归档</a>
+        <a href="categories.html" data-page="categories"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> 分类</a>
+        <a href="search.html" data-page="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 搜索</a>
       </nav>
     </header>
 
@@ -27,6 +31,7 @@
 
   <script src="js/main.js"></script>
   <script>
+    initTheme();
     const slug = getSlug();
     if (slug) {
       loadPostContent(slug);
