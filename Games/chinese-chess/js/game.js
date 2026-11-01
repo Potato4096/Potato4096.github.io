@@ -69,7 +69,25 @@
       undoEmpty: '没有可悔的棋',
       cleared: '对局记录已清除',
       restarted: '已重新开始',
-      hint: '点击己方棋子选中，再点击目标位置落子'
+      hint: '点击己方棋子选中，再点击目标位置落子',
+      modeTitle: '选择对局模式',
+      modePvp: '双人对弈',
+      modePvpSub: '两人轮流走棋',
+      modeAi: '人机对战',
+      modeAiSub: '你执红先行，电脑执黑',
+      modeLabel: '模式',
+      switchMode: '切换模式',
+      chooseMode: '请选择对局模式',
+      diffEasy: '简单',
+      diffMedium: '中等',
+      diffHard: '困难',
+      modeAiFull: '人机对战（{diff}）',
+      thinking: '电脑思考中…',
+      yourTurn: '轮到你走棋',
+      yourCheck: '你被将军！',
+      aiCheck: '电脑被将军！',
+      youName: '你',
+      aiName: '电脑'
     },
     en: {
       back: 'Back to Home',
@@ -92,7 +110,25 @@
       undoEmpty: 'Nothing to undo',
       cleared: 'Records cleared',
       restarted: 'New game started',
-      hint: 'Click your piece, then click the destination'
+      hint: 'Click your piece, then click the destination',
+      modeTitle: 'Choose Game Mode',
+      modePvp: 'Two Players',
+      modePvpSub: 'Take turns on this device',
+      modeAi: 'VS Computer',
+      modeAiSub: 'You play Red and move first',
+      modeLabel: 'Mode',
+      switchMode: 'Switch Mode',
+      chooseMode: 'Choose a game mode to start',
+      diffEasy: 'Easy',
+      diffMedium: 'Medium',
+      diffHard: 'Hard',
+      modeAiFull: 'VS Computer ({diff})',
+      thinking: 'AI is thinking…',
+      yourTurn: 'Your move',
+      yourCheck: 'You are in check!',
+      aiCheck: 'AI is in check!',
+      youName: 'You',
+      aiName: 'AI'
     }
   };
 
@@ -109,12 +145,20 @@
     return s;
   }
 
-  function sideName(s) { return s === 'r' ? t('red') : t('black'); }
+  function sideName(s) {
+    if (mode === 'ai') return s === aiSide ? t('aiName') : t('youName');
+    return s === 'r' ? t('red') : t('black');
+  }
 
   /* ---------------- 状态 ---------------- */
   var board, turn, selected, legalTargets, history, status, lastMove;
   var anim = null;
   var resultRecorded = false;
+  var mode = null;            // 'pvp' | 'ai'，null 表示尚未选择
+  var difficulty = 'medium';  // 'easy' | 'medium' | 'hard'
+  var aiThinking = false;
+  var gameToken = 0;          // 撤销/重开/切换模式后递增，用于作废在途 AI 思考
+  var aiSide = 'b';           // 电脑执黑，玩家执红
 
   var canvas, ctx;
   var el = {};
@@ -431,24 +475,39 @@
     renderStats();
     updateStatusUI();
     render();
+
+    // 人机模式：轮到电脑时调度 AI 思考
+    if (mode === 'ai' && !status.over && turn === aiSide) scheduleAi();
   }
 
-  function undo() {
-    if (!history.length) {
-      GamePlatform.ui.toast(t('undoEmpty'));
-      return;
-    }
+  function undoOne() {
     var h = history.pop();
     board[h.from.y][h.from.x] = h.piece;
     board[h.to.y][h.to.x] = h.captured;
     turn = h.piece.s;
-    selected = null;
-    legalTargets = [];
-    anim = null;
     if (resultRecorded) {
       unsaveStats(status.winner);
       resultRecorded = false;
     }
+  }
+
+  function undo() {
+    // 若 AI 正在思考，作废在途思考
+    if (aiThinking) {
+      gameToken++;
+      aiThinking = false;
+    }
+    if (!history.length) {
+      GamePlatform.ui.toast(t('undoEmpty'));
+      return;
+    }
+    // 人机模式：若最后一手是电脑的，连撤两手把回合交还玩家
+    var n = 1;
+    if (mode === 'ai' && history[history.length - 1].piece.s === aiSide) n = 2;
+    for (var i = 0; i < n && history.length; i++) undoOne();
+    selected = null;
+    legalTargets = [];
+    anim = null;
     var prev = history[history.length - 1];
     lastMove = prev ? { from: prev.from, to: prev.to } : null;
     status = X.statusAfter(board, turn);
@@ -458,7 +517,9 @@
     updateStatusUI();
   }
 
-  function restart() {
+  function resetGame() {
+    gameToken++;
+    aiThinking = false;
     board = X.initialBoard();
     turn = 'r';
     selected = null;
@@ -472,7 +533,44 @@
     renderMoveList();
     renderStats();
     updateStatusUI();
+  }
+
+  function restart() {
+    if (!mode) return;
+    resetGame();
     GamePlatform.ui.toast(t('restarted'));
+    // 重开后若电脑执黑则无需调度（红方先行）；若将来支持换边可在此扩展
+  }
+
+  /** AI 思考调度：异步执行以免卡住 UI */
+  function scheduleAi() {
+    aiThinking = true;
+    updateStatusUI();
+    var token = gameToken;
+    setTimeout(function () {
+      if (token !== gameToken) return; // 已被撤销/重开/切换模式
+      var mv = XiangqiAI.findBestMove(board, aiSide, { difficulty: difficulty });
+      if (token !== gameToken) return;
+      aiThinking = false;
+      if (mv) doMove(mv.from, mv.to);
+    }, 220);
+  }
+
+  function startGame(m, diff) {
+    mode = m;
+    if (diff) difficulty = diff;
+    el.overlay.style.display = 'none';
+    resetGame();
+    updateStatusUI();
+  }
+
+  function showOverlay() {
+    gameToken++;
+    aiThinking = false;
+    mode = null;
+    el.overlay.style.display = 'flex';
+    updateStatusUI();
+    render();
   }
 
   /* ---------------- 存档 ---------------- */
@@ -496,6 +594,7 @@
 
   /* ---------------- UI 更新 ---------------- */
   function statusText() {
+    if (!mode) return t('chooseMode');
     if (status.over) {
       return fmt('win', {
         side: sideName(status.winner),
@@ -504,12 +603,29 @@
           : t('reasonCapture')
       });
     }
+    if (mode === 'ai') {
+      if (aiThinking || turn === aiSide) {
+        return status.check ? t('aiCheck') : t('thinking');
+      }
+      return status.check ? t('yourCheck') : t('yourTurn');
+    }
     if (status.check) return fmt('check', { side: sideName(turn) });
     return fmt('turn', { side: sideName(turn) });
   }
 
+  function modeLabelText() {
+    if (mode === 'pvp') return t('modePvp');
+    if (mode === 'ai') {
+      return fmt('modeAiFull', {
+        diff: t(difficulty === 'easy' ? 'diffEasy' : difficulty === 'hard' ? 'diffHard' : 'diffMedium')
+      });
+    }
+    return '-';
+  }
+
   function updateStatusUI() {
     el.statusText.textContent = statusText();
+    el.modeLabel.textContent = modeLabelText();
     if (status.over) {
       el.turnDot.className = 'turn-dot is-win';
     } else {
@@ -568,7 +684,7 @@
   }
 
   function onClick(e) {
-    if (anim || status.over) return;
+    if (!mode || aiThinking || anim || status.over) return;
     var cell = pointToCell(e.clientX, e.clientY);
     if (!cell) return;
     var piece = board[cell.y][cell.x];
@@ -601,7 +717,9 @@
       statRed: document.getElementById('stat-red'),
       statBlack: document.getElementById('stat-black'),
       badge: document.getElementById('lang-badge'),
-      title: document.getElementById('game-title')
+      title: document.getElementById('game-title'),
+      overlay: document.getElementById('mode-overlay'),
+      modeLabel: document.getElementById('mode-label')
     };
 
     setupCanvas();
@@ -612,6 +730,15 @@
     });
     document.getElementById('btn-undo').addEventListener('click', undo);
     document.getElementById('btn-restart').addEventListener('click', restart);
+    document.getElementById('btn-switch-mode').addEventListener('click', showOverlay);
+    document.getElementById('btn-mode-pvp').addEventListener('click', function () {
+      startGame('pvp');
+    });
+    document.querySelectorAll('[data-diff]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        startGame('ai', btn.dataset.diff);
+      });
+    });
     document.getElementById('btn-clear').addEventListener('click', function () {
       GamePlatform.storage.clear();
       renderStats();
@@ -630,6 +757,7 @@
     history = [];
     lastMove = null;
     status = X.statusAfter(board, turn);
+    // mode 保持 null：显示模式选择浮层，选择后才开始
 
     applyText();
     render();

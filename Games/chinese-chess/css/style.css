@@ -180,6 +180,92 @@
   padding: 12px 0;
 }
 
+/* 模式行 */
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.mode-row b {
+  flex: 1;
+}
+
+.mode-switch {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+/* 模式选择浮层 */
+.mode-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.mode-box {
+  width: min(92vw, 360px);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mode-title {
+  margin: 0;
+  font-size: 18px;
+  text-align: center;
+}
+
+.mode-big {
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  font-size: 17px;
+}
+
+.mode-big-title {
+  font-weight: 700;
+}
+
+.mode-big-sub {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.mode-ai-block {
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  padding: 14px;
+}
+
+.mode-ai-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.diff-row {
+  display: flex;
+  gap: 8px;
+}
+
+.diff-row .pg-btn {
+  flex: 1;
+}
+
+.mode-ai-sub {
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+
 @media (max-width: 880px) {
   .game-layout {
     flex-direction: column;
