@@ -1,0 +1,27 @@
+{
+  "id": "super-jump",
+  "title": {
+    "zh": "超级跳跃",
+    "en": "Super Jump"
+  },
+  "description": {
+    "zh": "像素风横版跳跃游戏。踩扁小怪、顶出金币、躲开陷阱，一路跑到旗杆终点。支持键盘与触屏操作，自动保存最高分。",
+    "en": "A pixel-art side-scrolling platformer. Stomp enemies, bump blocks, dodge pits and race to the flagpole. Keyboard & touch controls, best score auto-saved."
+  },
+  "version": "0.1.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "⭐",
+  "tags": ["platformer", "action", "singleplayer", "arcade"],
+  "category": "action",
+  "players": 1,
+  "controls": {
+    "zh": "←→/AD 移动，空格/↑/W 跳跃，Esc/P 暂停；触屏设备提供屏幕按钮",
+    "en": "Arrows/A-D to move, Space/Up/W to jump, Esc/P to pause; on-screen buttons on touch devices"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}
