@@ -260,22 +260,22 @@
       light: {
         bg: '#eaf0fb',
         bgTexture: 'radial-gradient(1200px 800px at 12% -10%, rgba(126, 168, 255, 0.55) 0%, rgba(126, 168, 255, 0) 55%), radial-gradient(900px 700px at 110% 20%, rgba(255, 158, 196, 0.45) 0%, rgba(255, 158, 196, 0) 60%), radial-gradient(800px 600px at 50% 120%, rgba(140, 230, 200, 0.40) 0%, rgba(140, 230, 200, 0) 60%), linear-gradient(180deg, #eaf0fb 0%, #f2f5fc 100%)',
-        surface: 'rgba(255, 255, 255, 0.55)', surface2: 'rgba(255, 255, 255, 0.38)',
-        text: '#16202e', textMuted: '#5c6b80', border: 'rgba(255, 255, 255, 0.65)',
+        surface: 'rgba(255, 255, 255, 0.32)', surface2: 'rgba(255, 255, 255, 0.18)',
+        text: '#16202e', textMuted: '#5c6b80', border: 'rgba(255, 255, 255, 0.45)',
         accent: '#0a84ff', accentHover: '#0071e3', accentSoft: 'rgba(10, 132, 255, 0.14)',
         accentTexture: 'linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%)',
         success: '#248a3d', warning: '#c77500', danger: '#d70015',
-        backdropFilter: 'blur(20px) saturate(1.6)'
+        backdropFilter: 'blur(24px) saturate(1.8)'
       },
       dark: {
         bg: '#0c1220',
         bgTexture: 'radial-gradient(1200px 800px at 10% -10%, rgba(64, 120, 255, 0.35) 0%, rgba(64, 120, 255, 0) 55%), radial-gradient(900px 700px at 115% 15%, rgba(160, 90, 255, 0.28) 0%, rgba(160, 90, 255, 0) 60%), radial-gradient(800px 600px at 55% 125%, rgba(40, 190, 180, 0.22) 0%, rgba(40, 190, 180, 0) 60%), linear-gradient(180deg, #0c1220 0%, #0f1526 100%)',
-        surface: 'rgba(28, 34, 48, 0.55)', surface2: 'rgba(255, 255, 255, 0.10)',
-        text: '#eef2f8', textMuted: '#93a1b5', border: 'rgba(255, 255, 255, 0.16)',
+        surface: 'rgba(28, 34, 48, 0.35)', surface2: 'rgba(255, 255, 255, 0.07)',
+        text: '#eef2f8', textMuted: '#93a1b5', border: 'rgba(255, 255, 255, 0.12)',
         accent: '#64b5ff', accentHover: '#8ac8ff', accentSoft: 'rgba(100, 181, 255, 0.18)',
         accentTexture: 'linear-gradient(135deg, #4aa8ff 0%, #7d8cff 100%)',
         success: '#30d158', warning: '#e6a700', danger: '#ff6961',
-        backdropFilter: 'blur(20px) saturate(1.6)'
+        backdropFilter: 'blur(24px) saturate(1.8)'
       }
     },
     'mono': {
