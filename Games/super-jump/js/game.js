@@ -871,6 +871,7 @@
     rebuildPal();
     initClouds();
     resetLevel();
+    SJ.Input.init();
     applyI18n();
     updateHUD();
     bindUI();
