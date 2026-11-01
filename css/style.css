@@ -125,54 +125,6 @@ main {
   padding: 0 28px 48px;
 }
 
-.hero {
-  text-align: center;
-  padding: 44px 12px 34px;
-}
-
-.hero h1 {
-  font-size: clamp(28px, 5vw, 44px);
-  margin: 0 0 12px;
-  letter-spacing: 0.5px;
-}
-
-.hero p {
-  margin: 0 auto 28px;
-  max-width: 620px;
-  color: var(--text-muted);
-  font-size: 17px;
-}
-
-.hero-stats {
-  display: inline-flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.stat {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px 22px;
-  min-width: 110px;
-  box-shadow: var(--shadow);
-}
-
-.stat-num {
-  display: block;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
 /* ---------- Games ---------- */
 
 .section-head {
@@ -321,39 +273,30 @@ main {
 
 .play-btn:hover { background: var(--accent-hover); }
 
-/* ---------- Dev section ---------- */
-
-.dev-section {
-  margin-top: 44px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 26px;
-  box-shadow: var(--shadow);
-}
-
-.dev-section h2 { margin: 0 0 8px; font-size: 20px; }
-.dev-section p { margin: 0 0 16px; color: var(--text-muted); }
-.dev-section code {
-  background: var(--surface-2);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.dev-links {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 /* ---------- Footer ---------- */
 
 .site-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   text-align: center;
-  padding: 22px;
+  padding: 26px 20px 30px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.footer-github {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-github:hover { text-decoration: underline; }
+
+.footer-notice {
+  margin: 0;
+  max-width: 720px;
 }
 
 /* ---------- Settings panel ---------- */
@@ -475,6 +418,4 @@ main {
 @media (max-width: 560px) {
   .site-header { padding: 14px 16px; }
   main { padding: 0 16px 36px; }
-  .hero { padding: 28px 4px 22px; }
-  .stat { min-width: 90px; padding: 10px 14px; }
 }

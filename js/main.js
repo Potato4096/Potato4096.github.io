@@ -1,6 +1,6 @@
 /**
  * Potato4096 Arcade - 首页主逻辑
- * 职责: 游戏发现(game.json 清单/自动遍历) → 渲染卡片 → 跳转入口；全局设置面板
+ * 职责: 游戏发现(games.json 清单/自动遍历) → 渲染卡片 → 跳转入口；全局设置面板
  */
 (function () {
   'use strict';
@@ -18,19 +18,10 @@
   }
 
   function applyI18n() {
-    document.getElementById('hero-title').textContent = GP.i18n.t(CONFIG.tagline) || t('hero.title');
-    document.getElementById('hero-desc').textContent = t('hero.desc');
-    document.getElementById('stat-games-label').textContent = t('stat.games');
-    document.getElementById('stat-theme-label').textContent = t('stat.theme');
-    document.getElementById('stat-lang-label').textContent = t('stat.lang');
     document.getElementById('games-title').textContent = t('games.title');
     document.getElementById('refresh-label').textContent = t('refresh');
-    document.getElementById('dev-title').textContent = t('dev.title');
-    document.getElementById('dev-desc').textContent = t('dev.desc');
-    document.getElementById('link-spec').textContent = t('link.spec');
-    document.getElementById('link-api').textContent = t('link.api');
-    document.getElementById('link-readme').textContent = t('link.readme');
-    document.getElementById('footer-text').textContent = t('footer');
+    document.getElementById('footer-github').textContent = t('footer.github');
+    document.getElementById('footer-notice').textContent = t('footer.notice');
     document.getElementById('panel-title').textContent = t('panel.title');
     document.getElementById('label-lang').textContent = t('label.lang');
     document.getElementById('label-lang-hint').textContent = t('label.lang.hint');
@@ -47,22 +38,13 @@
     document.getElementById('btn-theme').textContent =
       pref === 'dark' ? '🌙' : pref === 'light' ? '☀️' : '🖥️';
 
-    updateStats();
     renderSegmented();
-  }
-
-  function updateStats() {
-    document.getElementById('stat-games').textContent = String(state.games.length || 0);
-    document.getElementById('stat-theme').textContent = t('theme.' + GP.settings.get('theme'));
-    document.getElementById('stat-lang').textContent =
-      GP.settings.get('lang') === 'en' ? 'EN' : '中文';
   }
 
   /* ========== 游戏发现 ========== */
 
   var state = {
-    games: [],        // [{ id, dir, config }]
-    source: 'manifest'
+    games: [] // [{ id, dir, config }]
   };
 
   function fetchJson(url) {
@@ -79,9 +61,6 @@
       return dirs.map(function (item) {
         return typeof item === 'string' ? { id: item, dir: 'Games/' + item } : item;
       });
-    }).then(function (list) {
-      state.source = 'manifest';
-      return list;
     });
   }
 
@@ -93,14 +72,10 @@
       return (entries || [])
         .filter(function (e) { return e.type === 'dir'; })
         .map(function (e) { return { id: e.name, dir: 'Games/' + e.name }; });
-    }).then(function (list) {
-      state.source = 'github';
-      return list;
     });
   }
 
   function discoverManual() {
-    state.source = 'manual';
     return Promise.resolve((CONFIG.manualGames || []).map(function (id) {
       return { id: id, dir: 'Games/' + id };
     }));
@@ -143,6 +118,14 @@
     return GP.i18n.t(value);
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function renderGames() {
     var grid = document.getElementById('game-grid');
     grid.innerHTML = '';
@@ -152,7 +135,6 @@
       empty.className = 'empty-card';
       empty.textContent = t('games.empty');
       grid.appendChild(empty);
-      updateStats();
       return;
     }
 
@@ -193,16 +175,6 @@
 
       grid.appendChild(card);
     });
-
-    updateStats();
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 
   function loadAndRender() {
