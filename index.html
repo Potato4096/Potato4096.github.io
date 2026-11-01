@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Potato4096 Arcade - a simple online game platform">
+  <title>Potato4096 Arcade</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">🎮</span>
+      <span class="brand-name">Potato4096 <em>Arcade</em></span>
+    </a>
+    <nav class="header-actions">
+      <button id="btn-lang" class="icon-btn" type="button" title="Language">中 / EN</button>
+      <button id="btn-theme" class="icon-btn" type="button" title="Theme">🌙</button>
+      <button id="btn-settings" class="icon-btn" type="button" title="Settings">⚙️</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1 id="hero-title">简单 · 通用 · 即点即玩</h1>
+      <p id="hero-desc">一个轻量在线游戏平台。每个游戏独立开发、独立配置，主页自动发现并展示。</p>
+      <div class="hero-stats" id="hero-stats">
+        <div class="stat"><span class="stat-num" id="stat-games">-</span><span class="stat-label" id="stat-games-label">游戏</span></div>
+        <div class="stat"><span class="stat-num" id="stat-theme">-</span><span class="stat-label" id="stat-theme-label">主题</span></div>
+        <div class="stat"><span class="stat-num" id="stat-lang">-</span><span class="stat-label" id="stat-lang-label">语言</span></div>
+      </div>
+    </section>
+
+    <section class="games-section">
+      <div class="section-head">
+        <h2 id="games-title">游戏库</h2>
+        <button id="btn-refresh" class="ghost-btn" type="button">↻ <span id="refresh-label">刷新</span></button>
+      </div>
+      <div id="game-grid" class="game-grid" aria-live="polite">
+        <div class="loading-card" id="loading-card">正在加载游戏列表…</div>
+      </div>
+    </section>
+
+    <section class="dev-section">
+      <h2 id="dev-title">开发者</h2>
+      <p id="dev-desc">想添加自己的游戏？阅读开发规范，把游戏放进 <code>Games/</code> 目录即可。</p>
+      <div class="dev-links">
+        <a class="ghost-btn" href="docs/GAME_SPEC.md" target="_blank" rel="noopener">📄 <span id="link-spec">游戏开发规范</span></a>
+        <a class="ghost-btn" href="docs/API.md" target="_blank" rel="noopener">🔧 <span id="link-api">GamePlatform API</span></a>
+        <a class="ghost-btn" href="README.md" target="_blank" rel="noopener">📦 <span id="link-readme">README</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span id="footer-text">Potato4096 Arcade · 项目起草阶段</span>
+  </footer>
+
+  <!-- 设置面板 -->
+  <div class="panel-backdrop" id="panel-backdrop" hidden></div>
+  <aside class="settings-panel" id="settings-panel" hidden aria-label="Settings">
+    <div class="panel-head">
+      <h3 id="panel-title">全局设置</h3>
+      <button class="icon-btn" id="btn-close-panel" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span id="label-lang">语言</span>
+        <small id="label-lang-hint">影响主页与所有游戏</small>
+      </div>
+      <div class="segmented" id="seg-lang">
+        <button type="button" data-value="zh">中文</button>
+        <button type="button" data-value="en">English</button>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span id="label-theme">主题</span>
+        <small id="label-theme-hint">深浅配色</small>
+      </div>
+      <div class="segmented" id="seg-theme">
+        <button type="button" data-value="system">跟随系统</button>
+        <button type="button" data-value="light">浅色</button>
+        <button type="button" data-value="dark">深色</button>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span id="label-motion">减少动画</span>
+        <small id="label-motion-hint">关闭过渡与动效</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-motion">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span id="label-sound">游戏音效</span>
+        <small id="label-sound-hint">全局音效开关</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-sound">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="panel-foot">
+      <button class="ghost-btn" id="btn-reset-settings" type="button">恢复默认</button>
+    </div>
+  </aside>
+
+  <script src="platform/game-api.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

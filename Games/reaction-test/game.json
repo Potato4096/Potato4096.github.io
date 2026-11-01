@@ -1,0 +1,22 @@
+{
+  "id": "reaction-test",
+  "title": {
+    "zh": "反应力测试",
+    "en": "Reaction Test"
+  },
+  "description": {
+    "zh": "测试你的反应速度！等待颜色变绿的瞬间立刻点击，看看你的最快记录是多少毫秒。",
+    "en": "Test your reflexes! Click the instant the color turns green and see your fastest record in milliseconds."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "⚡",
+  "tags": ["reflex", "singleplayer", "demo"],
+  "category": "casual",
+  "players": 1,
+  "api": ["settings", "storage", "i18n", "theme", "sound", "toast", "reduceMotion"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Guess · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <style>
+    .game-wrap { max-width: 520px; margin: 0 auto; padding: 24px 20px 60px; }
+    .panel { padding: 28px; }
+    .hint {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--pg-accent);
+      background: var(--pg-accent-soft);
+      border-radius: 12px;
+      margin-bottom: 18px;
+      text-align: center;
+      padding: 8px;
+    }
+    .guess-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .guess-input {
+      flex: 1;
+      font-size: 20px;
+      text-align: center;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--pg-border);
+      background: var(--pg-surface-2);
+      color: var(--pg-text);
+      font-family: inherit;
+    }
+    .guess-input:focus { outline: 2px solid var(--pg-accent); }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--pg-text-muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .history {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 36px;
+    }
+    .chip {
+      background: var(--pg-surface-2);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 13px;
+    }
+    .chip.high { color: var(--pg-danger); }
+    .chip.low { color: var(--pg-accent); }
+    .actions { display: flex; gap: 10px; margin-top: 22px; }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-back">← <span data-t="back">返回主页</span></button>
+      <span class="pg-tag" id="lang-badge">中文</span>
+    </div>
+
+    <div class="panel pg-card">
+      <div class="hint" id="hint">我心里想好了一个 1 到 100 之间的数字</div>
+
+      <div class="guess-row">
+        <input class="guess-input" id="input" type="number" min="1" max="100" placeholder="1 - 100" autocomplete="off">
+        <button class="pg-btn" id="btn-guess" data-t="guess">猜！</button>
+      </div>
+
+      <div class="meta-row">
+        <span><span data-t="tries">次数</span>: <b id="tries">0</b></span>
+        <span><span data-t="best">最佳记录</span>: <b id="best">-</b></span>
+      </div>
+
+      <div class="history" id="history"></div>
+
+      <div class="actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-restart" data-t="restart">重新开始</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var TEXT = {
+        zh: {
+          back: '返回主页',
+          guess: '猜！',
+          tries: '次数',
+          best: '最佳记录',
+          restart: '重新开始',
+          placeholder: '1 - 100',
+          idle: '我心里想好了一个 1 到 100 之间的数字',
+          higher: '再大一点 ↑',
+          lower: '再小一点 ↓',
+          win: '猜对了！答案就是 {n}，用了 {t} 次',
+          invalid: '请输入 1 - 100 之间的整数',
+          newBest: '🎉 新纪录！'
+        },
+        en: {
+          back: 'Back to Home',
+          guess: 'Guess!',
+          tries: 'Tries',
+          best: 'Best',
+          restart: 'Restart',
+          placeholder: '1 - 100',
+          idle: "I'm thinking of a number between 1 and 100",
+          higher: 'Higher ↑',
+          lower: 'Lower ↓',
+          win: 'Correct! The answer was {n}, in {t} tries',
+          invalid: 'Please enter an integer between 1 and 100',
+          newBest: '🎉 New record!'
+        }
+      };
+
+      var target = 0;
+      var tries = 0;
+      var history = [];
+      var won = false;
+
+      var el = {
+        hint: document.getElementById('hint'),
+        input: document.getElementById('input'),
+        tries: document.getElementById('tries'),
+        best: document.getElementById('best'),
+        history: document.getElementById('history'),
+        badge: document.getElementById('lang-badge')
+      };
+
+      function t(key) {
+        var lang = GamePlatform.settings.get('lang');
+        return (TEXT[lang] || TEXT.zh)[key] || key;
+      }
+
+      function applyText() {
+        document.querySelectorAll('[data-t]').forEach(function (node) {
+          node.textContent = t(node.dataset.t);
+        });
+        el.input.placeholder = t('placeholder');
+        el.badge.textContent = GamePlatform.settings.get('lang') === 'en' ? 'EN' : '中文';
+        if (!won) el.hint.textContent = t('idle');
+        renderBest();
+      }
+
+      function renderBest() {
+        var best = GamePlatform.storage.get('best', null);
+        el.best.textContent = best == null ? '-' : String(best);
+      }
+
+      function renderHistory() {
+        el.history.innerHTML = history.map(function (item) {
+          return '<span class="chip ' + item.dir + '">' + item.value + '</span>';
+        }).join('');
+      }
+
+      function restart() {
+        target = GamePlatform.util.randInt(1, 100);
+        tries = 0;
+        history = [];
+        won = false;
+        el.tries.textContent = '0';
+        el.hint.textContent = t('idle');
+        el.input.value = '';
+        el.input.disabled = false;
+        renderHistory();
+        el.input.focus();
+      }
+
+      function guess() {
+        if (won) return;
+        var v = parseInt(el.input.value, 10);
+        if (isNaN(v) || v < 1 || v > 100) {
+          GamePlatform.ui.toast(t('invalid'));
+          return;
+        }
+        tries++;
+        el.tries.textContent = String(tries);
+
+        if (v === target) {
+          won = true;
+          el.hint.textContent = t('win').replace('{n}', target).replace('{t}', tries);
+          el.input.disabled = true;
+          var best = GamePlatform.storage.get('best', null);
+          if (best == null || tries < best) {
+            GamePlatform.storage.set('best', tries);
+            GamePlatform.ui.toast(t('newBest'));
+            renderBest();
+          }
+        } else {
+          var dir = v > target ? 'high' : 'low';
+          history.push({ value: v, dir: dir });
+          renderHistory();
+          el.hint.textContent = dir === 'high' ? t('lower') : t('higher');
+          el.input.value = '';
+          el.input.focus();
+        }
+      }
+
+      document.getElementById('btn-guess').addEventListener('click', guess);
+      el.input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') guess();
+      });
+      document.getElementById('btn-restart').addEventListener('click', restart);
+      document.getElementById('btn-back').addEventListener('click', function () {
+        GamePlatform.navigate.goHome();
+      });
+
+      // 响应全局语言/设置变化
+      GamePlatform.settings.onChange(function () {
+        if (!won) el.hint.textContent = t('idle');
+        applyText();
+      });
+
+      GamePlatform.ready.then(function () {
+        applyText();
+        restart();
+      });
+    })();
+  </script>
+</body>
+</html>

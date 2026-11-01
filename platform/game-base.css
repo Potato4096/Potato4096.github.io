@@ -1,0 +1,145 @@
+/**
+ * Potato4096 Arcade - game-base.css
+ * 游戏基础样式：主题变量 / 深浅色自适应 / 通用组件
+ * 用法: <link rel="stylesheet" href="../../platform/game-base.css">
+ */
+
+:root {
+  --pg-bg: #f6f7fb;
+  --pg-surface: #ffffff;
+  --pg-surface-2: #eef0f6;
+  --pg-text: #1c2333;
+  --pg-text-muted: #5b6474;
+  --pg-border: #d9dee8;
+  --pg-accent: #4f6df5;
+  --pg-accent-hover: #3d59e0;
+  --pg-accent-soft: rgba(79, 109, 245, 0.12);
+  --pg-success: #22a06b;
+  --pg-warning: #e2a03f;
+  --pg-danger: #e5484d;
+  --pg-radius: 12px;
+  --pg-shadow: 0 8px 24px rgba(28, 35, 51, 0.10);
+  --pg-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+html[data-theme="dark"] {
+  --pg-bg: #12151d;
+  --pg-surface: #1b202c;
+  --pg-surface-2: #242b3a;
+  --pg-text: #e9edf5;
+  --pg-text-muted: #9aa4b5;
+  --pg-border: #313a4d;
+  --pg-accent: #7c93ff;
+  --pg-accent-hover: #93a6ff;
+  --pg-accent-soft: rgba(124, 147, 255, 0.16);
+  --pg-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--pg-bg);
+  color: var(--pg-text);
+  font-family: var(--pg-font);
+  line-height: 1.6;
+}
+
+html[data-reduce-motion="1"] *,
+html[data-reduce-motion="1"] *::before,
+html[data-reduce-motion="1"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* 通用组件 ------------------------------------------------- */
+
+.pg-container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.pg-card {
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  box-shadow: var(--pg-shadow);
+  padding: 20px;
+}
+
+.pg-btn {
+  appearance: none;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--pg-accent);
+  color: #fff;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.pg-btn:hover { background: var(--pg-accent-hover); }
+.pg-btn:active { transform: scale(0.97); }
+
+.pg-btn--ghost {
+  background: transparent;
+  color: var(--pg-text);
+  border: 1px solid var(--pg-border);
+}
+.pg-btn--ghost:hover { background: var(--pg-surface-2); }
+
+.pg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pg-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--pg-accent-soft);
+  color: var(--pg-accent);
+}
+
+.pg-muted { color: var(--pg-text-muted); }
+
+.pg-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* 平台注入的 toast ----------------------------------------- */
+
+.p4096-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--pg-text);
+  color: var(--pg-bg);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  max-width: 80vw;
+  text-align: center;
+}
+
+.p4096-toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

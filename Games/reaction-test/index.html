@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reaction Test · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <style>
+    .game-wrap { max-width: 560px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    .arena {
+      border-radius: 18px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      cursor: pointer;
+      user-select: none;
+      padding: 32px 24px;
+      text-align: center;
+      transition: background 0.12s ease;
+      background: var(--pg-surface-2);
+      border: 1px solid var(--pg-border);
+    }
+
+    .arena.is-waiting { background: var(--pg-danger); color: #fff; border-color: transparent; }
+    .arena.is-go      { background: var(--pg-success); color: #fff; border-color: transparent; }
+    .arena.is-result  { background: var(--pg-surface); }
+
+    .arena-title { font-size: 26px; font-weight: 700; margin: 0; }
+    .arena-sub { margin: 0; opacity: 0.9; font-size: 15px; }
+
+    .time-big {
+      font-size: 52px;
+      font-weight: 800;
+      color: var(--pg-accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat-box {
+      flex: 1;
+      background: var(--pg-surface);
+      border: 1px solid var(--pg-border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-box b { display: block; font-size: 20px; color: var(--pg-accent); }
+    .stat-box span { font-size: 12px; color: var(--pg-text-muted); }
+
+    .actions { display: flex; gap: 10px; margin-top: 18px; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-back">← <span data-t="back">返回主页</span></button>
+      <span class="pg-tag" id="lang-badge">中文</span>
+    </div>
+
+    <div class="arena" id="arena">
+      <p class="arena-title" id="arena-title">点击开始</p>
+      <p class="arena-sub" id="arena-sub">等背景变绿的一瞬间点击，越快越好</p>
+      <div class="time-big" id="time-big" hidden>-</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box"><b id="stat-last">-</b><span data-t="last">上次 (ms)</span></div>
+      <div class="stat-box"><b id="stat-best">-</b><span data-t="best">最佳 (ms)</span></div>
+      <div class="stat-box"><b id="stat-avg">-</b><span data-t="avg">平均 (ms)</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="pg-btn pg-btn--ghost" id="btn-reset" data-t="resetRecords">清除记录</button>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var TEXT = {
+        zh: {
+          back: '返回主页',
+          last: '上次 (ms)',
+          best: '最佳 (ms)',
+          avg: '平均 (ms)',
+          resetRecords: '清除记录',
+          idleTitle: '点击开始',
+          idleSub: '等背景变绿的一瞬间点击，越快越好',
+          waitTitle: '等待变绿…',
+          waitSub: '别抢跑！现在点击算失败',
+          goTitle: '点！',
+          goSub: '就是现在',
+          resultSub: '点击再来一局',
+          tooSoon: '抢跑了！等变绿再点',
+          result: '{ms} ms',
+          cleared: '记录已清除'
+        },
+        en: {
+          back: 'Back to Home',
+          last: 'Last (ms)',
+          best: 'Best (ms)',
+          avg: 'Average (ms)',
+          resetRecords: 'Clear records',
+          idleTitle: 'Click to start',
+          idleSub: 'Click the instant the background turns green - faster is better',
+          waitTitle: 'Wait for green…',
+          waitSub: "Don't jump the gun! Clicking now counts as a miss",
+          goTitle: 'NOW!',
+          goSub: 'Click!',
+          resultSub: 'Click to play again',
+          tooSoon: 'Too early! Wait for green',
+          result: '{ms} ms',
+          cleared: 'Records cleared'
+        }
+      };
+
+      // 状态: idle | waiting | go | result
+      var state = 'idle';
+      var goAt = 0;
+      var timer = null;
+
+      var el = {
+        arena: document.getElementById('arena'),
+        title: document.getElementById('arena-title'),
+        sub: document.getElementById('arena-sub'),
+        big: document.getElementById('time-big'),
+        last: document.getElementById('stat-last'),
+        best: document.getElementById('stat-best'),
+        avg: document.getElementById('stat-avg'),
+        badge: document.getElementById('lang-badge')
+      };
+
+      function t(key) {
+        var lang = GamePlatform.settings.get('lang');
+        return (TEXT[lang] || TEXT.zh)[key] || key;
+      }
+
+      /** 简易提示音：尊重全局 sound 开关 */
+      function beep(freq, durMs) {
+        if (!GamePlatform.ui.isSoundEnabled()) return;
+        try {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return;
+          if (!beep._ctx) beep._ctx = new Ctx();
+          var ctx = beep._ctx;
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.value = 0.06;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + (durMs || 90) / 1000);
+        } catch (e) { /* ignore */ }
+      }
+
+      function renderStats() {
+        var records = GamePlatform.storage.get('records', []);
+        el.last.textContent = records.length ? records[records.length - 1] : '-';
+        el.best.textContent = records.length ? Math.min.apply(null, records) : '-';
+        el.avg.textContent = records.length
+          ? Math.round(records.reduce(function (a, b) { return a + b; }, 0) / records.length)
+          : '-';
+      }
+
+      function applyText() {
+        document.querySelectorAll('[data-t]').forEach(function (node) {
+          node.textContent = t(node.dataset.t);
+        });
+        el.badge.textContent = GamePlatform.settings.get('lang') === 'en' ? 'EN' : '中文';
+        renderStats();
+      }
+
+      function setState(next, opts) {
+        state = next;
+        el.arena.classList.remove('is-waiting', 'is-go', 'is-result');
+        el.big.hidden = true;
+
+        if (next === 'idle') {
+          el.title.textContent = t('idleTitle');
+          el.sub.textContent = t('idleSub');
+        } else if (next === 'waiting') {
+          el.arena.classList.add('is-waiting');
+          el.title.textContent = t('waitTitle');
+          el.sub.textContent = t('waitSub');
+          var delay = GamePlatform.util.randInt(1200, 3600);
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function () {
+            state = 'go';
+            goAt = performance.now();
+            el.arena.classList.remove('is-waiting');
+            el.arena.classList.add('is-go');
+            el.title.textContent = t('goTitle');
+            el.sub.textContent = t('goSub');
+            beep(880, 120);
+          }, delay);
+        } else if (next === 'result') {
+          el.arena.classList.add('is-result');
+          el.title.textContent = t('result').replace('{ms}', opts.ms);
+          el.sub.textContent = t('resultSub');
+          el.big.hidden = false;
+          el.big.textContent = opts.ms;
+        }
+      }
+
+      function onArenaClick() {
+        if (state === 'idle' || state === 'result') {
+          setState('waiting');
+          beep(440, 80);
+        } else if (state === 'waiting') {
+          if (timer) clearTimeout(timer);
+          GamePlatform.ui.toast(t('tooSoon'));
+          beep(220, 180);
+          setState('idle');
+        } else if (state === 'go') {
+          var ms = Math.round(performance.now() - goAt);
+          var records = GamePlatform.storage.get('records', []);
+          records.push(ms);
+          if (records.length > 20) records = records.slice(-20);
+          GamePlatform.storage.set('records', records);
+          setState('result', { ms: ms });
+          renderStats();
+          beep(660, 100);
+        }
+      }
+
+      el.arena.addEventListener('click', onArenaClick);
+      document.getElementById('btn-back').addEventListener('click', function () {
+        GamePlatform.navigate.goHome();
+      });
+      document.getElementById('btn-reset').addEventListener('click', function () {
+        GamePlatform.storage.remove('records');
+        renderStats();
+        GamePlatform.ui.toast(t('cleared'));
+      });
+
+      GamePlatform.settings.onChange(function () { applyText(); });
+
+      GamePlatform.ready.then(function () {
+        applyText();
+        setState('idle');
+      });
+    })();
+  </script>
+</body>
+</html>

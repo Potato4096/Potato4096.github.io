@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 · Potato4096 Arcade</title>
+  <!-- GitHub Pages 会在任意深度的错误路径下返回本页，故资源一律用根绝对路径 -->
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .nf-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      gap: 10px;
+    }
+    .nf-code {
+      font-size: 88px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin: 0;
+    }
+    .nf-title { margin: 0; font-size: 24px; }
+    .nf-desc { margin: 0 0 18px; color: var(--text-muted); max-width: 420px; }
+  </style>
+</head>
+<body>
+  <div class="nf-wrap">
+    <p class="nf-code">404</p>
+    <h1 class="nf-title" id="t-title">页面不存在</h1>
+    <p class="nf-desc" id="t-desc">你要找的游戏或页面不见了，回到主页看看别的吧。</p>
+    <a class="ghost-btn" href="/index.html" id="t-home">← 返回主页</a>
+  </div>
+
+  <script src="/platform/game-api.js"></script>
+  <script>
+    (function () {
+      var TEXT = {
+        zh: { title: '页面不存在', desc: '你要找的游戏或页面不见了，回到主页看看别的吧。', home: '← 返回主页' },
+        en: { title: 'Page not found', desc: 'The game or page you are looking for is gone. Head back home.', home: '← Back to Home' }
+      };
+      function apply() {
+        var dict = TEXT[GamePlatform.settings.get('lang')] || TEXT.zh;
+        document.getElementById('t-title').textContent = dict.title;
+        document.getElementById('t-desc').textContent = dict.desc;
+        document.getElementById('t-home').textContent = dict.home;
+      }
+      GamePlatform.ready.then(apply);
+      GamePlatform.settings.onChange(apply);
+    })();
+  </script>
+</body>
+</html>

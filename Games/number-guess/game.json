@@ -1,0 +1,22 @@
+{
+  "id": "number-guess",
+  "title": {
+    "zh": "猜数字",
+    "en": "Number Guess"
+  },
+  "description": {
+    "zh": "经典猜数字游戏。系统随机生成 1-100 之间的数字，用最少的次数猜中它。最佳记录会被自动保存。",
+    "en": "Classic number guessing. The system picks a number between 1 and 100 - find it in as few tries as possible. Your best record is saved automatically."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🔢",
+  "tags": ["puzzle", "singleplayer", "demo"],
+  "category": "casual",
+  "players": 1,
+  "api": ["settings", "storage", "i18n", "theme", "toast"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}
