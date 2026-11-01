@@ -1,0 +1,27 @@
+{
+  "id": "chinese-chess",
+  "title": {
+    "zh": "中国象棋",
+    "en": "Chinese Chess"
+  },
+  "description": {
+    "zh": "经典中国象棋双人对弈。红黑双方轮流走棋，支持完整象棋规则——将军、将死、困毙、蹩马腿、塞象眼、炮打隔子、将帅对脸，附带悔棋、棋谱与胜负统计。",
+    "en": "Classic Xiangqi for two players taking turns. Full rule support - check, checkmate, stalemate, horse-leg blocking, elephant-eye blocking, cannon screen captures and the facing-generals rule. Includes undo, move record and win stats."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "♟️",
+  "tags": ["board", "strategy", "multiplayer", "classic", "xiangqi"],
+  "category": "strategy",
+  "players": 2,
+  "controls": {
+    "zh": "鼠标点击选子，再点击目标位置落子",
+    "en": "Click a piece, then click the destination"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}

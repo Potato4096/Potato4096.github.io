@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chinese Chess · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-back">← <span data-t="back">返回主页</span></button>
+      <span class="pg-tag" id="lang-badge">中文</span>
+    </div>
+
+    <h1 class="pg-muted" id="game-title" style="font-size:18px;margin:10px 2px 0;">中国象棋 · 双人对弈</h1>
+
+    <div class="game-layout">
+      <div class="board-col">
+        <div class="status-bar pg-card">
+          <span class="turn-dot is-red" id="turn-dot"></span>
+          <span id="status-text">红方走棋</span>
+        </div>
+        <div class="board-frame">
+          <canvas id="board"></canvas>
+        </div>
+        <p class="pg-muted" id="hint" style="font-size:13px;margin:10px 2px 0;"></p>
+      </div>
+
+      <div class="side-col">
+        <div class="side-panel pg-card">
+          <div class="stats-row">
+            <span class="stat"><span class="dot red"></span><span data-t="redWins">红方胜</span>: <b id="stat-red">0</b></span>
+            <span class="stat"><span class="dot black"></span><span data-t="blackWins">黑方胜</span>: <b id="stat-black">0</b></span>
+          </div>
+
+          <div class="actions">
+            <button class="pg-btn" id="btn-undo" data-t="undo">悔棋</button>
+            <button class="pg-btn pg-btn--ghost" id="btn-restart" data-t="restart">重新开始</button>
+          </div>
+          <button class="pg-btn pg-btn--ghost btn-clear" id="btn-clear" data-t="clear">清除记录</button>
+
+          <h2 class="panel-title" data-t="record">棋谱</h2>
+          <div class="move-list" id="move-list">
+            <div class="move-empty" data-t="noMoves">尚未走棋</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
