@@ -21,7 +21,6 @@ Potato4096.github.io/
 ├── index.html                 # 平台首页（游戏发现 + 全局设置）
 ├── 404.html                   # GitHub Pages 错误页（自动生效）
 ├── .nojekyll                  # 禁用 Jekyll，纯静态发布
-├── games.json                 # 游戏清单（脚本生成，勿手改）
 ├── css/
 │   └── style.css              # 首页样式（含深浅主题）
 ├── js/
@@ -37,8 +36,6 @@ Potato4096.github.io/
 │   │   ├── index.html         #   游戏入口（必填）
 │   │   └── assets/            #   资源目录（可选）
 │   └── reaction-test/         # 示例：反应力测试
-├── scripts/
-│   └── generate-games-json.mjs # 游戏清单生成脚本
 └── docs/
     ├── GAME_SPEC.md           # ★ 游戏开发规范
     └── API.md                 # ★ GamePlatform API 文档
@@ -46,12 +43,12 @@ Potato4096.github.io/
 
 ## 它是怎么工作的
 
-1. **游戏发现**：主页读取 `games.json` 清单拿到游戏目录列表；部署到 GitHub Pages 后即使清单缺失，也会自动回退到 GitHub API 遍历 `Games/` 目录（见 `js/config.js` 的 `discoveryMode`）。
+1. **游戏发现（动态）**：主页运行时动态扫描 `Games/` 目录——本地开发时解析静态服务器返回的目录列表（`python -m http.server`、`npx serve` 等均支持）；部署到 GitHub Pages 后自动改用 GitHub API 遍历仓库的 `Games/` 目录。**无需任何清单文件或构建步骤**。
 2. **读取配置**：主页对每个游戏目录请求 `game.json`，用其中的标题、简介、标签、图标等渲染成卡片。
 3. **跳转入口**：点击卡片 → 跳转到 `Games/<id>/<entry>`（默认 `index.html`）。
 4. **全局协调**：主页与所有游戏共享同一份全局设置（语言 / 深浅主题 / 减少动画 / 音效），存于 `localStorage`，跨页面、跨标签页实时同步。游戏通过 `GamePlatform` API 读取并响应变化。
 
-## 添加一个新游戏（3 步）
+## 添加一个新游戏（2 步）
 
 1. 在 `Games/` 下新建目录，例如 `Games/my-game/`，放入 `game.json` 和 `index.html`（详见 [docs/GAME_SPEC.md](docs/GAME_SPEC.md)）。
 2. 在游戏页面中引入框架并调用 API（详见 [docs/API.md](docs/API.md)）：
@@ -66,11 +63,7 @@ Potato4096.github.io/
    </script>
    ```
 
-3. 重新生成游戏清单：
-
-   ```bash
-   node scripts/generate-games-json.mjs
-   ```
+   完成后刷新主页即可看到新游戏（部署后 push 即生效），无需生成清单。
 
 ## 部署到 GitHub Pages
 
@@ -102,8 +95,7 @@ git push -u origin main
 
 - 根目录已放置 `.nojekyll`：禁用 Jekyll 处理，保证纯静态资源原样发布（避免 markdown/下划线目录被转换或忽略）。
 - 根目录的 `404.html` 会被 GitHub Pages 自动用于所有错误路径，其中资源引用使用 `/` 根绝对路径（因为 404 会挂在任意深度的 URL 上）。
-- `js/config.js` 中 `github.owner/repo/branch` 需与实际仓库一致，"游戏列表自动遍历"的 GitHub API 回退通道依赖它。
-- 推送前记得运行 `node scripts/generate-games-json.mjs`，把最新游戏清单一并提交。
+- `js/config.js` 中 `github.owner/repo/branch` 需与实际仓库一致，游戏列表的动态发现（GitHub API 通道）依赖它。
 - 站点内文档链接（`docs/*.md`）在 Pages 上以纯文本展示；完整渲染效果可在 GitHub 仓库页面查看。
 
 ## 全局设置说明

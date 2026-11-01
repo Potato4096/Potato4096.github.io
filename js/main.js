@@ -1,6 +1,6 @@
 /**
  * Potato4096 Arcade - 首页主逻辑
- * 职责: 游戏发现(games.json 清单/自动遍历) → 渲染卡片 → 跳转入口；全局设置面板
+ * 职责: 游戏发现(动态扫描 Games/ 目录) → 渲染卡片 → 跳转入口；全局设置面板
  */
 (function () {
   'use strict';
@@ -54,12 +54,27 @@
     });
   }
 
-  /** 方式一：读取 games.json 清单 */
-  function discoverFromManifest() {
-    return fetchJson('games.json').then(function (data) {
-      var dirs = (data && data.games) || [];
-      return dirs.map(function (item) {
-        return typeof item === 'string' ? { id: item, dir: 'Games/' + item } : item;
+  /** 方式一：解析 Games/ 目录列表（本地静态服务器，如 python -m http.server / npx serve） */
+  function discoverFromListing() {
+    return fetch('Games/', { cache: 'no-cache' }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' for Games/');
+      return res.text();
+    }).then(function (html) {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var names = [];
+      Array.prototype.forEach.call(doc.querySelectorAll('a[href]'), function (a) {
+        var path = (a.getAttribute('href') || '').split(/[?#]/)[0];
+        if (path.charAt(path.length - 1) !== '/') return; // 只要子目录
+        var segs = path.split('/').filter(function (s) { return s.length; });
+        if (!segs.length) return;
+        var name = segs[segs.length - 1];
+        if (name !== '.' && name !== '..' && /^[A-Za-z0-9._-]+$/.test(name) && names.indexOf(name) === -1) {
+          names.push(name);
+        }
+      });
+      if (!names.length) throw new Error('empty Games/ listing');
+      return names.map(function (id) {
+        return { id: id, dir: 'Games/' + id };
       });
     });
   }
@@ -85,10 +100,11 @@
     var mode = CONFIG.discoveryMode || 'auto';
 
     if (mode === 'manual') return discoverManual();
+    if (mode === 'listing') return discoverFromListing();
     if (mode === 'github-api') return discoverFromGitHub();
 
-    // auto: manifest 优先，失败回退 GitHub API
-    return discoverFromManifest().catch(function () {
+    // auto: 本地目录列表优先（本地开发看到的就是本地文件），失败回退 GitHub API（GitHub Pages）
+    return discoverFromListing().catch(function () {
       return discoverFromGitHub();
     }).catch(function () {
       return discoverManual();
