@@ -272,3 +272,80 @@
   }
 }
 
+/* easter-egg modifier dock - lives OUTSIDE the game frame, stays open while you play */
+.cheat-dock {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  background: var(--pg-surface);
+  box-shadow: var(--pg-shadow);
+}
+
+.cheat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cheat-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.cheat-hint {
+  margin: 0;
+  flex: 1;
+  min-width: 140px;
+  font-size: 12px;
+  color: var(--pg-text-muted);
+}
+
+.cheat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px 18px;
+}
+
+.cheat-row {
+  display: grid;
+  grid-template-columns: 112px 1fr 78px;
+  gap: 10px;
+  align-items: center;
+}
+
+.cheat-row .cheat-name {
+  font-size: 13px;
+  color: var(--pg-text-muted);
+}
+
+.cheat-row input[type='range'] {
+  width: 100%;
+  accent-color: var(--pg-accent);
+  cursor: pointer;
+}
+
+.cheat-row input[type='number'] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--pg-border);
+  border-radius: 6px;
+  background: var(--pg-surface-2);
+  color: var(--pg-text);
+  padding: 4px 6px;
+  font-size: 13px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.cheat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+

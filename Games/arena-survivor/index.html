@@ -92,6 +92,22 @@
       </div>
 
       <p class="pg-muted controls-hint" data-i18n="controls"></p>
+
+      <section class="cheat-dock pg-card" id="ov-cheat" hidden>
+        <div class="cheat-head">
+          <h2 class="cheat-title" data-ci18n="cheatTitle">🔧 修改器</h2>
+          <p class="cheat-hint" data-ci18n="cheatHint">彩蛋面板 · 参数即时生效</p>
+          <button class="pg-btn pg-btn--ghost" id="cheat-close" data-ci18n="cheatClose">关闭</button>
+        </div>
+        <div class="cheat-grid" id="cheat-grid"></div>
+        <div class="cheat-actions">
+          <button class="pg-btn pg-btn--ghost" id="cheat-heal" data-ci18n="cheatHeal">回满血</button>
+          <button class="pg-btn pg-btn--ghost" id="cheat-clear" data-ci18n="cheatClear">清空敌人</button>
+          <button class="pg-btn pg-btn--ghost" id="cheat-score" data-ci18n="cheatScore">+1000 分</button>
+          <button class="pg-btn pg-btn--ghost" id="cheat-god">无敌：关</button>
+          <button class="pg-btn pg-btn--ghost" id="cheat-reset" data-ci18n="cheatReset">恢复默认</button>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -100,5 +116,6 @@
   <script src="js/audio.js"></script>
   <script src="js/upgrades.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/cheats.js"></script>
 </body>
 </html>

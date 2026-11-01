@@ -127,6 +127,7 @@
   var uidSeq = 1;
   var bannerTimer = 0;
   var nowSec = 0;
+  var godMode = false; // easter-egg cheat toggle (see js/cheats.js)
 
   function makePlayer() {
     return {
@@ -322,7 +323,7 @@
   }
 
   function damagePlayer(amount, fromX, fromY) {
-    if (player.invuln > 0) return;
+    if (godMode || player.invuln > 0) return;
     player.hp -= amount;
     player.invuln = 0.72;
     SJ.Audio.play('hurt');
@@ -816,6 +817,27 @@
     if (gameState === 'playing') pauseGame();
     else if (gameState === 'paused') resumeGame();
   }
+
+  // ---------- easter egg hooks (driven by js/cheats.js) ----------
+  SJ.CheatAPI = {
+    getPlayer: function () { return player; },
+    getDefaults: function () { return makePlayer(); },
+    getState: function () { return gameState; },
+    pause: pauseGame,
+    resume: resumeGame,
+    isGod: function () { return godMode; },
+    setGod: function (v) { godMode = !!v; },
+    fullHeal: function () {
+      player.hp = player.maxHp;
+      updateHUD();
+    },
+    clearEnemies: function () { enemies.length = 0; },
+    addScore: function (v) {
+      score += v;
+      updateHUD();
+    },
+    getScore: function () { return score; }
+  };
 
   // ---------- main loop ----------
   var lastTs = 0, acc = 0;
