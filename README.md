@@ -46,7 +46,15 @@
 
    开发前请完整阅读 **[docs/GAME_SPEC.md](docs/GAME_SPEC.md)**（目录与配置规范、主题适配要求、发布检查清单）。
 
-4. **本地测试**（需要静态服务器）：
+4. **更新游戏注册表**：
+
+   ```bash
+   node scripts/generate-games-json.mjs
+   ```
+
+   该脚本会扫描 `Games/` 目录并校验各游戏的 `game.json`，重新生成 `games.json` 全局注册表（主页据此展示游戏）。
+
+5. **本地测试**（需要静态服务器）：
 
    ```bash
    python -m http.server 8080
@@ -55,15 +63,15 @@
 
    打开 `http://localhost:8080`，确认游戏出现在游戏库且游玩正常。
 
-5. **提交并推送** 到你的 Fork：
+6. **提交并推送** 到你的 Fork：
 
    ```bash
-   git add Games/my-game
+   git add Games/my-game games.json
    git commit -m "feat(game): add my-game"
    git push origin feat/my-game
    ```
 
-6. 在 GitHub 上向 `Potato4096/Potato4096.github.io` 发起 **Pull Request**，简要介绍游戏玩法与操作方式。合并到 `main` 后即自动上线。
+7. 在 GitHub 上向 `Potato4096/Potato4096.github.io` 发起 **Pull Request**，简要介绍游戏玩法与操作方式。合并到 `main` 后即自动上线。
 
 ### PR 要求
 
@@ -79,6 +87,7 @@ Potato4096.github.io/
 ├── index.html                 # 平台首页（游戏发现 + 全局设置）
 ├── 404.html                   # GitHub Pages 错误页（自动生效）
 ├── .nojekyll                  # 禁用 Jekyll，纯静态发布
+├── games.json                 # ★ 游戏全局注册表（脚本生成，随游戏一并提交）
 ├── css/
 │   └── style.css              # 首页样式（含深浅主题）
 ├── js/
@@ -94,6 +103,8 @@ Potato4096.github.io/
 │   │   ├── index.html         #   游戏入口（必填）
 │   │   └── assets/            #   资源目录（可选）
 │   └── reaction-test/         # 示例：反应力测试
+├── scripts/
+│   └── generate-games-json.mjs # 游戏注册表生成脚本
 └── docs/
     ├── GAME_SPEC.md           # ★ 游戏开发规范
     └── API.md                 # ★ GamePlatform API 文档
@@ -101,7 +112,7 @@ Potato4096.github.io/
 
 ## 它是怎么工作的
 
-1. **游戏发现（动态）**：主页运行时动态扫描 `Games/` 目录——线上环境通过 GitHub API 遍历仓库的 `Games/` 目录；本地开发时解析静态服务器返回的目录列表（`python -m http.server`、`npx serve` 等均支持）。**无需任何清单文件或构建步骤**，合并 PR 后游戏自动出现在游戏库。
+1. **游戏发现（注册表）**：主页读取 `games.json` 全局注册表拿到游戏列表。注册表由 `node scripts/generate-games-json.mjs` 生成——脚本扫描 `Games/` 目录、校验各游戏的 `game.json` 后输出清单。**无需构建步骤**，新增游戏后重新运行脚本并提交 `games.json` 即可。
 2. **读取配置**：主页对每个游戏目录请求 `game.json`，用其中的标题、简介、标签、图标等渲染成卡片。配置损坏或缺字段的游戏会被跳过，不影响其他游戏。
 3. **跳转入口**：点击卡片 → 跳转到 `Games/<id>/<entry>`（默认 `index.html`）。
 4. **全局协调**：主页与所有游戏共享同一份全局设置（语言 / 深浅主题 / 减少动画 / 音效），存于 `localStorage`，跨页面、跨标签页实时同步。游戏通过 `GamePlatform` API 读取并响应变化。
@@ -126,7 +137,8 @@ Potato4096.github.io/
 
 - `.nojekyll`：禁用 Jekyll 处理，纯静态资源原样发布
 - `404.html`：GitHub Pages 自动用于所有错误路径（资源引用为 `/` 根绝对路径）
-- `js/config.js` 的 `github.owner/repo/branch` 必须与实际仓库一致，游戏动态发现（GitHub API 通道）依赖它
+- `js/config.js` 的 `github.owner/repo/branch` 必须与实际仓库一致（发现方式 `github-api`/`auto` 的回退通道依赖它）
+- 合并新增游戏的 PR 后，确认 `games.json` 注册表已包含该游戏（PR 中应同时提交）
 - 站点内文档链接（`docs/*.md`）在 Pages 上以纯文本展示，完整渲染效果见 GitHub 仓库页面
 
 ## 文档

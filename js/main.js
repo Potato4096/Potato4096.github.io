@@ -56,7 +56,17 @@
     });
   }
 
-  /** 方式一：解析 Games/ 目录列表（本地静态服务器，如 python -m http.server / npx serve） */
+  /** 方式一（主）：读取 games.json 全局注册表（node scripts/generate-games-json.mjs 生成） */
+  function discoverFromManifest() {
+    return fetchJson('games.json').then(function (data) {
+      var list = (data && data.games) || [];
+      return list.map(function (item) {
+        return typeof item === 'string' ? { id: item, dir: 'Games/' + item } : item;
+      });
+    });
+  }
+
+  /** 方式二：解析 Games/ 目录列表（本地静态服务器，如 python -m http.server / npx serve） */
   function discoverFromListing() {
     return fetch('Games/', { cache: 'no-cache' }).then(function (res) {
       if (!res.ok) throw new Error('HTTP ' + res.status + ' for Games/');
@@ -99,14 +109,17 @@
   }
 
   function discoverGames() {
-    var mode = CONFIG.discoveryMode || 'auto';
+    var mode = CONFIG.discoveryMode || 'manifest';
 
     if (mode === 'manual') return discoverManual();
+    if (mode === 'manifest') return discoverFromManifest();
     if (mode === 'listing') return discoverFromListing();
     if (mode === 'github-api') return discoverFromGitHub();
 
-    // auto: 本地目录列表优先（本地开发看到的就是本地文件），失败回退 GitHub API（GitHub Pages）
-    return discoverFromListing().catch(function () {
+    // auto: 注册表优先（任何静态服务器下都可靠），失败再依次回退
+    return discoverFromManifest().catch(function () {
+      return discoverFromListing();
+    }).catch(function () {
       return discoverFromGitHub();
     }).catch(function () {
       return discoverManual();
