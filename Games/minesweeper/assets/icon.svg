@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#4f6df5"/>
+  <rect x="16" y="16" width="30" height="30" rx="5" fill="#e8ecff"/>
+  <rect x="49" y="16" width="30" height="30" rx="5" fill="#c9d4ff"/>
+  <rect x="82" y="16" width="30" height="30" rx="5" fill="#e8ecff"/>
+  <rect x="16" y="49" width="30" height="30" rx="5" fill="#c9d4ff"/>
+  <rect x="82" y="49" width="30" height="30" rx="5" fill="#c9d4ff"/>
+  <rect x="16" y="82" width="30" height="30" rx="5" fill="#e8ecff"/>
+  <rect x="49" y="82" width="30" height="30" rx="5" fill="#c9d4ff"/>
+  <rect x="82" y="82" width="30" height="30" rx="5" fill="#e8ecff"/>
+  <g transform="translate(49 49)">
+    <circle cx="15" cy="15" r="9" fill="#2b3350"/>
+    <rect x="13.5" y="0" width="3" height="30" rx="1.5" fill="#2b3350"/>
+    <rect x="0" y="13.5" width="30" height="3" rx="1.5" fill="#2b3350"/>
+    <rect x="13.5" y="0" width="3" height="30" rx="1.5" fill="#2b3350" transform="rotate(45 15 15)"/>
+    <rect x="0" y="13.5" width="30" height="3" rx="1.5" fill="#2b3350" transform="rotate(45 15 15)"/>
+    <circle cx="11.5" cy="11.5" r="2.6" fill="#e8ecff"/>
+  </g>
+</svg>

@@ -1,0 +1,257 @@
+/* minesweeper - game styles (theme-aware via --pg-* variables) */
+
+.game-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.stage {
+  position: relative;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  overflow: hidden;
+  background: var(--pg-surface);
+  box-shadow: var(--pg-shadow);
+}
+
+.board-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 18px 12px;
+  overflow-x: auto;
+  background: var(--pg-surface);
+}
+
+.grid {
+  display: grid;
+  gap: 1px;
+  background: var(--pg-border);
+  border: 1px solid var(--pg-border);
+  line-height: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.cell {
+  width: var(--cell, 32px);
+  height: var(--cell, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--pg-font);
+  font-weight: 700;
+  font-size: calc(var(--cell, 32px) * 0.52);
+  line-height: 1;
+  background: var(--pg-surface-2);
+  color: var(--pg-text);
+  position: relative;
+}
+
+.cell.covered {
+  cursor: pointer;
+  box-shadow:
+    inset 2px 2px 0 var(--pg-surface),
+    inset -2px -2px 0 var(--pg-border);
+}
+
+.cell.covered:hover {
+  background: var(--pg-accent-soft);
+}
+
+.cell.revealed {
+  background: var(--pg-surface);
+  cursor: default;
+}
+
+.cell.exploded {
+  background: var(--pg-danger);
+  color: #fff;
+}
+
+.cell.wrong::after {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pg-danger);
+  font-size: calc(var(--cell, 32px) * 0.62);
+}
+
+.cell .glyph {
+  width: 62%;
+  height: 62%;
+  display: block;
+}
+
+.cell .flag-glyph {
+  color: var(--pg-danger);
+}
+
+.cell .mine-glyph {
+  color: var(--pg-text);
+}
+
+.cell.exploded .mine-glyph {
+  color: #fff;
+}
+
+.cell.question {
+  color: var(--pg-text-muted);
+}
+
+/* classic number colors (game semantics; dark mode gets brighter variants) */
+.cell.n1 { color: #1976d2; }
+.cell.n2 { color: #2e7d32; }
+.cell.n3 { color: #d32f2f; }
+.cell.n4 { color: #1a237e; }
+.cell.n5 { color: #6d4c41; }
+.cell.n6 { color: #00838f; }
+.cell.n7 { color: #424242; }
+.cell.n8 { color: #757575; }
+
+html[data-theme="dark"] .cell.n1 { color: #64b5f6; }
+html[data-theme="dark"] .cell.n2 { color: #81c784; }
+html[data-theme="dark"] .cell.n3 { color: #e57373; }
+html[data-theme="dark"] .cell.n4 { color: #7986cb; }
+html[data-theme="dark"] .cell.n5 { color: #a1887f; }
+html[data-theme="dark"] .cell.n6 { color: #4dd0e1; }
+html[data-theme="dark"] .cell.n7 { color: #e0e0e0; }
+html[data-theme="dark"] .cell.n8 { color: #9e9e9e; }
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.hud-label {
+  color: var(--pg-text-muted);
+  font-size: 12px;
+}
+
+.hud-item b {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#btn-flag.is-on {
+  background-color: var(--pg-accent);
+  background-image: var(--pg-accent-image);
+  color: #fff;
+  border-color: transparent;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 14, 22, 0.52);
+  line-height: 1.5;
+  z-index: 5;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay .panel {
+  width: min(480px, 100%);
+  text-align: center;
+}
+
+.game-title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.overlay .tagline {
+  margin: 0 0 16px;
+  color: var(--pg-text-muted);
+  font-size: 14px;
+}
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.diff-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  background: var(--pg-surface-2);
+}
+
+.diff-btn {
+  width: 100%;
+}
+
+.diff-meta {
+  font-size: 12px;
+  color: var(--pg-text-muted);
+}
+
+.diff-best {
+  font-size: 12px;
+  color: var(--pg-text-muted);
+}
+
+.diff-best b {
+  color: var(--pg-accent);
+  font-size: 14px;
+}
+
+.best-line,
+.result-line {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--pg-text);
+}
+
+.best-line b,
+.result-line b {
+  color: var(--pg-accent);
+  font-size: 18px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.controls-hint {
+  margin: 14px 2px 0;
+  font-size: 13px;
+  text-align: center;
+}

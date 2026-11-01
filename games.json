@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-01T07:31:23.306Z",
-  "count": 8,
+  "generatedAt": "2026-11-01T09:23:37.937Z",
+  "count": 9,
   "games": [
     {
       "id": "arena-survivor",
@@ -21,6 +21,10 @@
     {
       "id": "doudizhu",
       "dir": "Games/doudizhu"
+    },
+    {
+      "id": "minesweeper",
+      "dir": "Games/minesweeper"
     },
     {
       "id": "number-guess",

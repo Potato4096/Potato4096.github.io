@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扫雷 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-home" data-i18n="home">返回主页</button>
+      <div class="hud">
+        <span class="hud-item"><span class="hud-label" data-i18n="minesLeft">剩余地雷</span><b id="hud-mines">10</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="time">用时</span><b id="hud-time">000</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="difficulty">难度</span><b id="hud-diff">初级</b></span>
+      </div>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-flag" data-i18n="flagMode">插旗模式</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-pause" data-i18n="pauseBtn">暂停</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-fullscreen" data-i18n="fullscreen">全屏</button>
+      </div>
+    </div>
+
+    <div class="game-wrap">
+      <div class="stage">
+        <div class="board-wrap">
+          <div id="grid" class="grid"></div>
+        </div>
+
+        <div class="overlay" id="ov-menu">
+          <div class="panel pg-card">
+            <h1 class="game-title" data-i18n="title">扫雷</h1>
+            <p class="tagline" data-i18n="tagline"></p>
+            <div class="diff-grid" id="diff-grid">
+              <div class="diff-item">
+                <button class="pg-btn diff-btn" id="btn-easy" data-i18n="diff-easy">初级</button>
+                <span class="diff-meta">9×9 · 10</span>
+                <span class="diff-best"><span data-i18n="bestTime">最佳</span> <b id="best-easy">--</b></span>
+              </div>
+              <div class="diff-item">
+                <button class="pg-btn diff-btn" id="btn-medium" data-i18n="diff-medium">中级</button>
+                <span class="diff-meta">16×16 · 40</span>
+                <span class="diff-best"><span data-i18n="bestTime">最佳</span> <b id="best-medium">--</b></span>
+              </div>
+              <div class="diff-item">
+                <button class="pg-btn diff-btn" id="btn-hard" data-i18n="diff-hard">高级</button>
+                <span class="diff-meta">30×16 · 99</span>
+                <span class="diff-best"><span data-i18n="bestTime">最佳</span> <b id="best-hard">--</b></span>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="pg-btn pg-btn--ghost" id="btn-clear" data-i18n="clearRecords">清除记录</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-pause" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="paused">已暂停</h2>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-resume" data-i18n="resume">继续游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-restart-pause" data-i18n="restart">重新开始</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-menu-pause" data-i18n="toMenu">返回菜单</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-pause" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-gameover" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="gameOver">踩到雷了</h2>
+            <p class="result-line"><span data-i18n="time">用时</span> <b id="go-time">0</b></p>
+            <p class="best-line"><span data-i18n="bestTime">最佳</span> <b id="go-best">--</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-go" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-menu-go" data-i18n="toMenu">返回菜单</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-go" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-win" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="win">排雷成功！</h2>
+            <p class="result-line"><span data-i18n="time">用时</span> <b id="win-time">0</b></p>
+            <p class="best-line"><span data-i18n="bestTime">最佳</span> <b id="win-best">--</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-win" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-menu-win" data-i18n="toMenu">返回菜单</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-win" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="pg-muted controls-hint" data-i18n="controls"></p>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
