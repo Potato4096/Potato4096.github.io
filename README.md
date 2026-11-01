@@ -91,7 +91,6 @@ Potato4096.github.io/
 ├── css/
 │   └── style.css              # 首页样式（含深浅主题）
 ├── js/
-│   ├── config.js              # 平台配置（名称、发现方式、GitHub 仓库信息）
 │   ├── i18n.js                # 首页文案（中/英）
 │   └── main.js                # 首页逻辑
 ├── platform/
@@ -137,7 +136,6 @@ Potato4096.github.io/
 
 - `.nojekyll`：禁用 Jekyll 处理，纯静态资源原样发布
 - `404.html`：GitHub Pages 自动用于所有错误路径（资源引用为 `/` 根绝对路径）
-- `js/config.js` 的 `github.owner/repo/branch` 必须与实际仓库一致（发现方式 `github-api`/`auto` 的回退通道依赖它）
 - 合并新增游戏的 PR 后，确认 `games.json` 注册表已包含该游戏（PR 中应同时提交）
 - 站点内文档链接（`docs/*.md`）在 Pages 上以纯文本展示，完整渲染效果见 GitHub 仓库页面
 

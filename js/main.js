@@ -1,11 +1,10 @@
 /**
  * Potato4096 Arcade - 首页主逻辑
- * 职责: 游戏发现(动态扫描 Games/ 目录) → 渲染卡片 → 跳转入口；全局设置面板
+ * 职责: 游戏发现(读取 games.json 注册表) → 渲染卡片 → 跳转入口；全局设置面板
  */
 (function () {
   'use strict';
 
-  var CONFIG = window.PLATFORM_CONFIG;
   var I18N = window.I18N;
   var GP = window.GamePlatform;
 
@@ -56,8 +55,8 @@
     });
   }
 
-  /** 方式一（主）：读取 games.json 全局注册表（node scripts/generate-games-json.mjs 生成） */
-  function discoverFromManifest() {
+  /** 读取 games.json 全局注册表（node scripts/generate-games-json.mjs 生成） */
+  function discoverGames() {
     return fetchJson('games.json').then(function (data) {
       var list = (data && data.games) || [];
       return list.map(function (item) {
@@ -66,70 +65,14 @@
     });
   }
 
-  /** 方式二：解析 Games/ 目录列表（本地静态服务器，如 python -m http.server / npx serve） */
-  function discoverFromListing() {
-    return fetch('Games/', { cache: 'no-cache' }).then(function (res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status + ' for Games/');
-      return res.text();
-    }).then(function (html) {
-      var doc = new DOMParser().parseFromString(html, 'text/html');
-      var names = [];
-      Array.prototype.forEach.call(doc.querySelectorAll('a[href]'), function (a) {
-        var path = (a.getAttribute('href') || '').split(/[?#]/)[0];
-        if (path.charAt(path.length - 1) !== '/') return; // 只要子目录
-        var segs = path.split('/').filter(function (s) { return s.length; });
-        if (!segs.length) return;
-        var name = segs[segs.length - 1];
-        if (name !== '.' && name !== '..' && /^[A-Za-z0-9._-]+$/.test(name) && names.indexOf(name) === -1) {
-          names.push(name);
-        }
-      });
-      if (!names.length) throw new Error('empty Games/ listing');
-      return names.map(function (id) {
-        return { id: id, dir: 'Games/' + id };
-      });
-    });
-  }
-
-  /** 方式二：GitHub API 遍历 Games/ 子目录（部署到 GitHub Pages 后自动可用） */
-  function discoverFromGitHub() {
-    var g = CONFIG.github;
-    var url = 'https://api.github.com/repos/' + g.owner + '/' + g.repo + '/contents/Games?ref=' + g.branch;
-    return fetchJson(url).then(function (entries) {
-      return (entries || [])
-        .filter(function (e) { return e.type === 'dir'; })
-        .map(function (e) { return { id: e.name, dir: 'Games/' + e.name }; });
-    });
-  }
-
-  function discoverManual() {
-    return Promise.resolve((CONFIG.manualGames || []).map(function (id) {
-      return { id: id, dir: 'Games/' + id };
-    }));
-  }
-
-  function discoverGames() {
-    var mode = CONFIG.discoveryMode || 'manifest';
-
-    if (mode === 'manual') return discoverManual();
-    if (mode === 'manifest') return discoverFromManifest();
-    if (mode === 'listing') return discoverFromListing();
-    if (mode === 'github-api') return discoverFromGitHub();
-
-    // auto: 注册表优先（任何静态服务器下都可靠），失败再依次回退
-    return discoverFromManifest().catch(function () {
-      return discoverFromListing();
-    }).catch(function () {
-      return discoverFromGitHub();
-    }).catch(function () {
-      return discoverManual();
-    });
-  }
-
   /** 读取每个游戏的 game.json 配置（主程序读取配置文件） */
   function loadGameConfigs(list) {
     var tasks = list.map(function (item) {
       return fetchJson(item.dir + '/game.json').then(function (config) {
+        if (config.published === false) {
+          console.info('[Arcade] hidden (published:false)', item.id);
+          return null;
+        }
         return { id: config.id || item.id, dir: item.dir, config: config };
       }).catch(function (err) {
         console.warn('[Arcade] skip', item.id, err);

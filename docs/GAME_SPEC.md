@@ -77,7 +77,7 @@ Games/<game-id>/
 | `players` | number \| string |  | 人数或描述，如 `1`、`"1-2"` |
 | `controls` | object \| string |  | 操作说明（双语） |
 | `api` | string[] |  | 声明用到的 GamePlatform 能力，便于审查。见 §6 |
-| `published` | boolean |  | `false` 时清单仍收录但可在主页过滤。默认 `true` |
+| `published` | boolean |  | `false` 时主页隐藏不展示（注册表仍收录）。默认 `true` |
 | `created` / `updated` | string |  | 日期 `YYYY-MM-DD` |
 
 **双语字段规则**：`title` / `description` / `controls` 支持两种写法——
