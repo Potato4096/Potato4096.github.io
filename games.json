@@ -1,7 +1,11 @@
 {
-  "generatedAt": "2026-11-01T04:16:56.054Z",
-  "count": 3,
+  "generatedAt": "2026-11-01T04:56:31.415Z",
+  "count": 4,
   "games": [
+    {
+      "id": "chess",
+      "dir": "Games/chess"
+    },
     {
       "id": "chinese-chess",
       "dir": "Games/chinese-chess"

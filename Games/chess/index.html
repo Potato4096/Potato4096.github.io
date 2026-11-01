@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-back">← <span data-t="back">返回主页</span></button>
+      <span class="pg-tag" id="lang-badge">中文</span>
+    </div>
+
+    <h1 class="pg-muted" id="game-title" style="font-size:18px;margin:10px 2px 0;">国际象棋 · 双人对弈</h1>
+
+    <div class="game-layout">
+      <div class="board-col">
+        <div class="status-bar pg-card">
+          <span class="turn-dot is-white" id="turn-dot"></span>
+          <span id="status-text">请选择对局模式</span>
+        </div>
+        <div class="board-frame">
+          <canvas id="board"></canvas>
+        </div>
+        <p class="pg-muted" id="hint" style="font-size:13px;margin:10px 2px 0;"></p>
+      </div>
+
+      <div class="side-col">
+        <div class="side-panel pg-card">
+          <div class="mode-row">
+            <span class="pg-muted" data-t="modeLabel">模式</span>
+            <b id="mode-label">-</b>
+            <button class="pg-btn pg-btn--ghost mode-switch" id="btn-switch-mode" data-t="switchMode">切换模式</button>
+          </div>
+
+          <div class="stats-row">
+            <span class="stat"><span class="dot white"></span><span data-t="whiteWins">白方胜</span>: <b id="stat-white">0</b></span>
+            <span class="stat"><span class="dot black"></span><span data-t="blackWins">黑方胜</span>: <b id="stat-black">0</b></span>
+            <span class="stat"><span class="dot draw"></span><span data-t="draws">和棋</span>: <b id="stat-draw">0</b></span>
+          </div>
+
+          <div class="actions">
+            <button class="pg-btn" id="btn-undo" data-t="undo">悔棋</button>
+            <button class="pg-btn pg-btn--ghost" id="btn-restart" data-t="restart">重新开始</button>
+          </div>
+          <button class="pg-btn pg-btn--ghost btn-clear" id="btn-clear" data-t="clear">清除记录</button>
+
+          <h2 class="panel-title" data-t="record">棋谱</h2>
+          <div class="move-list" id="move-list">
+            <div class="move-empty" data-t="noMoves">尚未走棋</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模式选择浮层 -->
+  <div class="mode-overlay" id="mode-overlay">
+    <div class="mode-box pg-card">
+      <h2 class="mode-title" data-t="modeTitle">选择对局模式</h2>
+      <button class="pg-btn mode-big" id="btn-mode-pvp">
+        <span class="mode-big-title" data-t="modePvp">双人对弈</span>
+        <span class="mode-big-sub" data-t="modePvpSub">两人轮流走棋</span>
+      </button>
+      <div class="mode-ai-block">
+        <div class="mode-ai-title" data-t="modeAi">人机对战</div>
+        <div class="diff-row">
+          <button class="pg-btn pg-btn--ghost" data-diff="easy" data-t="diffEasy">简单</button>
+          <button class="pg-btn pg-btn--ghost" data-diff="medium" data-t="diffMedium">中等</button>
+          <button class="pg-btn pg-btn--ghost" data-diff="hard" data-t="diffHard">困难</button>
+        </div>
+        <p class="mode-ai-sub pg-muted" data-t="modeAiSub">你执白先行，电脑执黑</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 升变选择浮层 -->
+  <div class="mode-overlay" id="promo-overlay" style="display:none;">
+    <div class="mode-box pg-card">
+      <h2 class="mode-title" data-t="promoTitle">选择升变棋子</h2>
+      <div class="promo-row">
+        <button class="promo-btn" data-promo="Q">Q</button>
+        <button class="promo-btn" data-promo="R">R</button>
+        <button class="promo-btn" data-promo="B">B</button>
+        <button class="promo-btn" data-promo="N">N</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

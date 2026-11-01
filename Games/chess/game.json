@@ -1,0 +1,27 @@
+{
+  "id": "chess",
+  "title": {
+    "zh": "国际象棋",
+    "en": "Chess"
+  },
+  "description": {
+    "zh": "经典国际象棋。支持双人对弈与人机对战（简单/中等/困难三档 AI），完整规则——王车易位、吃过路兵、升变、将军、将死、逼和、50 回合与三次重复和棋，附带悔棋、标准记谱与胜负统计。",
+    "en": "Classic Chess with two-player mode and VS Computer (Easy/Medium/Hard AI). Full rule support - castling, en passant, promotion, check, checkmate, stalemate, fifty-move and threefold draws. Includes undo, standard algebraic notation and win stats."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "♜",
+  "tags": ["board", "strategy", "ai", "classic", "chess"],
+  "category": "strategy",
+  "players": "1-2",
+  "controls": {
+    "zh": "鼠标点击选子，再点击目标位置落子",
+    "en": "Click a piece, then click the destination"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}

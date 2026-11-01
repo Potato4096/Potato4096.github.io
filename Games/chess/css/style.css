@@ -1,0 +1,305 @@
+/* 国际象棋 - 游戏私有样式（依赖 game-base.css 的主题变量） */
+
+.game-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 20px 60px;
+}
+
+.game-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-top: 14px;
+}
+
+.board-col {
+  flex: 1 1 576px;
+  min-width: 0;
+}
+
+.side-col {
+  flex: 0 0 290px;
+}
+
+/* 状态条 */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.turn-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: none;
+  border: 2px solid var(--pg-border);
+}
+
+.turn-dot.is-white {
+  background: #f7ecd9;
+  border-color: #8a7a63;
+}
+
+.turn-dot.is-black {
+  background: #263238;
+  border-color: #5b6474;
+}
+
+.turn-dot.is-win {
+  background: var(--pg-success);
+  border-color: var(--pg-success);
+}
+
+/* 棋盘 */
+.board-frame {
+  background: var(--pg-surface);
+  border-radius: var(--pg-radius);
+  box-shadow: var(--pg-shadow);
+  padding: 12px;
+}
+
+#board {
+  display: block;
+  width: 100%;
+  max-width: 576px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* 侧栏 */
+.side-panel {
+  padding: 18px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--pg-text-muted);
+}
+
+.stat b {
+  color: var(--pg-text);
+  font-size: 16px;
+}
+
+.stat .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.stat .dot.white { background: #f7ecd9; border: 1px solid #8a7a63; }
+.stat .dot.black { background: #263238; }
+.stat .dot.draw { background: var(--pg-text-muted); }
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.actions .pg-btn {
+  flex: 1;
+}
+
+.btn-clear {
+  width: 100%;
+  font-size: 12px;
+  padding: 6px 10px;
+  opacity: 0.75;
+}
+
+.panel-title {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pg-text-muted);
+}
+
+.move-list {
+  max-height: 300px;
+  overflow-y: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.move-row {
+  display: flex;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.move-row:nth-child(odd) {
+  background: var(--pg-surface-2);
+}
+
+.move-no {
+  flex: none;
+  width: 28px;
+  color: var(--pg-text-muted);
+}
+
+.move-white {
+  flex: 1;
+  color: var(--pg-text);
+  font-weight: 600;
+}
+
+.move-black {
+  flex: 1;
+  color: var(--pg-text);
+  font-weight: 600;
+}
+
+.move-empty {
+  color: var(--pg-text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* 模式行 */
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.mode-row b {
+  flex: 1;
+}
+
+.mode-switch {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+/* 模式选择 / 升变 浮层 */
+.mode-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.mode-box {
+  width: min(92vw, 360px);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mode-title {
+  margin: 0;
+  font-size: 18px;
+  text-align: center;
+}
+
+.mode-big {
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  font-size: 17px;
+}
+
+.mode-big-title {
+  font-weight: 700;
+}
+
+.mode-big-sub {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.mode-ai-block {
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  padding: 14px;
+}
+
+.mode-ai-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.diff-row {
+  display: flex;
+  gap: 8px;
+}
+
+.diff-row .pg-btn {
+  flex: 1;
+}
+
+.mode-ai-sub {
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+
+/* 升变选择 */
+.promo-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.promo-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  border: 2px solid var(--pg-border);
+  background: var(--pg-surface-2);
+  color: var(--pg-text);
+  font-size: 26px;
+  font-weight: 700;
+  font-family: Georgia, "Times New Roman", serif;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.promo-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--pg-accent, #4f6df5);
+}
+
+@media (max-width: 880px) {
+  .game-layout {
+    flex-direction: column;
+  }
+
+  .side-col {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .move-list {
+    max-height: 200px;
+  }
+}
