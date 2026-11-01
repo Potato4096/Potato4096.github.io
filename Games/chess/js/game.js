@@ -344,31 +344,258 @@
     ctx.textBaseline = 'alphabetic';
   }
 
+  /**
+   * 棋子剪影（矢量绘制，单位坐标：原点在棋子中心，y 向下为正）
+   * 每个棋子 = 一条完整外轮廓闭合路径 + 少量细节线
+   */
   function drawPiece(px, py, piece, c) {
-    var r = CELL * 0.42;
     var isW = piece.s === 'w';
-    // 底圆
+    var fill = isW ? c.pieceFillW : c.pieceFillB;
+    var stroke = isW ? c.pieceLineW : c.pieceLineB;
+    var s = CELL * 0.88;
+
+    // 柔和投影
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(s, s);
     ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.fillStyle = isW ? c.pieceFillW : c.pieceFillB;
+    ctx.ellipse(0, 0.46, 0.26, 0.05, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
     ctx.fill();
-    ctx.lineWidth = 2.2;
-    ctx.strokeStyle = isW ? c.pieceLineW : c.pieceLineB;
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(s, s);
+    ctx.lineWidth = 0.03;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = stroke;
+    ctx.fillStyle = fill;
+
+    var t = piece.t;
+    if (t === 'P') pawnPath();
+    else if (t === 'R') rookPath();
+    else if (t === 'N') knightPath();
+    else if (t === 'B') bishopPath();
+    else if (t === 'Q') queenPath();
+    else kingPath();
+
+    ctx.fill();
     ctx.stroke();
-    // 内圈
+    drawDetails(t, stroke);
+    ctx.restore();
+  }
+
+  function drawDetails(t, stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 0.022;
+    if (t === 'R') {
+      // 塔身横带
+      ctx.beginPath();
+      ctx.moveTo(-0.21, -0.26);
+      ctx.lineTo(0.21, -0.26);
+      ctx.moveTo(-0.225, 0.10);
+      ctx.lineTo(0.225, 0.10);
+      ctx.stroke();
+    } else if (t === 'B') {
+      // 主教冠的斜切口
+      ctx.beginPath();
+      ctx.moveTo(0.02, -0.44);
+      ctx.lineTo(0.125, -0.22);
+      ctx.moveTo(-0.145, -0.045);
+      ctx.lineTo(0.145, -0.045);
+      ctx.stroke();
+    } else if (t === 'N') {
+      // 马眼 + 鬃毛
+      ctx.beginPath();
+      ctx.arc(-0.115, -0.215, 0.022, 0, Math.PI * 2);
+      ctx.fillStyle = stroke;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0.10, -0.28);
+      ctx.quadraticCurveTo(0.15, -0.10, 0.17, 0.06);
+      ctx.stroke();
+    } else if (t === 'Q') {
+      // 王冠横带
+      ctx.beginPath();
+      ctx.moveTo(-0.235, -0.27);
+      ctx.lineTo(0.235, -0.27);
+      ctx.stroke();
+    } else if (t === 'K') {
+      // 王冠横带
+      ctx.beginPath();
+      ctx.moveTo(-0.215, -0.155);
+      ctx.lineTo(0.215, -0.155);
+      ctx.stroke();
+    }
+  }
+
+  /** 兵：圆头 + 束腰 + 底座 */
+  function pawnPath() {
     ctx.beginPath();
-    ctx.arc(px, py, r * 0.82, 0, Math.PI * 2);
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    // 字母
-    var ch = X.PIECE_CHARS[piece.s][piece.t];
-    ctx.fillStyle = isW ? c.glyphW : c.glyphB;
-    ctx.font = 'bold ' + Math.round(CELL * 0.48) + 'px Georgia, "Times New Roman", serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(ch, px, py + 1);
-    ctx.textAlign = 'start';
-    ctx.textBaseline = 'alphabetic';
+    ctx.arc(0, -0.26, 0.135, Math.PI, 0);
+    ctx.quadraticCurveTo(0.185, -0.155, 0.165, 0.02);
+    ctx.quadraticCurveTo(0.155, 0.10, 0.185, 0.14);
+    ctx.lineTo(0.185, 0.24);
+    ctx.quadraticCurveTo(0.30, 0.28, 0.30, 0.36);
+    ctx.quadraticCurveTo(0.30, 0.44, 0.20, 0.44);
+    ctx.lineTo(-0.20, 0.44);
+    ctx.quadraticCurveTo(-0.30, 0.44, -0.30, 0.36);
+    ctx.quadraticCurveTo(-0.30, 0.28, -0.185, 0.24);
+    ctx.lineTo(-0.185, 0.14);
+    ctx.quadraticCurveTo(-0.155, 0.10, -0.165, 0.02);
+    ctx.quadraticCurveTo(-0.185, -0.155, -0.135, -0.26);
+    ctx.closePath();
+  }
+
+  /** 车：城垛 + 直身 + 底座 */
+  function rookPath() {
+    ctx.beginPath();
+    // 城垛（3 齿 2 缺口）
+    ctx.moveTo(-0.26, -0.46);
+    ctx.lineTo(-0.26, -0.34);
+    ctx.lineTo(-0.155, -0.34);
+    ctx.lineTo(-0.155, -0.46);
+    ctx.lineTo(-0.065, -0.46);
+    ctx.lineTo(-0.065, -0.34);
+    ctx.lineTo(0.065, -0.34);
+    ctx.lineTo(0.065, -0.46);
+    ctx.lineTo(0.155, -0.46);
+    ctx.lineTo(0.155, -0.34);
+    ctx.lineTo(0.26, -0.34);
+    ctx.lineTo(0.26, -0.46);
+    // 右侧直身
+    ctx.lineTo(0.235, -0.26);
+    ctx.lineTo(0.225, 0.10);
+    ctx.lineTo(0.235, 0.14);
+    ctx.lineTo(0.235, 0.24);
+    ctx.quadraticCurveTo(0.315, 0.28, 0.315, 0.36);
+    ctx.quadraticCurveTo(0.315, 0.44, 0.215, 0.44);
+    ctx.lineTo(-0.215, 0.44);
+    ctx.quadraticCurveTo(-0.315, 0.44, -0.315, 0.36);
+    ctx.quadraticCurveTo(-0.315, 0.28, -0.235, 0.24);
+    ctx.lineTo(-0.235, 0.14);
+    ctx.lineTo(-0.225, 0.10);
+    ctx.lineTo(-0.235, -0.26);
+    ctx.closePath();
+  }
+
+  /** 马：马头侧影（朝左） */
+  function knightPath() {
+    ctx.beginPath();
+    ctx.moveTo(-0.26, 0.44);
+    ctx.lineTo(-0.26, 0.16);
+    ctx.quadraticCurveTo(-0.12, 0.10, -0.10, 0.04);
+    ctx.quadraticCurveTo(-0.28, -0.02, -0.315, -0.17);
+    ctx.lineTo(-0.30, -0.235);
+    ctx.quadraticCurveTo(-0.20, -0.27, -0.115, -0.30);
+    ctx.quadraticCurveTo(-0.045, -0.40, 0.015, -0.475);
+    ctx.lineTo(0.075, -0.335);
+    ctx.lineTo(0.155, -0.43);
+    ctx.lineTo(0.175, -0.26);
+    ctx.quadraticCurveTo(0.145, -0.10, 0.185, 0.06);
+    ctx.lineTo(0.26, 0.16);
+    ctx.lineTo(0.26, 0.44);
+    ctx.closePath();
+  }
+
+  /** 象：尖顶 + 主教冠 + 底座 */
+  function bishopPath() {
+    ctx.beginPath();
+    ctx.moveTo(0, -0.52);
+    ctx.quadraticCurveTo(0.115, -0.42, 0.16, -0.27);
+    ctx.quadraticCurveTo(0.195, -0.155, 0.135, -0.055);
+    ctx.lineTo(0.155, 0.0);
+    ctx.quadraticCurveTo(0.165, 0.10, 0.19, 0.14);
+    ctx.lineTo(0.19, 0.24);
+    ctx.quadraticCurveTo(0.30, 0.28, 0.30, 0.36);
+    ctx.quadraticCurveTo(0.30, 0.44, 0.20, 0.44);
+    ctx.lineTo(-0.20, 0.44);
+    ctx.quadraticCurveTo(-0.30, 0.44, -0.30, 0.36);
+    ctx.quadraticCurveTo(-0.30, 0.28, -0.19, 0.24);
+    ctx.lineTo(-0.19, 0.14);
+    ctx.quadraticCurveTo(-0.165, 0.10, -0.155, 0.0);
+    ctx.lineTo(-0.135, -0.055);
+    ctx.quadraticCurveTo(-0.195, -0.155, -0.16, -0.27);
+    ctx.quadraticCurveTo(-0.115, -0.42, 0, -0.52);
+    ctx.closePath();
+  }
+
+  /** 后：五珠王冠 + 散裙 + 底座 */
+  function queenPath() {
+    ctx.beginPath();
+    // 左半身向上到王冠
+    ctx.moveTo(-0.215, 0.44);
+    ctx.quadraticCurveTo(-0.315, 0.44, -0.315, 0.36);
+    ctx.quadraticCurveTo(-0.315, 0.28, -0.235, 0.24);
+    ctx.lineTo(-0.235, 0.14);
+    ctx.quadraticCurveTo(-0.215, 0.02, -0.195, -0.12);
+    ctx.lineTo(-0.24, -0.275);
+    // 王冠齿：左珠
+    ctx.arc(-0.24, -0.425, 0.05, Math.PI * 0.55, Math.PI * 1.45, true);
+    ctx.lineTo(-0.185, -0.315);
+    ctx.lineTo(-0.165, -0.485);
+    // 中左珠
+    ctx.arc(-0.12, -0.485, 0.05, Math.PI * 1.1, Math.PI * 1.9, true);
+    ctx.lineTo(-0.065, -0.335);
+    ctx.lineTo(-0.045, -0.51);
+    // 中珠
+    ctx.arc(0, -0.51, 0.05, Math.PI * 1.1, Math.PI * 1.9, true);
+    ctx.lineTo(0.065, -0.335);
+    ctx.lineTo(0.045, -0.485);
+    // 中右珠
+    ctx.arc(0.12, -0.485, 0.05, Math.PI * 1.1, Math.PI * 0.1, true);
+    ctx.lineTo(0.185, -0.315);
+    ctx.lineTo(0.165, -0.425);
+    // 右珠
+    ctx.arc(0.24, -0.425, 0.05, Math.PI * 1.45, Math.PI * 0.55, true);
+    // 右半身下行
+    ctx.lineTo(0.24, -0.275);
+    ctx.quadraticCurveTo(0.215, -0.12, 0.195, 0.02);
+    ctx.quadraticCurveTo(0.215, 0.12, 0.235, 0.14);
+    ctx.lineTo(0.235, 0.24);
+    ctx.quadraticCurveTo(0.315, 0.28, 0.315, 0.36);
+    ctx.quadraticCurveTo(0.315, 0.44, 0.215, 0.44);
+    ctx.closePath();
+  }
+
+  /** 王：十字 + 圆冠 + 底座 */
+  function kingPath() {
+    ctx.beginPath();
+    // 底部左→上：左半身
+    ctx.moveTo(-0.215, 0.44);
+    ctx.quadraticCurveTo(-0.315, 0.44, -0.315, 0.36);
+    ctx.quadraticCurveTo(-0.315, 0.28, -0.235, 0.24);
+    ctx.lineTo(-0.235, 0.14);
+    ctx.quadraticCurveTo(-0.215, 0.0, -0.195, -0.10);
+    ctx.lineTo(-0.215, -0.155);
+    // 圆冠左半
+    ctx.quadraticCurveTo(-0.225, -0.32, -0.10, -0.375);
+    ctx.lineTo(-0.10, -0.40);
+    // 十字（左臂→顶→右臂）
+    ctx.lineTo(-0.155, -0.40);
+    ctx.lineTo(-0.155, -0.455);
+    ctx.lineTo(-0.10, -0.455);
+    ctx.lineTo(-0.10, -0.525);
+    ctx.lineTo(-0.035, -0.525);
+    ctx.lineTo(-0.035, -0.455);
+    ctx.lineTo(0.035, -0.455);
+    ctx.lineTo(0.035, -0.525);
+    ctx.lineTo(0.10, -0.525);
+    ctx.lineTo(0.10, -0.455);
+    ctx.lineTo(0.155, -0.455);
+    ctx.lineTo(0.155, -0.40);
+    ctx.lineTo(0.10, -0.40);
+    // 圆冠右半
+    ctx.quadraticCurveTo(0.225, -0.32, 0.215, -0.155);
+    // 右半身下行
+    ctx.lineTo(0.195, -0.10);
+    ctx.quadraticCurveTo(0.215, 0.0, 0.235, 0.14);
+    ctx.lineTo(0.235, 0.24);
+    ctx.quadraticCurveTo(0.315, 0.28, 0.315, 0.36);
+    ctx.quadraticCurveTo(0.315, 0.44, 0.215, 0.44);
+    ctx.closePath();
   }
 
   /* ---------------- 动画 ---------------- */
