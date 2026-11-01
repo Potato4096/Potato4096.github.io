@@ -111,9 +111,12 @@ Potato4096.github.io/
 | 设置项 | 取值 | 存储键 | 游戏如何感知 |
 |--------|------|--------|--------------|
 | 语言 | `zh` / `en` | `p4096:settings.lang` | `GamePlatform.i18n` / `settings.onChange` |
-| 主题 | `light` / `dark` / `system` | `p4096:settings.theme` | `<html data-theme>` + `GamePlatform.theme.onChange` |
+| 深浅色 | `light` / `dark` / `system` | `p4096:settings.theme` | `<html data-theme>` + `GamePlatform.theme.onChange` |
+| 主题 | 外观包 id（`default`/`ocean`/`forest`/`sunset`/`candy`/`mono`…） | `p4096:settings.skin` | `--pg-*` CSS 变量 + `GamePlatform.themePacks` |
 | 减少动画 | `true` / `false` | `p4096:settings.reduceMotion` | `<html data-reduce-motion>` + `GamePlatform.ui.shouldReduceMotion()` |
 | 音效 | `true` / `false` | `p4096:settings.sound` | `GamePlatform.ui.isSoundEnabled()` |
+
+主题与深浅色是**两个正交维度**：每个主题包内含 light/dark 两套配色与纹理（背景色/纹理、强调色/纹理、面板色、状态色等），平台解析后写入 `--pg-*` CSS 变量，游戏用 CSS 变量或 `GamePlatform.themePacks.colors()` 取用即可自动跟随。详见 [docs/API.md](docs/API.md)。
 
 设置持久化于 `localStorage`，主页设置面板可随时修改，所有已打开的游戏页面会实时响应。
 

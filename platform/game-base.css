@@ -6,6 +6,8 @@
 
 :root {
   --pg-bg: #f6f7fb;
+  --pg-bg-image: none;
+  --pg-accent-image: none;
   --pg-surface: #ffffff;
   --pg-surface-2: #eef0f6;
   --pg-text: #1c2333;
@@ -24,6 +26,7 @@
 
 html[data-theme="dark"] {
   --pg-bg: #12151d;
+  --pg-bg-image: none;
   --pg-surface: #1b202c;
   --pg-surface-2: #242b3a;
   --pg-text: #e9edf5;
@@ -40,7 +43,9 @@ html[data-theme="dark"] {
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--pg-bg);
+  background-color: var(--pg-bg);
+  background-image: var(--pg-bg-image);
+  background-attachment: fixed;
   color: var(--pg-text);
   font-family: var(--pg-font);
   line-height: 1.6;
@@ -80,12 +85,13 @@ html[data-reduce-motion="1"] *::after {
   font-family: inherit;
   font-weight: 600;
   cursor: pointer;
-  background: var(--pg-accent);
+  background-color: var(--pg-accent);
+  background-image: var(--pg-accent-image);
   color: #fff;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
-.pg-btn:hover { background: var(--pg-accent-hover); }
+.pg-btn:hover { background-color: var(--pg-accent-hover); }
 .pg-btn:active { transform: scale(0.97); }
 
 .pg-btn--ghost {

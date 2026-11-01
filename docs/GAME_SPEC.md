@@ -136,22 +136,36 @@ Games/<game-id>/
 
 ## 5. 主题与语言适配（必做）
 
-平台会自动把全局设置应用到 `<html>` 上：
+平台的外观由两个正交维度决定：**深浅模式**（light/dark/system）× **主题外观包**（skin，每个包含深浅两套配色与纹理）。平台会自动把解析结果应用到页面：
 
-| 属性 | 值 | 含义 |
-|------|----|------|
-| `data-theme` | `light` / `dark` | **已解析**的主题（`system` 会被解析为具体值） |
-| `data-theme-pref` | `light` / `dark` / `system` | 用户偏好原始值 |
-| `data-lang` | `zh` / `en` | 当前语言 |
-| `data-reduce-motion` | `1` 或移除 | 减少动画 |
+| 载体 | 内容 | 含义 |
+|------|------|------|
+| `<html data-theme>` | `light` / `dark` | **已解析**的深浅模式（`system` 会被解析为具体值） |
+| `<html data-theme-pref>` | `light` / `dark` / `system` | 深浅偏好原始值 |
+| `<html data-skin>` | 如 `ocean` | 当前主题外观包 id |
+| `<html data-lang>` | `zh` / `en` | 当前语言 |
+| `<html data-reduce-motion>` | `1` 或移除 | 减少动画 |
+| CSS 变量 `--pg-*` | 颜色/纹理/字体等 | 当前主题包 × 深浅模式解析后的资源 |
 
 **游戏必须遵守**：
 
-1. 颜色一律使用 `game-base.css` 提供的 CSS 变量（`--pg-bg` / `--pg-text` / `--pg-accent` …），不要硬编码色值。这样深浅色自动适配。
-2. 需要感知主题切换时（如 canvas 绘制），订阅 `GamePlatform.theme.onChange`。
+1. 颜色、纹理一律使用 `game-base.css` 语义化 CSS 变量（`--pg-bg` / `--pg-bg-image` / `--pg-text` / `--pg-accent` / `--pg-accent-image` / `--pg-surface` …），不要硬编码色值。这样任意主题包 + 深浅模式自动适配。
+2. 需要 JS 取色时（如 canvas 绘制、内联样式），用 `GamePlatform.themePacks.colors()` / `getActive()` 获取背景色、背景纹理、强调色、强调色纹理等资源，并订阅 `GamePlatform.themePacks.onChange`（主题包变化）与 `GamePlatform.theme.onChange`（深浅或主题包变化）重绘。
 3. 所有面向用户的文本提供中英双语，通过 `GamePlatform.i18n.t({ zh, en })` 取值，并监听 `GamePlatform.settings.onChange` 重渲染。
 4. 动画尊重减少动画设置：用 CSS 变量过渡即可被 `game-base.css` 自动压制；JS 动画请检查 `GamePlatform.ui.shouldReduceMotion()`。
 5. 音效尊重 `GamePlatform.ui.isSoundEnabled()`，关闭时不播放声音。
+
+### 主题外观包资源清单
+
+每个主题包（`light`/`dark` 各一套）定义：
+
+- **背景**：`bg` 背景色、`bgTexture` 背景纹理（CSS `background-image` 值，渐变/图案/`none`）
+- **强调**：`accent` 强调色、`accentTexture` 强调纹理、`accentHover`、`accentSoft`
+- **面板**：`surface`、`surface2`
+- **文字/边框**：`text`、`textMuted`、`border`
+- **状态色**：`success`、`warning`、`danger`
+
+完整结构与 API 见 [API.md](API.md#主题外观包-gameplatformthemepacks)。游戏也可用 `GamePlatform.themePacks.register()` 注册临时自定义包（一般仅特殊场景使用）。
 
 ---
 
@@ -165,6 +179,7 @@ Games/<game-id>/
 | `storage` | `GamePlatform.storage.*` |
 | `i18n` | `GamePlatform.i18n.*` |
 | `theme` | `GamePlatform.theme.*` |
+| `themePacks` | `GamePlatform.themePacks.*` |
 | `toast` | `GamePlatform.ui.toast` |
 | `fullscreen` | `GamePlatform.ui.requestFullscreen` 等 |
 | `sound` | `GamePlatform.ui.isSoundEnabled` |
@@ -201,7 +216,8 @@ Games/<game-id>/
 - [ ] `game.json` 必填字段齐全，双语文案无错别字
 - [ ] 入口文件存在且可独立打开运行
 - [ ] 刷新主页确认游戏已出现在游戏库（动态发现，无需生成清单）
-- [ ] 深色 / 浅色主题下均可正常游玩，无硬编码颜色
+- [ ] 各主题外观包（含深浅两套配色）下均可正常游玩，无硬编码颜色
+- [ ] 深色 / 浅色模式下均可正常游玩，无硬编码颜色
 - [ ] 中 / 英文切换正常
 - [ ] 减少动画开启时无大幅动效
 - [ ] 音效开关生效

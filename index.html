@@ -61,14 +61,22 @@
 
     <div class="setting-row">
       <div class="setting-label">
-        <span id="label-theme">主题</span>
-        <small id="label-theme-hint">深浅配色</small>
+        <span id="label-theme">深浅色</span>
+        <small id="label-theme-hint">浅色 / 深色 / 跟随系统</small>
       </div>
       <div class="segmented" id="seg-theme">
         <button type="button" data-value="system">跟随系统</button>
         <button type="button" data-value="light">浅色</button>
         <button type="button" data-value="dark">深色</button>
       </div>
+    </div>
+
+    <div class="setting-row setting-row--stack">
+      <div class="setting-label">
+        <span id="label-skin">主题</span>
+        <small id="label-skin-hint">全局配色与纹理，每个主题自带深浅两套</small>
+      </div>
+      <div class="skin-grid" id="skin-grid"></div>
     </div>
 
     <div class="setting-row">

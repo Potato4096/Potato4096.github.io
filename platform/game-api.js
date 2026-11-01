@@ -29,7 +29,8 @@
 
   var DEFAULT_SETTINGS = {
     lang: 'zh',            // 'zh' | 'en'
-    theme: 'system',       // 'light' | 'dark' | 'system'
+    theme: 'system',       // 'light' | 'dark' | 'system'  —— 深浅模式
+    skin: 'default',       // 主题外观包 id —— 每个包内含深浅两套配色/纹理
     reduceMotion: false,   // 减少动画
     sound: true            // 全局音效开关
   };
@@ -73,6 +74,7 @@
 
   var settingsListeners = [];
   var themeListeners = [];
+  var skinListeners = [];
   var langListeners = [];
   var channel = null;
 
@@ -118,9 +120,14 @@
     settingsListeners.forEach(function (fn) {
       try { fn(s, keys, source); } catch (e) { console.error('[GamePlatform]', e); }
     });
-    if (keys.indexOf('theme') !== -1) {
+    if (keys.indexOf('theme') !== -1 || keys.indexOf('skin') !== -1) {
       themeListeners.forEach(function (fn) {
         try { fn(resolveTheme(s.theme), s.theme); } catch (e) { console.error('[GamePlatform]', e); }
+      });
+    }
+    if (keys.indexOf('skin') !== -1) {
+      skinListeners.forEach(function (fn) {
+        try { fn(themePacks.getActive()); } catch (e) { console.error('[GamePlatform]', e); }
       });
     }
     if (keys.indexOf('lang') !== -1) {
@@ -129,6 +136,179 @@
       });
     }
     applyDocumentMeta();
+  }
+
+  /* ---------------------------------------------------------- */
+  /* 主题外观包 (skin packs)                                     */
+  /* 每个包含 light/dark 两套配色与纹理，与深浅模式正交            */
+  /* ---------------------------------------------------------- */
+
+  var THEME_PACKS = {
+    'default': {
+      id: 'default',
+      name: { zh: '默认', en: 'Default' },
+      light: {
+        bg: '#f6f7fb',
+        bgTexture: 'linear-gradient(160deg, #eef1ff 0%, #f6f7fb 45%, #fdf7ee 100%)',
+        surface: '#ffffff', surface2: '#eef0f6',
+        text: '#1c2333', textMuted: '#5b6474', border: '#d9dee8',
+        accent: '#4f6df5', accentHover: '#3d59e0', accentSoft: 'rgba(79, 109, 245, 0.12)',
+        accentTexture: 'linear-gradient(135deg, #4f6df5 0%, #7c5cf0 100%)',
+        success: '#22a06b', warning: '#e2a03f', danger: '#e5484d'
+      },
+      dark: {
+        bg: '#0f1219',
+        bgTexture: 'linear-gradient(160deg, #171c2a 0%, #0f1219 50%, #1a1420 100%)',
+        surface: '#1a202d', surface2: '#242c3c',
+        text: '#e9edf5', textMuted: '#98a2b3', border: '#2e3748',
+        accent: '#7c93ff', accentHover: '#93a6ff', accentSoft: 'rgba(124, 147, 255, 0.16)',
+        accentTexture: 'linear-gradient(135deg, #7c93ff 0%, #a58bff 100%)',
+        success: '#2eae78', warning: '#e2a03f', danger: '#e56a63'
+      }
+    },
+    'ocean': {
+      id: 'ocean',
+      name: { zh: '海洋', en: 'Ocean' },
+      light: {
+        bg: '#eef6fb',
+        bgTexture: 'linear-gradient(160deg, #d9edf7 0%, #eef6fb 40%, #e7f6f2 100%)',
+        surface: '#ffffff', surface2: '#e2f0f8',
+        text: '#0f2e40', textMuted: '#4c6f85', border: '#c2dcea',
+        accent: '#0e9bc9', accentHover: '#0b86ad', accentSoft: 'rgba(14, 155, 201, 0.14)',
+        accentTexture: 'linear-gradient(135deg, #0e9bc9 0%, #43c4e0 100%)',
+        success: '#1a9e6f', warning: '#d9932e', danger: '#d8524f'
+      },
+      dark: {
+        bg: '#0a1520',
+        bgTexture: 'linear-gradient(160deg, #0d2130 0%, #0a1520 55%, #0c2622 100%)',
+        surface: '#12222f', surface2: '#1b3040',
+        text: '#e4f1f8', textMuted: '#8fb0c2', border: '#274456',
+        accent: '#3ec0e4', accentHover: '#63d0ec', accentSoft: 'rgba(62, 192, 228, 0.16)',
+        accentTexture: 'linear-gradient(135deg, #3ec0e4 0%, #5ce0c8 100%)',
+        success: '#2fb98a', warning: '#e2a545', danger: '#e56a63'
+      }
+    },
+    'forest': {
+      id: 'forest',
+      name: { zh: '森林', en: 'Forest' },
+      light: {
+        bg: '#f0f5ec',
+        bgTexture: 'linear-gradient(160deg, #e3efdb 0%, #f0f5ec 45%, #f5f0e2 100%)',
+        surface: '#ffffff', surface2: '#e7f0e2',
+        text: '#22331f', textMuted: '#5c7254', border: '#cfdcc6',
+        accent: '#3f9a4f', accentHover: '#34833f', accentSoft: 'rgba(63, 154, 79, 0.14)',
+        accentTexture: 'linear-gradient(135deg, #3f9a4f 0%, #7fbf5c 100%)',
+        success: '#2f9e5f', warning: '#d99a34', danger: '#d4544e'
+      },
+      dark: {
+        bg: '#121a12',
+        bgTexture: 'linear-gradient(160deg, #172417 0%, #121a12 55%, #1c2410 100%)',
+        surface: '#1b261b', surface2: '#243124',
+        text: '#e6f0e2', textMuted: '#93a88c', border: '#31422f',
+        accent: '#62c274', accentHover: '#7ed18c', accentSoft: 'rgba(98, 194, 116, 0.16)',
+        accentTexture: 'linear-gradient(135deg, #62c274 0%, #a5d95c 100%)',
+        success: '#4cba6d', warning: '#e0ac4a', danger: '#e06b62'
+      }
+    },
+    'sunset': {
+      id: 'sunset',
+      name: { zh: '日落', en: 'Sunset' },
+      light: {
+        bg: '#fdf3ec',
+        bgTexture: 'linear-gradient(160deg, #fde6d8 0%, #fdf3ec 45%, #f8e8ef 100%)',
+        surface: '#ffffff', surface2: '#f8e8dd',
+        text: '#3c2418', textMuted: '#8a6450', border: '#edd4c2',
+        accent: '#e8703a', accentHover: '#d15e2c', accentSoft: 'rgba(232, 112, 58, 0.14)',
+        accentTexture: 'linear-gradient(135deg, #e8703a 0%, #f0a03c 100%)',
+        success: '#2a9d68', warning: '#e0a030', danger: '#d84848'
+      },
+      dark: {
+        bg: '#1c1210',
+        bgTexture: 'linear-gradient(160deg, #291713 0%, #1c1210 55%, #261420 100%)',
+        surface: '#2a1c18', surface2: '#37241e',
+        text: '#f6e9e2', textMuted: '#b89482', border: '#4a322a',
+        accent: '#f0854e', accentHover: '#f5a06c', accentSoft: 'rgba(240, 133, 78, 0.16)',
+        accentTexture: 'linear-gradient(135deg, #f0854e 0%, #f5b25c 100%)',
+        success: '#3fae7a', warning: '#e7b14e', danger: '#e56b62'
+      }
+    },
+    'candy': {
+      id: 'candy',
+      name: { zh: '糖果', en: 'Candy' },
+      light: {
+        bg: '#f9f0f8',
+        bgTexture: 'linear-gradient(160deg, #f6e4f4 0%, #f9f0f8 45%, #eef0fd 100%)',
+        surface: '#ffffff', surface2: '#f4e6f3',
+        text: '#3a2340', textMuted: '#7e5a88', border: '#e8d2e8',
+        accent: '#c2559c', accentHover: '#ab4688', accentSoft: 'rgba(194, 85, 156, 0.14)',
+        accentTexture: 'linear-gradient(135deg, #c2559c 0%, #7b6ef0 100%)',
+        success: '#2aa476', warning: '#dd9a35', danger: '#d84f6d'
+      },
+      dark: {
+        bg: '#1a1220',
+        bgTexture: 'linear-gradient(160deg, #231530 0%, #1a1220 55%, #241428 100%)',
+        surface: '#271b30', surface2: '#33243d',
+        text: '#f2e8f5', textMuted: '#ab8fb5', border: '#453250',
+        accent: '#e074c0', accentHover: '#ea8fd0', accentSoft: 'rgba(224, 116, 192, 0.16)',
+        accentTexture: 'linear-gradient(135deg, #e074c0 0%, #8f8dfa 100%)',
+        success: '#37b887', warning: '#e5ac4c', danger: '#e56b86'
+      }
+    },
+    'mono': {
+      id: 'mono',
+      name: { zh: '极简', en: 'Mono' },
+      light: {
+        bg: '#f2f2f2',
+        bgTexture: 'none',
+        surface: '#ffffff', surface2: '#e8e8e8',
+        text: '#1a1a1a', textMuted: '#666666', border: '#d4d4d4',
+        accent: '#333333', accentHover: '#111111', accentSoft: 'rgba(0, 0, 0, 0.08)',
+        accentTexture: 'none',
+        success: '#2a8a5b', warning: '#b8862a', danger: '#c04040'
+      },
+      dark: {
+        bg: '#141414',
+        bgTexture: 'none',
+        surface: '#1e1e1e', surface2: '#2a2a2a',
+        text: '#f0f0f0', textMuted: '#999999', border: '#3a3a3a',
+        accent: '#e8e8e8', accentHover: '#ffffff', accentSoft: 'rgba(255, 255, 255, 0.12)',
+        accentTexture: 'none',
+        success: '#4cb584', warning: '#cfa13f', danger: '#d06060'
+      }
+    }
+  };
+
+  /** pack 颜色键 -> CSS 自定义属性名 */
+  var SKIN_VAR_MAP = {
+    bg: '--pg-bg',
+    surface: '--pg-surface',
+    surface2: '--pg-surface-2',
+    text: '--pg-text',
+    textMuted: '--pg-text-muted',
+    border: '--pg-border',
+    accent: '--pg-accent',
+    accentHover: '--pg-accent-hover',
+    accentSoft: '--pg-accent-soft',
+    success: '--pg-success',
+    warning: '--pg-warning',
+    danger: '--pg-danger'
+  };
+
+  function getPack(id) {
+    return THEME_PACKS[id] || THEME_PACKS[DEFAULT_SETTINGS.skin];
+  }
+
+  /** 把外观包(按当前深浅模式)写入 <html> 的 CSS 变量 */
+  function applySkinVars(root, packId, mode) {
+    var pack = getPack(packId);
+    var d = pack[mode] || pack.light;
+    for (var key in SKIN_VAR_MAP) {
+      if (d[key] != null) root.style.setProperty(SKIN_VAR_MAP[key], d[key]);
+    }
+    root.style.setProperty('--pg-bg-image', d.bgTexture || 'none');
+    root.style.setProperty('--pg-accent-image', d.accentTexture || 'none');
+    if (d.font) root.style.setProperty('--pg-font', d.font);
+    root.setAttribute('data-skin', pack.id);
   }
 
   /* ---------------------------------------------------------- */
@@ -156,6 +336,7 @@
     if (s.reduceMotion) root.setAttribute('data-reduce-motion', '1');
     else root.removeAttribute('data-reduce-motion');
     if (!root.getAttribute('lang')) root.setAttribute('lang', s.lang === 'en' ? 'en' : 'zh-CN');
+    applySkinVars(root, s.skin, resolved);
   }
 
   if (mediaQuery) {
@@ -355,6 +536,66 @@
   };
 
   /* ---------------------------------------------------------- */
+  /* 主题外观包 API                                              */
+  /* ---------------------------------------------------------- */
+
+  var themePacks = {
+    /** 所有外观包 id */
+    list: function () {
+      return Object.keys(THEME_PACKS);
+    },
+    /** 取外观包定义；不传 id 则返回当前激活包 */
+    get: function (id) {
+      return getPack(id || readSettings().skin);
+    },
+    /**
+     * 当前激活包按当前深浅模式解析后的完整外观
+     * => { id, name, mode, colors: {...}, bgTexture, accentTexture, font }
+     */
+    getActive: function () {
+      var pack = getPack(readSettings().skin);
+      var mode = resolveTheme(readSettings().theme);
+      var d = pack[mode] || pack.light;
+      var colors = {};
+      for (var key in SKIN_VAR_MAP) colors[key] = d[key];
+      return {
+        id: pack.id,
+        name: pack.name,
+        mode: mode,
+        colors: colors,
+        bgTexture: d.bgTexture || 'none',
+        accentTexture: d.accentTexture || 'none',
+        font: d.font || null
+      };
+    },
+    /** 仅取当前已解析颜色表 (canvas 等场景常用) */
+    colors: function () {
+      return themePacks.getActive().colors;
+    },
+    /** 订阅外观包变化，fn(activeInfo)；返回取消订阅函数 */
+    onChange: function (fn) {
+      skinListeners.push(fn);
+      return function () {
+        var i = skinListeners.indexOf(fn);
+        if (i !== -1) skinListeners.splice(i, 1);
+      };
+    },
+    /**
+     * 运行时注册自定义外观包
+     * pack = { id, name: {zh,en}, light: {...}, dark: {...} }
+     * light/dark 字段同 THEME_PACKS 内置包（bg / bgTexture / accent / accentTexture ...）
+     */
+    register: function (pack) {
+      if (!pack || !pack.id || !pack.light || !pack.dark) {
+        throw new Error('[GamePlatform] themePacks.register: pack needs id/light/dark');
+      }
+      THEME_PACKS[pack.id] = pack;
+      if (readSettings().skin === pack.id) applyDocumentMeta();
+      return pack;
+    }
+  };
+
+  /* ---------------------------------------------------------- */
   /* 设置对象                                                    */
   /* ---------------------------------------------------------- */
 
@@ -409,7 +650,7 @@
     theme: {
       get: function () { return resolveTheme(readSettings().theme); },
       getPref: function () { return readSettings().theme; },
-      /** 订阅主题(解析后)变化。fn(resolvedTheme, pref) */
+      /** 订阅主题(解析后)变化 —— 深浅模式或外观包变化都会触发。fn(resolvedTheme, pref) */
       onChange: function (fn) {
         themeListeners.push(fn);
         return function () {
@@ -419,6 +660,7 @@
       },
       apply: applyDocumentMeta
     },
+    themePacks: themePacks,
     i18n: i18n,
     ui: ui,
     events: { on: on, off: off, emit: emit },

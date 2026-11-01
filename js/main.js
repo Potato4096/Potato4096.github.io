@@ -27,6 +27,8 @@
     document.getElementById('label-lang-hint').textContent = t('label.lang.hint');
     document.getElementById('label-theme').textContent = t('label.theme');
     document.getElementById('label-theme-hint').textContent = t('label.theme.hint');
+    document.getElementById('label-skin').textContent = t('label.skin');
+    document.getElementById('label-skin-hint').textContent = t('label.skin.hint');
     document.getElementById('label-motion').textContent = t('label.motion');
     document.getElementById('label-motion-hint').textContent = t('label.motion.hint');
     document.getElementById('label-sound').textContent = t('label.sound');
@@ -240,6 +242,33 @@
     });
     document.getElementById('toggle-motion').checked = !!GP.settings.get('reduceMotion');
     document.getElementById('toggle-sound').checked = !!GP.settings.get('sound');
+    renderSkinGrid();
+  }
+
+  /** 主题外观包选择器 */
+  function renderSkinGrid() {
+    var grid = document.getElementById('skin-grid');
+    if (!grid) return;
+    var active = GP.settings.get('skin');
+    grid.innerHTML = '';
+
+    GP.themePacks.list().forEach(function (id) {
+      var pack = GP.themePacks.get(id);
+      var name = GP.i18n.t(pack.name || { zh: id, en: id });
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'skin-swatch' + (id === active ? ' active' : '');
+      btn.dataset.skin = id;
+      btn.title = name;
+      btn.innerHTML =
+        '<span class="skin-dot" style="background: linear-gradient(135deg, ' +
+          pack.light.accent + ' 0 50%, ' + pack.dark.accent + ' 50% 100%)"></span>' +
+        '<span class="skin-name">' + escapeHtml(name) + '</span>';
+      btn.addEventListener('click', function () {
+        GP.settings.set('skin', id);
+      });
+      grid.appendChild(btn);
+    });
   }
 
   function bindSettingsUI() {
@@ -286,6 +315,7 @@
       GP.settings.set({
         lang: GP.settings.defaults.lang,
         theme: GP.settings.defaults.theme,
+        skin: GP.settings.defaults.skin,
         reduceMotion: GP.settings.defaults.reduceMotion,
         sound: GP.settings.defaults.sound
       });

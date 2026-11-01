@@ -26,6 +26,7 @@ GamePlatform = {
   settings: { defaults, get, getAll, set, onChange },
   storage:  { get, set, remove, clear, keys },
   theme:    { get, getPref, onChange, apply },
+  themePacks: { list, get, getActive, colors, onChange, register },
   i18n:     { getLang, t, onChange },
   ui:       { toast, requestFullscreen, exitFullscreen, isFullscreen, shouldReduceMotion, isSoundEnabled },
   events:   { on, off, emit },
@@ -46,7 +47,8 @@ GamePlatform = {
 GamePlatform.settings.defaults
 // {
 //   lang: 'zh',          // 'zh' | 'en'
-//   theme: 'system',     // 'light' | 'dark' | 'system'
+//   theme: 'system',     // 'light' | 'dark' | 'system'  —— 深浅模式
+//   skin: 'default',     // 主题外观包 id（见 themePacks）
 //   reduceMotion: false,
 //   sound: true
 // }
@@ -130,6 +132,80 @@ function repaint() {
 }
 GamePlatform.theme.onChange(repaint);
 ```
+
+---
+
+## 主题外观包 `GamePlatform.themePacks`
+
+全局**主题包（skin）系统**：与深浅模式正交——每个主题包内含 `light` / `dark` 两套配色与纹理，最终外观 = 主题包 × 深浅模式。主题包定义背景色/纹理、强调色/纹理等资源，平台自动写入 CSS 变量，游戏按需取用。
+
+### 包结构
+
+```js
+{
+  id: 'ocean',
+  name: { zh: '海洋', en: 'Ocean' },
+  light: {
+    bg: '#eef6fb',                  // 背景色
+    bgTexture: 'linear-gradient(...)', // 背景纹理 (CSS background-image 值，可 'none')
+    surface: '#ffffff', surface2: '#e2f0f8',
+    text: '#0f2e40', textMuted: '#4c6f85', border: '#c2dcea',
+    accent: '#0e9bc9',              // 强调色
+    accentTexture: 'linear-gradient(...)', // 强调色纹理 (CSS background-image 值)
+    accentHover: '#0b86ad', accentSoft: 'rgba(14,155,201,0.14)',
+    success: '#1a9e6f', warning: '#d9932e', danger: '#d8524f'
+  },
+  dark: { /* 同结构 */ }
+}
+```
+
+内置包：`default`（默认）、`ocean`（海洋）、`forest`（森林）、`sunset`（日落）、`candy`（糖果）、`mono`（极简）。
+
+### CSS 变量（推荐用法）
+
+平台会把激活包按当前深浅模式解析后写入 `<html>`，CSS 直接引用即可自动跟随：
+
+| 变量 | 含义 |
+|------|------|
+| `--pg-bg` / `--pg-bg-image` | 背景色 / 背景纹理 |
+| `--pg-surface` / `--pg-surface-2` | 面板色 / 次级面板色 |
+| `--pg-text` / `--pg-text-muted` / `--pg-border` | 文字 / 弱化文字 / 边框 |
+| `--pg-accent` / `--pg-accent-hover` / `--pg-accent-soft` | 强调色 / 悬停 / 弱化底色 |
+| `--pg-accent-image` | 强调色纹理（按钮背景等） |
+| `--pg-success` / `--pg-warning` / `--pg-danger` | 状态色 |
+| `--pg-font` / `--pg-radius` / `--pg-shadow` | 字体 / 圆角 / 阴影 |
+
+```css
+.my-panel { background: var(--pg-surface); color: var(--pg-text); }
+.my-btn   { background-color: var(--pg-accent); background-image: var(--pg-accent-image); }
+body      { background-color: var(--pg-bg); background-image: var(--pg-bg-image); }
+```
+
+### JS API
+
+| 方法 | 说明 |
+|------|------|
+| `list()` | 所有外观包 id 数组 |
+| `get(id?)` | 包定义；不传 id 返回当前激活包 |
+| `getActive()` | `{ id, name, mode, colors, bgTexture, accentTexture, font }`（已按当前深浅模式解析） |
+| `colors()` | 仅取当前已解析颜色表（canvas 取色常用） |
+| `onChange(fn)` | 订阅主题包变化，`fn(activeInfo)`；返回取消订阅函数 |
+| `register(pack)` | 运行时注册自定义主题包（需 `id` / `name` / `light` / `dark`） |
+
+```js
+// canvas 场景：取强调色绘制，并跟随主题包/深浅色变化重绘
+function repaint() {
+  var c = GamePlatform.themePacks.colors();
+  ctx.fillStyle = c.bg;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = c.accent;
+  ctx.fillRect(0, 0, score * 10, 20);
+}
+GamePlatform.themePacks.onChange(repaint);
+GamePlatform.theme.onChange(repaint); // 深浅模式变化同样会触发
+```
+
+> `GamePlatform.theme.onChange` 在**深浅模式或主题包**变化时都会触发（外观变了就该重绘）；`themePacks.onChange` 只在主题包切换时触发。
 
 ---
 

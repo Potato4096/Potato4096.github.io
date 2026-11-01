@@ -249,8 +249,17 @@
 
       GamePlatform.settings.onChange(function () { applyText(); });
 
+      /** 主题包 JS 用法示例：canvas/内联样式等无法用 CSS 变量的场景可直接取色 */
+      function applyThemeColors() {
+        var colors = GamePlatform.themePacks.colors();
+        el.big.style.color = colors.accent;
+        el.title.style.color = colors.text;
+      }
+      GamePlatform.themePacks.onChange(applyThemeColors);
+
       GamePlatform.ready.then(function () {
         applyText();
+        applyThemeColors();
         setState('idle');
       });
     })();
