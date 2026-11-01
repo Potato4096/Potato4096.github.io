@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Dou Dizhu">
+  <defs>
+    <linearGradient id="felt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f6b4f"/>
+      <stop offset="1" stop-color="#1d4a37"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="124" height="124" rx="26" fill="url(#felt)"/>
+  <g transform="rotate(-14 44 66)">
+    <rect x="16" y="24" width="56" height="80" rx="8" fill="#d8deed" stroke="#9aa6c0" stroke-width="2.5"/>
+    <path d="M22 34h44M22 44h44M22 54h44M22 64h44M22 74h44M22 84h44" stroke="#aab5cb" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  </g>
+  <g transform="rotate(8 78 64)">
+    <rect x="50" y="18" width="58" height="84" rx="8" fill="#ffffff" stroke="#c6cee0" stroke-width="2.5"/>
+    <text x="57" y="45" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="700" fill="#d8484d">A</text>
+    <text x="58" y="68" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#d8484d">♥</text>
+    <text x="83" y="92" font-family="Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#d8484d" text-anchor="end">A</text>
+  </g>
+</svg>

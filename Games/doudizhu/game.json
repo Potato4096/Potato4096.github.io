@@ -1,0 +1,27 @@
+{
+  "id": "doudizhu",
+  "title": {
+    "zh": "斗地主",
+    "en": "Dou Dizhu"
+  },
+  "description": {
+    "zh": "经典三人斗地主。54 张牌、依次叫分抢地主、炸弹翻倍与春天结算，完整牌型（顺子、连对、飞机、四带二、王炸）。支持单人挑战电脑与同屏热座轮换对战，内置出牌提示、记牌器与托管。",
+    "en": "Classic three-player Dou Dizhu with 54 cards, bidding for the landlord role, bomb multipliers and the spring bonus. Full pattern set - straights, consecutive pairs, planes, four-with-two and the rocket. Play solo against the CPU or pass the device between friends, with hints, a card counter and autoplay."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "🃏",
+  "tags": ["cards", "strategy", "classic", "ai", "hotseat"],
+  "category": "strategy",
+  "players": "1-3",
+  "controls": {
+    "zh": "点击选牌，再点「出牌」；也可以用「提示」自动选牌",
+    "en": "Tap cards to select, then Play. Use Hint to auto-select."
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}

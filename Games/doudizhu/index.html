@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>斗地主 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container ddz">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-back">← <span data-t="back">返回主页</span></button>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-counter" data-t="counterBtn">记牌器</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-auto" data-t="autoBtn">托管</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-mode" data-t="modeBtn">模式</button>
+        <span class="pg-tag" id="lang-badge">中文</span>
+      </div>
+    </div>
+
+    <div class="table" id="table">
+      <div class="seat" id="seat-left"></div>
+
+      <div class="table-center">
+        <div class="bottom-row">
+          <span class="bottom-label" data-t="bottom">底牌</span>
+          <div class="bottom-cards" id="bottom-cards"></div>
+        </div>
+        <div class="play-area" id="play-area"></div>
+        <div class="center-tip" id="center-tip"></div>
+      </div>
+
+      <div class="seat" id="seat-right"></div>
+    </div>
+
+    <div class="counter-strip" id="counter-strip"></div>
+
+    <div class="hand-bar">
+      <div class="hand-meta">
+        <span class="hand-name" id="hand-name"></span>
+        <span class="pg-tag" id="hand-role"></span>
+        <span class="pg-tag pg-tag--plain" id="mult-badge"></span>
+      </div>
+      <div class="hand" id="hand"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="pg-btn pg-btn--ghost" id="btn-pass" data-t="pass">不要</button>
+      <button class="pg-btn pg-btn--ghost" id="btn-hint" data-t="hint">提示</button>
+      <button class="pg-btn" id="btn-play" data-t="play">出牌</button>
+      <button class="pg-btn pg-btn--ghost" id="btn-restart" data-t="restart">重新开始</button>
+    </div>
+
+    <div class="bid-bar" id="bid-bar"></div>
+  </div>
+
+  <div class="curtain" id="curtain">
+    <div class="curtain-box pg-card">
+      <h2 id="curtain-title"></h2>
+      <p id="curtain-sub" class="pg-muted"></p>
+      <button class="pg-btn" id="curtain-ok"></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="overlay-box pg-card">
+      <h2 id="overlay-title"></h2>
+      <div id="overlay-body"></div>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

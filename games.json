@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-01T05:13:13.918Z",
-  "count": 4,
+  "generatedAt": "2026-11-01T06:10:46.196Z",
+  "count": 5,
   "games": [
     {
       "id": "chess",
@@ -9,6 +9,10 @@
     {
       "id": "chinese-chess",
       "dir": "Games/chinese-chess"
+    },
+    {
+      "id": "doudizhu",
+      "dir": "Games/doudizhu"
     },
     {
       "id": "number-guess",
