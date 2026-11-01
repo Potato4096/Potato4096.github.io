@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>竞技场幸存者 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-home" data-i18n="home">返回主页</button>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-pause" data-i18n="pauseBtn">暂停</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-fullscreen" data-i18n="fullscreen">全屏</button>
+      </div>
+    </div>
+
+    <div class="game-wrap">
+      <div class="bars">
+        <div class="bar-block">
+          <div class="bar-head"><span data-i18n="hp">生命</span><b id="hp-text">100/100</b></div>
+          <div class="bar-track"><div class="bar-fill hp" id="hp-bar"></div></div>
+        </div>
+        <div class="bar-block">
+          <div class="bar-head"><span data-i18n="xp">经验</span><b id="xp-text">Lv.1</b></div>
+          <div class="bar-track"><div class="bar-fill xp" id="xp-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="hud-row">
+        <span class="hud-item"><span class="hud-label" data-i18n="wave">波次</span><b id="hud-wave">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="kills">击杀</span><b id="hud-kills">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="score">得分</span><b id="hud-score">0</b></span>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="game" width="480" height="320"></canvas>
+        <div class="wave-banner" id="wave-banner"></div>
+
+        <div class="overlay" id="ov-menu">
+          <div class="panel pg-card">
+            <h1 class="game-title" data-i18n="title">竞技场幸存者</h1>
+            <p class="tagline" data-i18n="tagline"></p>
+            <p class="stat-line"><span data-i18n="bestWave">最高波次</span> <b id="menu-best-wave">0</b></p>
+            <p class="stat-line"><span data-i18n="best">最高分</span> <b id="menu-best-score">0</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-start" data-i18n="start">开始游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-clear" data-i18n="clearRecords">清除记录</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-levelup" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="chooseUpgrade">选择强化</h2>
+            <p class="tagline" id="levelup-sub"></p>
+            <div class="upgrade-grid" id="upgrade-grid"></div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-pause" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="paused">已暂停</h2>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-resume" data-i18n="resume">继续游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-restart-pause" data-i18n="restart">重新开始</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-pause" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-gameover" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="gameOver">游戏结束</h2>
+            <p class="stat-line"><span data-i18n="waveReached">到达波次</span> <b id="go-wave">0</b></p>
+            <p class="stat-line"><span data-i18n="kills">击杀</span> <b id="go-kills">0</b></p>
+            <p class="stat-line"><span data-i18n="score">得分</span> <b id="go-score">0</b></p>
+            <p class="stat-line"><span data-i18n="best">最高分</span> <b id="go-best">0</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-go" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="joystick" id="joystick">
+          <div class="joy-knob" id="joy-knob"></div>
+        </div>
+      </div>
+
+      <p class="pg-muted controls-hint" data-i18n="controls"></p>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/upgrades.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

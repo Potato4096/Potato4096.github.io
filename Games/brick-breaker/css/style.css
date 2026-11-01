@@ -1,0 +1,142 @@
+/* brick-breaker - game styles (theme-aware via --pg-* variables) */
+
+.game-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.stage {
+  position: relative;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  overflow: hidden;
+  background: var(--pg-surface-2);
+  box-shadow: var(--pg-shadow);
+  line-height: 0;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: none;
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.hud-label {
+  color: var(--pg-text-muted);
+  font-size: 12px;
+}
+
+.hud-item b {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 14, 22, 0.52);
+  line-height: 1.5;
+  z-index: 5;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay .panel {
+  width: min(440px, 100%);
+  text-align: center;
+}
+
+.game-title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.overlay .tagline {
+  margin: 0 0 12px;
+  color: var(--pg-text-muted);
+  font-size: 14px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 10px;
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: var(--pg-text-muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.best-line,
+.result-line {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--pg-text);
+}
+
+.best-line b,
+.result-line b {
+  color: var(--pg-accent);
+  font-size: 18px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.controls-hint {
+  margin: 14px 2px 0;
+  font-size: 13px;
+  text-align: center;
+}

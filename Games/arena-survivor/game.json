@@ -1,0 +1,27 @@
+{
+  "id": "arena-survivor",
+  "title": {
+    "zh": "竞技场幸存者",
+    "en": "Arena Survivor"
+  },
+  "description": {
+    "zh": "波次刷怪 + 升级构筑的竞技场生存游戏。角色自动攻击最近的敌人，击杀怪物获取经验，升级时三选一强化，撑过一波又一波越来越凶的怪物潮。自动保存最高分与最高波次。",
+    "en": "Wave-based arena survival with roguelite upgrades. Auto-attack the nearest enemy, gain XP from kills, pick 1 of 3 upgrades on level-up, and survive ever-harsher monster waves. Best score & wave auto-saved."
+  },
+  "version": "0.1.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "👾",
+  "tags": ["survival", "roguelike", "action", "singleplayer", "waves"],
+  "category": "action",
+  "players": 1,
+  "controls": {
+    "zh": "WASD/方向键移动（自动攻击最近敌人）；升级时点击卡片或按 1/2/3 选择强化；Esc/P 暂停；触屏使用虚拟摇杆",
+    "en": "WASD/Arrows to move (auto-attacks the nearest enemy); click a card or press 1/2/3 to pick upgrades; Esc/P to pause; virtual joystick on touch devices"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}

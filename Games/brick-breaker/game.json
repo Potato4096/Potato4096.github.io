@@ -1,0 +1,26 @@
+{
+  "id": "brick-breaker",
+  "title": {
+    "zh": "弹球打砖块",
+    "en": "Brick Breaker"
+  },
+  "description": {
+    "zh": "经典弹球打砖块。鼠标控制底部平台，让小球反弹击碎所有砖块。特殊砖块碎裂后会掉落道具：小球分身、加速、加宽平台、减速与额外生命，逐关挑战更高分！",
+    "en": "Classic brick breaker. Move the paddle with your mouse, bounce the ball and smash every brick. Special bricks drop power-ups: multi-ball, speed up, wide paddle, slow down and extra lives. Clear levels and chase the high score!"
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🧱",
+  "tags": ["arcade", "action", "singleplayer"],
+  "category": "arcade",
+  "players": 1,
+  "controls": {
+    "zh": "鼠标 / 触摸拖动移动平台，点击 / 空格发球，Esc / P 暂停",
+    "en": "Mouse / touch drag to move the paddle, click / Space to launch, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-01",
+  "updated": "2026-11-01"
+}
