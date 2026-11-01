@@ -153,13 +153,14 @@ GamePlatform.theme.onChange(repaint);
     accent: '#0e9bc9',              // 强调色
     accentTexture: 'linear-gradient(...)', // 强调色纹理 (CSS background-image 值)
     accentHover: '#0b86ad', accentSoft: 'rgba(14,155,201,0.14)',
-    success: '#1a9e6f', warning: '#d9932e', danger: '#d8524f'
+    success: '#1a9e6f', warning: '#d9932e', danger: '#d8524f',
+    backdropFilter: 'blur(20px) saturate(1.6)' // 可选：毛玻璃滤镜（液态玻璃等），默认 'none'
   },
   dark: { /* 同结构 */ }
 }
 ```
 
-内置包：`default`（默认）、`ocean`（海洋）、`forest`（森林）、`sunset`（日落）、`candy`（糖果）、`mono`（极简）。
+内置包：`default`（默认）、`ocean`（海洋）、`forest`（森林）、`sunset`（日落）、`candy`（糖果）、`glass`（液态玻璃）、`mono`（极简）。
 
 ### CSS 变量（推荐用法）
 
@@ -174,6 +175,7 @@ GamePlatform.theme.onChange(repaint);
 | `--pg-accent-image` | 强调色纹理（按钮背景等） |
 | `--pg-success` / `--pg-warning` / `--pg-danger` | 状态色 |
 | `--pg-font` / `--pg-radius` / `--pg-shadow` | 字体 / 圆角 / 阴影 |
+| `--pg-backdrop-filter` | 毛玻璃滤镜（液态玻璃等主题为 `blur(...)`，其余为 `none`） |
 
 ```css
 .my-panel { background: var(--pg-surface); color: var(--pg-text); }
@@ -187,7 +189,7 @@ body      { background-color: var(--pg-bg); background-image: var(--pg-bg-image)
 |------|------|
 | `list()` | 所有外观包 id 数组 |
 | `get(id?)` | 包定义；不传 id 返回当前激活包 |
-| `getActive()` | `{ id, name, mode, colors, bgTexture, accentTexture, font }`（已按当前深浅模式解析） |
+| `getActive()` | `{ id, name, mode, colors, bgTexture, accentTexture, backdropFilter, font }`（已按当前深浅模式解析） |
 | `colors()` | 仅取当前已解析颜色表（canvas 取色常用） |
 | `onChange(fn)` | 订阅主题包变化，`fn(activeInfo)`；返回取消订阅函数 |
 | `register(pack)` | 运行时注册自定义主题包（需 `id` / `name` / `light` / `dark`） |

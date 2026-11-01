@@ -21,6 +21,7 @@
   --pg-danger: #e5484d;
   --pg-radius: 12px;
   --pg-shadow: 0 8px 24px rgba(28, 35, 51, 0.10);
+  --pg-backdrop-filter: none;
   --pg-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
 
@@ -74,6 +75,9 @@ html[data-reduce-motion="1"] *::after {
   border-radius: var(--pg-radius);
   box-shadow: var(--pg-shadow);
   padding: 20px;
+  /* 毛玻璃（仅液态玻璃等主题生效，其余主题为 none） */
+  -webkit-backdrop-filter: var(--pg-backdrop-filter);
+  backdrop-filter: var(--pg-backdrop-filter);
 }
 
 .pg-btn {

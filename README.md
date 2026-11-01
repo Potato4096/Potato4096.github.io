@@ -122,7 +122,7 @@ Potato4096.github.io/
 |--------|------|--------|--------------|
 | 语言 | `zh` / `en` | `p4096:settings.lang` | `GamePlatform.i18n` / `settings.onChange` |
 | 深浅色 | `light` / `dark` / `system` | `p4096:settings.theme` | `<html data-theme>` + `GamePlatform.theme.onChange` |
-| 主题 | 外观包 id（`default`/`ocean`/`forest`/`sunset`/`candy`/`mono`…） | `p4096:settings.skin` | `--pg-*` CSS 变量 + `GamePlatform.themePacks` |
+| 主题 | 外观包 id（`default`/`ocean`/`forest`/`sunset`/`candy`/`glass`/`mono`…） | `p4096:settings.skin` | `--pg-*` CSS 变量 + `GamePlatform.themePacks` |
 | 减少动画 | `true` / `false` | `p4096:settings.reduceMotion` | `<html data-reduce-motion>` + `GamePlatform.ui.shouldReduceMotion()` |
 | 音效 | `true` / `false` | `p4096:settings.sound` | `GamePlatform.ui.isSoundEnabled()` |
 

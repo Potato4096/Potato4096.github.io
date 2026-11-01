@@ -161,9 +161,10 @@ Games/<game-id>/
 
 - **背景**：`bg` 背景色、`bgTexture` 背景纹理（CSS `background-image` 值，渐变/图案/`none`）
 - **强调**：`accent` 强调色、`accentTexture` 强调纹理、`accentHover`、`accentSoft`
-- **面板**：`surface`、`surface2`
+- **面板**：`surface`、`surface2`（可为 `rgba(...)` 半透明，配合 `backdropFilter` 呈现玻璃效果）
 - **文字/边框**：`text`、`textMuted`、`border`
 - **状态色**：`success`、`warning`、`danger`
+- **毛玻璃（可选）**：`backdropFilter`（CSS `backdrop-filter` 值，如 `blur(20px) saturate(1.6)`）。平台写入 `--pg-backdrop-filter`，`game-base.css` 的 `.pg-card` 等组件自动应用；未定义的包为 `none`，无任何影响
 
 完整结构与 API 见 [API.md](API.md#主题外观包-gameplatformthemepacks)。游戏也可用 `GamePlatform.themePacks.register()` 注册临时自定义包（一般仅特殊场景使用）。
 

@@ -18,6 +18,7 @@
   --pg-shadow: 0 10px 30px rgba(28, 35, 51, 0.08);
   --pg-shadow-hover: 0 16px 40px rgba(28, 35, 51, 0.14);
   --pg-radius: 16px;
+  --pg-backdrop-filter: none;
   --pg-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
 
@@ -113,6 +114,8 @@ html[data-reduce-motion="1"] *::after {
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
   font-family: inherit;
+  -webkit-backdrop-filter: var(--pg-backdrop-filter);
+  backdrop-filter: var(--pg-backdrop-filter);
 }
 
 #btn-lang { width: auto; padding: 0 12px; font-size: 13px; font-weight: 600; }
@@ -178,6 +181,8 @@ main {
   border: 1px dashed var(--pg-border);
   border-radius: var(--pg-radius);
   font-size: 15px;
+  -webkit-backdrop-filter: var(--pg-backdrop-filter);
+  backdrop-filter: var(--pg-backdrop-filter);
 }
 
 .empty-card.error { color: var(--pg-danger); }
@@ -193,6 +198,8 @@ main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  -webkit-backdrop-filter: var(--pg-backdrop-filter);
+  backdrop-filter: var(--pg-backdrop-filter);
 }
 
 .game-card:hover {
@@ -335,6 +342,8 @@ main {
   flex-direction: column;
   gap: 22px;
   overflow-y: auto;
+  -webkit-backdrop-filter: var(--pg-backdrop-filter);
+  backdrop-filter: var(--pg-backdrop-filter);
 }
 
 .settings-panel.open { transform: translateX(0); }
