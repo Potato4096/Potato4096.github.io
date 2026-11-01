@@ -242,7 +242,7 @@
 /* joystick lives below the game frame so it never covers the view */
 .joystick {
   display: none;
-  margin: 14px 0 0 6px;
+  margin: 6px 0 0 6px;
   width: 116px;
   height: 116px;
   border-radius: 50%;
@@ -270,3 +270,4 @@
     display: block;
   }
 }
+
