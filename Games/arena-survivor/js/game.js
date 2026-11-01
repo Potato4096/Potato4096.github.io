@@ -45,8 +45,8 @@
     waveIncoming: { zh: '怪物来袭…', en: 'Incoming…' },
     waveCleared: { zh: '波次清空！', en: 'Wave cleared!' },
     controls: {
-      zh: '操作：WASD / 方向键移动，自动攻击最近敌人；升级时点击卡片或按 1/2/3 选择；Esc / P 暂停。触屏使用左下角虚拟摇杆。',
-      en: 'Controls: WASD / Arrows to move (auto-attacks the nearest enemy); click a card or press 1/2/3 to pick upgrades; Esc / P to pause. Virtual joystick at bottom-left on touch.'
+      zh: '操作：WASD / 方向键移动，自动攻击最近敌人；升级时点击卡片或按 1/2/3 选择；Esc / P 暂停。触屏使用游戏框下方的虚拟摇杆。',
+      en: 'Controls: WASD / Arrows to move (auto-attacks the nearest enemy); click a card or press 1/2/3 to pick upgrades; Esc / P to pause. On touch, use the virtual joystick below the game frame.'
     },
     fullscreen: { zh: '全屏', en: 'Fullscreen' },
     pauseBtn: { zh: '暂停', en: 'Pause' }

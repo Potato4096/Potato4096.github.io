@@ -117,17 +117,12 @@
   font-size: 13px;
 }
 
+/* touch controls live below the game frame so they never cover the view */
 .touch-controls {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
   display: none;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 12px;
-  pointer-events: none;
-  z-index: 4;
+  padding: 12px 2px 0;
 }
 
 .touch-pad {
@@ -136,7 +131,6 @@
 }
 
 .touch-btn {
-  pointer-events: auto;
   width: 62px;
   height: 62px;
   border-radius: 16px;

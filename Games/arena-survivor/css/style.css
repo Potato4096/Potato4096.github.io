@@ -239,19 +239,17 @@
   font-size: 13px;
 }
 
+/* joystick lives below the game frame so it never covers the view */
 .joystick {
-  position: absolute;
-  left: 18px;
-  bottom: 18px;
+  display: none;
+  margin: 14px 0 0 6px;
   width: 116px;
   height: 116px;
   border-radius: 50%;
   border: 2px solid var(--pg-border);
   background: var(--pg-surface);
   opacity: 0.82;
-  display: none;
   touch-action: none;
-  z-index: 4;
 }
 
 .joy-knob {
