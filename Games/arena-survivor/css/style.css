@@ -241,6 +241,7 @@
 
 /* joystick lives below the game frame so it never covers the view */
 .joystick {
+  position: relative;
   display: none;
   margin: 6px 0 0 6px;
   width: 116px;
