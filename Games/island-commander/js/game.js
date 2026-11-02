@@ -45,8 +45,8 @@
     warHint: { zh: '点选出征，自动战斗结算', en: 'Pick a target - battle auto-resolves' },
     armySummary: { zh: '远征军', en: 'Expeditionary force' },
     controls: {
-      zh: '操作：点击 / 触摸选择建筑与兵种，点选建筑后点击岛上空地建造；出征页点目标自动战斗。红方每 90 秒反扑一次，防住可缴获资源。Esc / P 暂停。',
-      en: 'Controls: click / tap to pick buildings & units, then tap a free island tile to build; pick a campaign target to auto-battle. Red raids every 90s - hold the island for loot. Esc / P to pause.'
+      zh: '操作：点击 / 触摸选择建筑与兵种，点选建筑后点击岛上空地建造，铲除按钮可拆除建筑；出征页点目标自动战斗。红方每 90 秒反扑一次，防住可缴获资源。Esc / P 暂停。',
+      en: 'Controls: click / tap to pick buildings & units, then tap a free island tile to build; use Demolish to remove buildings; pick a campaign target to auto-battle. Red raids every 90s - hold the island for loot. Esc / P to pause.'
     },
     cancel: { zh: '取消', en: 'Cancel' },
     level: { zh: '等级', en: 'Level' },
@@ -67,6 +67,11 @@
     needHq: { zh: '需要大本营等级', en: 'Requires HQ level' },
     needBld: { zh: '需要先建造', en: 'Requires building' },
     placing: { zh: '建造中：点击岛上空地放置，Esc 取消', en: 'Placing: tap a free island tile (Esc cancels)' },
+    demolish: { zh: '铲除', en: 'Demolish' },
+    demolishMode: { zh: '铲除中：点击已建造的建筑拆除（返还 50% 造价），Esc 取消', en: 'Demolish: tap a building to remove it (50% refund), Esc cancels' },
+    demolished: { zh: '已拆除：', en: 'Demolished: ' },
+    refund: { zh: '返还', en: 'Refund' },
+    nothingHere: { zh: '这里没有建筑', en: 'Nothing built here' },
     built: { zh: '建造完成：', en: 'Built: ' },
     trained: { zh: '招募：', en: 'Recruited: ' },
     upgraded: { zh: '大本营升级至 Lv.', en: 'HQ upgraded to Lv.' },
@@ -375,9 +380,39 @@
     if (state !== 'playing') return;
     var b = BUILDINGS[key];
     if (G.hq < b.hq) { toast('needHq', ' ' + b.hq); return; }
+    demolishMode = false;
     G.placing = key;
     renderPanels();
     try { GamePlatform.ui.toast(t('placing')); } catch (e) { /* ignore */ }
+  }
+
+  function toggleDemolish() {
+    if (state !== 'playing') return;
+    demolishMode = !demolishMode;
+    G.placing = null;
+    renderPanels();
+    try { GamePlatform.ui.toast(t('demolishMode')); } catch (e) { /* ignore */ }
+  }
+
+  function demolishAt(c, r) {
+    if (state !== 'playing' || !demolishMode) return;
+    if (c < 0 || c >= GRID_COLS || r < 0 || r >= GRID_ROWS) return;
+    var gk = c + ',' + r;
+    var bkey = G.grid[gk];
+    if (!bkey) { toast('nothingHere'); return; }
+    var b = BUILDINGS[bkey];
+    delete G.grid[gk];
+    var refundF = Math.floor((b.food || 0) * 0.5);
+    var refundG = Math.floor((b.gold || 0) * 0.5);
+    var cap = capacity();
+    G.food = Math.min(cap.food, G.food + refundF);
+    G.gold = Math.min(cap.gold, G.gold + refundG);
+    if (window.ICAudio) ICAudio.build();
+    toast('demolished', ' ' + t(b) + ' (+' + refundF + ' ' + t('food') + ' +' + refundG + ' ' + t('gold') + ')');
+    demolishMode = false;
+    renderPanels();
+    updateHUD();
+    saveGame();
   }
 
   function placeAt(c, r) {
@@ -554,7 +589,7 @@
 
   function computeSig() {
     // hash of everything the cards display: only re-render when a button state/count changes
-    var parts = [G.hq, G.placing || '-', G.hq >= HQ_MAX ? 1 : (canAfford({ food: 220 * G.hq, gold: 180 * G.hq }) ? 1 : 0), G.march ? G.march.idx : '-'];
+    var parts = [G.hq, G.placing || '-', demolishMode ? 1 : 0, G.hq >= HQ_MAX ? 1 : (canAfford({ food: 220 * G.hq, gold: 180 * G.hq }) ? 1 : 0), G.march ? G.march.idx : '-'];
     for (var i = 0; i < BUILD_KEYS.length; i++) {
       var b = BUILDINGS[BUILD_KEYS[i]];
       parts.push(G.hq < b.hq ? 2 : (canAfford(b) ? 1 : 0));
@@ -610,6 +645,10 @@
         '<span class="card-cost">' + costTxt + '</span>' +
         '<span class="card-extra">' + extra + '</span></button>';
     }
+    html += '<button class="cmd-card' + (demolishMode ? ' selected' : '') + '" data-act="demolish">' +
+      '<span class="card-name">🔨 ' + t('demolish') + '</span>' +
+      '<span class="card-cost">−50%</span>' +
+      '<span class="card-extra">' + t('demolishMode') + '</span></button>';
     host.innerHTML = html;
   }
 
@@ -748,12 +787,16 @@
         var x = GRID_X + c * CELL, y = GRID_Y + r * CELL;
         var gk = c + ',' + r;
         var placed = G.grid[gk];
-        var isHover = G.placing && hoverCell && hoverCell.c === c && hoverCell.r === r;
+        var isHover = (G.placing || demolishMode) && hoverCell && hoverCell.c === c && hoverCell.r === r;
         ctx.fillStyle = placed ? 'rgba(255,255,255,0.14)' : pal.gridLine;
         roundRect(x + 3, y + 3, CELL - 6, CELL - 6, 8);
         ctx.fill();
         if (isHover) {
-          ctx.fillStyle = canAfford(BUILDINGS[G.placing]) ? 'rgba(80,200,120,0.45)' : 'rgba(220,80,80,0.4)';
+          if (demolishMode) {
+            ctx.fillStyle = placed ? 'rgba(220,80,80,0.5)' : 'rgba(220,80,80,0.25)';
+          } else {
+            ctx.fillStyle = canAfford(BUILDINGS[G.placing]) ? 'rgba(80,200,120,0.45)' : 'rgba(220,80,80,0.4)';
+          }
           roundRect(x + 3, y + 3, CELL - 6, CELL - 6, 8);
           ctx.fill();
         }
@@ -840,12 +883,12 @@
       ctx.globalAlpha = 1;
     }
 
-    // placing hint text
-    if (G.placing) {
+    // placing / demolish hint text
+    if (G.placing || demolishMode) {
       ctx.fillStyle = pal.nodeText;
       ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(t('placing'), 16, H - 16);
+      ctx.fillText(demolishMode ? t('demolishMode') : t('placing'), 16, H - 16);
     }
   }
 
@@ -927,6 +970,7 @@
 
   // ---------- input ----------
   var hoverCell = null;
+  var demolishMode = false;
 
   function canvasPos(e) {
     var rect = canvas.getBoundingClientRect();
@@ -995,6 +1039,7 @@
       var btn = e.target.closest ? e.target.closest('.cmd-card') : null;
       if (!btn) return;
       if (btn.getAttribute('data-act') === 'hq') { upgradeHQ(); return; }
+      if (btn.getAttribute('data-act') === 'demolish') { toggleDemolish(); return; }
       if (btn.classList.contains('locked') || btn.classList.contains('disabled')) return;
       selectBuilding(btn.getAttribute('data-key'));
     };
@@ -1018,13 +1063,15 @@
     canvas.addEventListener('click', function (e) {
       if (state !== 'playing') return;
       var cell = posToCell(canvasPos(e));
-      if (cell && G.placing) placeAt(cell.c, cell.r);
+      if (cell && demolishMode) demolishAt(cell.c, cell.r);
+      else if (cell && G.placing) placeAt(cell.c, cell.r);
       else if (G.placing) { G.placing = null; renderPanels(); }
     });
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         if (G && G.placing) { G.placing = null; renderPanels(); }
+        else if (demolishMode) { demolishMode = false; renderPanels(); }
         else if (state === 'playing') pauseGame();
         else if (state === 'paused') resumeGame();
       } else if (e.key === 'p' || e.key === 'P') {
@@ -1117,6 +1164,9 @@
     start: startGame,
     train: trainUnit,
     place: function (key, c, r) { G.placing = key; placeAt(c, r); },
+    demolish: toggleDemolish,
+    demolishAt: demolishAt,
+    get demolishing() { return demolishMode; },
     march: launchMarch,
     resolveRaid: resolveRaid,
     tick: function (s) { update(s); }
