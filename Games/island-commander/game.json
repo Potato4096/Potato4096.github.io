@@ -1,0 +1,26 @@
+{
+  "id": "island-commander",
+  "title": {
+    "zh": "海岛奇兵",
+    "en": "Island Commander"
+  },
+  "description": {
+    "zh": "蓝军兵败中原，退守东南小岛。建设农田、金矿与兵营积蓄力量，训练五大兵种，时机成熟即可挥师反攻：连下五镇、大破红方都城，统一中原。经营与出征自由安排，红方也会定期反扑，考验你的备战节奏。",
+    "en": "Defeated on the mainland, the Blue army retreats to a remote island in the southeast. Build farms, gold mines and barracks, train five unit types, then launch your counterattack: capture five towns, storm the Red capital and reunify the realm. Develop and attack at your own pace - Red raids keep the pressure on."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🏝️",
+  "tags": ["strategy", "simulation", "campaign", "singleplayer"],
+  "category": "strategy",
+  "players": 1,
+  "controls": {
+    "zh": "点击 / 触摸：选择建筑与兵种、放置建筑、出征选关；资源自动产出，红方每 90 秒反扑一次，打退可缴获资源",
+    "en": "Click / tap: pick buildings & units, place buildings, choose campaign stages. Resources accumulate automatically; Red raids every 90s - win them for bonus loot"
+  },
+  "api": ["settings", "storage", "i18n", "toast", "sound", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-02",
+  "updated": "2026-11-02"
+}

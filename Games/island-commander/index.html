@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海岛奇兵 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-home" data-i18n="home">返回主页</button>
+      <div class="hud">
+        <span class="hud-item"><span class="hud-label" data-i18n="food">食粮</span><b id="hud-food">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="gold">金币</span><b id="hud-gold">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="army">兵力</span><b id="hud-army">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="hq">大本营</span><b id="hud-hq">Lv.1</b></span>
+      </div>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-pause" data-i18n="pauseBtn">暂停</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-fullscreen" data-i18n="fullscreen">全屏</button>
+      </div>
+    </div>
+
+    <div class="game-wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="760" height="430"></canvas>
+        <div class="wave-banner" id="wave-banner"></div>
+
+        <div class="overlay" id="ov-menu">
+          <div class="panel pg-card">
+            <h1 class="game-title" data-i18n="title">海岛奇兵</h1>
+            <p class="tagline" data-i18n="tagline"></p>
+            <p class="stat-line"><span data-i18n="bestWave">最高战绩</span> <b id="menu-best">—</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-start" data-i18n="start">开始游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-clear" data-i18n="clearRecords">清除记录</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-pause" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="paused">已暂停</h2>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-resume" data-i18n="resume">继续游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-restart-pause" data-i18n="restart">重新开始</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-pause" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-gameover" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="gameOver">海岛失守</h2>
+            <p class="stat-line"><span data-i18n="reachStage">反攻进度</span> <b id="go-stage">0/6</b></p>
+            <p class="stat-line"><span data-i18n="elapsed">用时</span> <b id="go-time">00:00</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-go" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-go" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-victory" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="victory">统一中原！</h2>
+            <p class="tagline" data-i18n="victorySub"></p>
+            <p class="stat-line"><span data-i18n="elapsed">用时</span> <b id="vi-time">00:00</b></p>
+            <p class="stat-line"><span data-i18n="best">最佳纪录</span> <b id="vi-best">00:00</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-vi" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-vi" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cmd-bar">
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-build" data-i18n="tabBuild">经营</button>
+          <button class="tab-btn" id="tab-war" data-i18n="tabWar">出征</button>
+        </div>
+        <div class="raid-info pg-muted" id="raid-info"></div>
+      </div>
+
+      <div class="cmd-panel" id="panel-build">
+        <div class="cmd-section">
+          <div class="cmd-title"><span data-i18n="buildings">建筑</span> <span class="pg-muted" data-i18n="buildHint"></span></div>
+          <div class="card-row" id="build-grid"></div>
+        </div>
+        <div class="cmd-section">
+          <div class="cmd-title"><span data-i18n="units">兵种</span> <span class="pg-muted" data-i18n="trainHint"></span></div>
+          <div class="card-row" id="unit-grid"></div>
+        </div>
+      </div>
+
+      <div class="cmd-panel" id="panel-war" hidden>
+        <div class="cmd-section">
+          <div class="cmd-title"><span data-i18n="campaign">反攻路线</span> <span class="pg-muted" data-i18n="warHint"></span></div>
+          <div class="card-row" id="stage-list"></div>
+        </div>
+        <div class="cmd-section">
+          <div class="cmd-title"><span data-i18n="armySummary">远征军</span></div>
+          <div class="army-summary pg-muted" id="army-summary"></div>
+        </div>
+      </div>
+
+      <p class="pg-muted controls-hint" data-i18n="controls"></p>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

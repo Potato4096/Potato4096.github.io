@@ -1,0 +1,276 @@
+/* island-commander - game styles (theme-aware via --pg-* variables) */
+
+.game-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stage {
+  position: relative;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  overflow: hidden;
+  background: var(--pg-surface-2);
+  box-shadow: var(--pg-shadow);
+  line-height: 0;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.wave-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(10, 14, 22, 0.72);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  z-index: 4;
+  white-space: nowrap;
+}
+
+.wave-banner.show {
+  opacity: 1;
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.hud-label {
+  color: var(--pg-text-muted);
+  font-size: 12px;
+}
+
+.hud-item b {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* overlays */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 14, 22, 0.52);
+  line-height: 1.5;
+  z-index: 5;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay .panel {
+  width: min(440px, 100%);
+  text-align: center;
+}
+
+.game-title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.overlay .tagline {
+  margin: 0 0 14px;
+  color: var(--pg-text-muted);
+  font-size: 14px;
+}
+
+.stat-line {
+  margin: 4px 0;
+  font-size: 15px;
+}
+
+.stat-line b {
+  color: var(--pg-accent);
+  font-size: 17px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/* command bar below the frame - stays close to it */
+.cmd-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.tab-btn {
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--pg-border);
+  background: var(--pg-surface);
+  color: var(--pg-text-muted);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: var(--pg-accent);
+  border-color: var(--pg-accent);
+  color: var(--pg-btn-text, #fff);
+  font-weight: 600;
+}
+
+.raid-info {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cmd-panel {
+  margin-top: 10px;
+}
+
+.cmd-section {
+  margin-top: 12px;
+}
+
+.cmd-section:first-child {
+  margin-top: 4px;
+}
+
+.cmd-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cmd-title .pg-muted {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cmd-card {
+  min-width: 104px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--pg-border);
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  font-size: 12px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+.cmd-card:hover {
+  border-color: var(--pg-accent);
+}
+
+.cmd-card.selected {
+  border-color: var(--pg-accent);
+  background: var(--pg-accent-soft);
+}
+
+.cmd-card.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cmd-card .card-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cmd-card .card-cost {
+  display: block;
+  color: var(--pg-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cmd-card .card-extra {
+  display: block;
+  color: var(--pg-accent);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cmd-card.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.army-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.controls-hint {
+  margin: 12px 2px 0;
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .hud-item {
+    font-size: 13px;
+  }
+
+  .cmd-card {
+    min-width: 88px;
+  }
+}

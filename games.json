@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-01T11:07:55.624Z",
-  "count": 9,
+  "generatedAt": "2026-11-02T12:52:31.856Z",
+  "count": 10,
   "games": [
     {
       "id": "arena-survivor",
@@ -21,6 +21,10 @@
     {
       "id": "doudizhu",
       "dir": "Games/doudizhu"
+    },
+    {
+      "id": "island-commander",
+      "dir": "Games/island-commander"
     },
     {
       "id": "minesweeper",
