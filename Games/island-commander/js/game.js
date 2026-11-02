@@ -14,6 +14,9 @@
     },
     bestWave: { zh: '最高战绩', en: 'Best campaign' },
     start: { zh: '开始游戏', en: 'Start' },
+    continueSave: { zh: '继续游戏', en: 'Continue' },
+    newGame: { zh: '开始新游戏', en: 'New game' },
+    saveRestored: { zh: '已恢复上次进度', en: 'Progress restored' },
     clearRecords: { zh: '清除记录', en: 'Clear records' },
     paused: { zh: '已暂停', en: 'Paused' },
     resume: { zh: '继续游戏', en: 'Resume' },
@@ -188,6 +191,77 @@
     };
   }
 
+  // ---------- persistence (localStorage auto-save) ----------
+  var SAVE_KEY = 'save';
+  var SAVE_VER = 1;
+
+  function clearSave() {
+    GamePlatform.storage.remove(SAVE_KEY);
+  }
+
+  function saveGame() {
+    if (state !== 'playing' && state !== 'paused') return;
+    GamePlatform.storage.set(SAVE_KEY, {
+      v: SAVE_VER,
+      food: G.food, gold: G.gold, hq: G.hq,
+      grid: G.grid,
+      units: G.units,
+      captured: G.captured,
+      hqLines: G.hqLines,
+      time: G.time,
+      raidTimer: G.raidTimer,
+      march: G.march ? { idx: G.march.idx, total: G.march.total, timer: G.march.timer } : null,
+      placing: G.placing
+    });
+  }
+
+  function readSave() {
+    var s = GamePlatform.storage.get(SAVE_KEY, null);
+    if (!s || s.v !== SAVE_VER) return null;
+    if (typeof s.food !== 'number' || typeof s.gold !== 'number') return null;
+    if (!s.grid || typeof s.grid !== 'object') return null;
+    if (!s.units || !Array.isArray(s.captured)) return null;
+    return s;
+  }
+
+  function loadGame() {
+    var s = readSave();
+    if (!s) return false;
+    var g = newGame();
+    g.food = Math.max(0, s.food);
+    g.gold = Math.max(0, s.gold);
+    g.hq = Math.min(HQ_MAX, Math.max(1, s.hq | 0));
+    for (var gk in s.grid) {
+      var parts = gk.split(',');
+      var c = parts[0] | 0, r = parts[1] | 0;
+      var bkey = s.grid[gk];
+      if (c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS && BUILDINGS[bkey]) {
+        g.grid[c + ',' + r] = bkey;
+      }
+    }
+    for (var i = 0; i < UNIT_KEYS.length; i++) {
+      var uk = UNIT_KEYS[i];
+      g.units[uk] = Math.max(0, s.units[uk] | 0);
+    }
+    g.captured = s.captured.filter(function (n) {
+      return typeof n === 'number' && n >= 0 && n < STAGES.length;
+    });
+    g.hqLines = Math.min(3, Math.max(1, s.hqLines | 0));
+    g.time = Math.max(0, s.time || 0);
+    g.raidTimer = Math.max(1, s.raidTimer || RAID_INTERVAL);
+    if (s.march && typeof s.march.idx === 'number' && s.march.idx >= 0 && s.march.idx < STAGES.length) {
+      var total = Math.max(0.5, s.march.total || 7);
+      g.march = {
+        idx: s.march.idx | 0,
+        total: total,
+        timer: Math.min(total, Math.max(0, s.march.timer || total))
+      };
+    }
+    if (s.placing && BUILDINGS[s.placing]) g.placing = s.placing;
+    G = g;
+    return true;
+  }
+
   // ---------- economy helpers ----------
   function capacity() {
     var f = 800 + (G.hq - 1) * 150, g = 640 + (G.hq - 1) * 120;
@@ -273,6 +347,7 @@
     if (window.ICAudio) ICAudio.train();
     renderPanels();
     updateHUD();
+    saveGame();
   }
   function findKeyOf(bkey) {
     for (var gk in G.grid) if (G.grid[gk] === bkey) return gk;
@@ -293,6 +368,7 @@
     toast('upgraded', ' ' + G.hq);
     renderPanels();
     updateHUD();
+    saveGame();
   }
 
   function selectBuilding(key) {
@@ -320,6 +396,7 @@
     toast('built', ' ' + t(b));
     renderPanels();
     updateHUD();
+    saveGame();
   }
 
   // ---------- campaign ----------
@@ -337,6 +414,7 @@
     if (window.ICAudio) ICAudio.march();
     banner(t('marchGo') + t(STAGES[idx]));
     renderPanels();
+    saveGame();
   }
 
   function resolveMarch() {
@@ -367,6 +445,7 @@
     }
     renderPanels();
     updateHUD();
+    saveGame();
   }
 
   function applyLosses(frac) {
@@ -407,6 +486,7 @@
       }
     }
     updateHUD();
+    saveGame();
   }
 
   // ---------- flow ----------
@@ -416,11 +496,13 @@
     hideOverlays();
     renderPanels();
     updateHUD();
+    saveGame();
   }
   function pauseGame() {
     if (state !== 'playing') return;
     state = 'paused';
     showOverlay('ov-pause');
+    saveGame();
   }
   function resumeGame() {
     if (state !== 'paused') return;
@@ -429,6 +511,7 @@
   }
   function loseGame() {
     state = 'gameover';
+    clearSave();
     if (window.ICAudio) ICAudio.lose();
     $('go-stage').textContent = G.captured.length + '/' + STAGES.length;
     $('go-time').textContent = fmtTime(G.time);
@@ -438,6 +521,7 @@
   }
   function winGame() {
     state = 'victory';
+    clearSave();
     if (window.ICAudio) ICAudio.win();
     var bestMs = GamePlatform.storage.get('best_time', 0) || 0;
     var ms = Math.round(G.time * 1000);
@@ -464,12 +548,37 @@
   }
 
   // ---------- panels (DOM) ----------
+  var panelSig = '';
+  var pointerIsDown = false;
+  var saveAcc = 0;
+
+  function computeSig() {
+    // hash of everything the cards display: only re-render when a button state/count changes
+    var parts = [G.hq, G.placing || '-', G.hq >= HQ_MAX ? 1 : (canAfford({ food: 220 * G.hq, gold: 180 * G.hq }) ? 1 : 0), G.march ? G.march.idx : '-'];
+    for (var i = 0; i < BUILD_KEYS.length; i++) {
+      var b = BUILDINGS[BUILD_KEYS[i]];
+      parts.push(G.hq < b.hq ? 2 : (canAfford(b) ? 1 : 0));
+    }
+    for (var j = 0; j < UNIT_KEYS.length; j++) {
+      var u = UNITS[UNIT_KEYS[j]];
+      parts.push(G.units[UNIT_KEYS[j]]);
+      parts.push((!u.need || hasBuilding(u.need)) && canAfford(u) && armyCount() < armyCap() ? 1 : 0);
+    }
+    for (var s = 0; s < STAGES.length; s++) {
+      var st = STAGES[s];
+      parts.push(G.captured.indexOf(s) !== -1 ? 2 :
+        (s === 0 || G.captured.indexOf(s - 1) !== -1 ? (armyPower(G.units) > st.power * 0.85 ? 1 : 0) : 0));
+    }
+    return parts.join('|');
+  }
+
   function renderPanels() {
     if (!G) return;
     renderBuildGrid();
     renderUnitGrid();
     renderStageList();
     renderRaidInfo();
+    panelSig = computeSig();
   }
 
   function renderBuildGrid() {
@@ -857,8 +966,25 @@
     $('btn-clear').onclick = function () {
       GamePlatform.storage.set('best_time', 0);
       GamePlatform.storage.set('best_stage', 0);
+      clearSave();
       $('menu-best').textContent = '—';
+      $('btn-continue').hidden = true;
+      $('btn-start').className = 'pg-btn';
+      $('btn-start').setAttribute('data-i18n', 'start');
+      applyLang();
       toast('clearRecords');
+    };
+    $('btn-continue').onclick = function () {
+      if (loadGame()) {
+        state = 'playing';
+        hideOverlays();
+        renderPanels();
+        updateHUD();
+        banner(t('saveRestored'));
+        if (window.ICAudio) ICAudio.unlock();
+      } else {
+        startGame();
+      }
     };
 
     $('tab-build').onclick = function () { switchTab('build'); };
@@ -906,6 +1032,17 @@
         else if (state === 'paused') resumeGame();
       }
     });
+
+    // keep card re-renders from stealing an in-progress click
+    document.addEventListener('pointerdown', function () { pointerIsDown = true; });
+    document.addEventListener('pointerup', function () { pointerIsDown = false; });
+    document.addEventListener('pointercancel', function () { pointerIsDown = false; });
+
+    // flush save on refresh / tab close / background
+    window.addEventListener('pagehide', saveGame);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) saveGame();
+    });
   }
 
   function switchTab(which) {
@@ -921,8 +1058,17 @@
     if (!lastTs) lastTs = ts;
     var dt = Math.min((ts - lastTs) / 1000, 1 / 30);
     lastTs = ts;
-    if (state === 'playing') update(dt);
-    if (G) draw();
+    if (state === 'playing') {
+      update(dt);
+      saveAcc += dt;
+      if (saveAcc >= 4) { saveAcc = 0; saveGame(); }
+    }
+    if (G) {
+      updateHUD();
+      renderRaidInfo();
+      if (!pointerIsDown && computeSig() !== panelSig) renderPanels();
+      draw();
+    }
     requestAnimationFrame(frame);
   }
 
@@ -938,6 +1084,14 @@
     var bestStage = GamePlatform.storage.get('best_stage', 0) || 0;
     $('menu-best').textContent = bestMs ? fmtTime(bestMs / 1000) :
       (bestStage ? bestStage + '/' + STAGES.length : '—');
+    // offer "continue" when an in-progress run was auto-saved
+    var hasSave = !!readSave();
+    $('btn-continue').hidden = !hasSave;
+    if (hasSave) {
+      $('btn-continue').className = 'pg-btn';
+      $('btn-start').className = 'pg-btn pg-btn--ghost';
+      $('btn-start').setAttribute('data-i18n', 'newGame');
+    }
     applyLang();
     bindInput();
     switchTab('build');
