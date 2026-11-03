@@ -42,11 +42,11 @@
     units: { zh: '兵种', en: 'Units' },
     trainHint: { zh: '点击招募', en: 'Tap to recruit' },
     campaign: { zh: '反攻路线', en: 'Counterattack route' },
-    warHint: { zh: '点选出征，自动战斗结算', en: 'Pick a target - battle auto-resolves' },
+    warHint: { zh: '目标任选，整备好了就出击；⚔ 为敌我战力对比，红框表示此战凶险', en: 'Pick any target when ready; ⚔ shows your power vs theirs, red border = risky fight' },
     armySummary: { zh: '远征军', en: 'Expeditionary force' },
     controls: {
-      zh: '操作：点击 / 触摸选择建筑与兵种，点选建筑后点击岛上空地建造，铲除按钮可拆除建筑；出征页点目标自动战斗。红方每 90 秒反扑一次，防住可缴获资源。Esc / P 暂停。',
-      en: 'Controls: click / tap to pick buildings & units, then tap a free island tile to build; use Demolish to remove buildings; pick a campaign target to auto-battle. Red raids every 90s - hold the island for loot. Esc / P to pause.'
+      zh: '操作：点击 / 触摸选择建筑与兵种，点选建筑后点击岛上空地建造，铲除按钮可拆除建筑；出征页自由选择目标反攻，时机由你定。红方每 90 秒反扑一次，防住可缴获资源。Esc / P 暂停。',
+      en: 'Controls: click / tap to pick buildings & units, then tap a free island tile to build; use Demolish to remove buildings; choose any campaign target and counterattack at your own pace. Red raids every 90s - hold the island for loot. Esc / P to pause.'
     },
     cancel: { zh: '取消', en: 'Cancel' },
     level: { zh: '等级', en: 'Level' },
@@ -108,20 +108,20 @@
   var BUILD_KEYS = ['farm', 'mine', 'barracks', 'depot', 'tower', 'range', 'stable', 'workshop'];
 
   var STAGES = [
-    { zh: '渔村', en: 'Fishing Village', power: 220, food: 180, gold: 120, x: 585, y: 168 },
-    { zh: '枫桥镇', en: 'Maple Bridge', power: 480, food: 300, gold: 230, x: 482, y: 128 },
-    { zh: '铁门关', en: 'Iron Gate Pass', power: 900, food: 430, gold: 360, x: 378, y: 100 },
-    { zh: '临江城', en: 'Riverhold', power: 1500, food: 580, gold: 520, x: 272, y: 82 },
-    { zh: '洛京', en: 'Luojing', power: 2400, food: 800, gold: 740, x: 168, y: 66 },
-    { zh: '中原·决战', en: 'Central Plains', power: 3400, food: 1100, gold: 1000, x: 66, y: 54 }
+    { zh: '渔村', en: 'Fishing Village', power: 220, food: 180, gold: 120 },
+    { zh: '枫桥镇', en: 'Maple Bridge', power: 480, food: 300, gold: 230 },
+    { zh: '铁门关', en: 'Iron Gate Pass', power: 900, food: 430, gold: 360 },
+    { zh: '临江城', en: 'Riverhold', power: 1500, food: 580, gold: 520 },
+    { zh: '洛京', en: 'Luojing', power: 2400, food: 800, gold: 740 },
+    { zh: '中原·决战', en: 'Central Plains', power: 3400, food: 1100, gold: 1000 }
   ];
 
   var RAID_INTERVAL = 90;
   var HQ_MAX = 5;
 
-  // island building grid (5 x 4 on the island)
-  var GRID_COLS = 5, GRID_ROWS = 4, CELL = 54;
-  var GRID_X = 452, GRID_Y = 206;
+  // island building grid (8 x 5 on the island)
+  var GRID_COLS = 8, GRID_ROWS = 5, CELL = 54;
+  var GRID_X = 164, GRID_Y = 80;
 
   // ---------- palette (nature scene + theme blend) ----------
   var WORLD = {
@@ -191,8 +191,7 @@
       raidTimer: RAID_INTERVAL,
       march: null,         // { idx, timer, total }
       placing: null,       // building key awaiting a tile
-      banner: { text: '', t: 0 },
-      flashes: []          // battle flash particles at nodes
+      banner: { text: '', t: 0 }
     };
   }
 
@@ -440,7 +439,6 @@
     if (G.march) { toast('marchBusy'); return; }
     if (armyCount() < 3) { toast('needArmy'); return; }
     if (G.captured.indexOf(idx) !== -1) return;
-    if (idx > 0 && G.captured.indexOf(idx - 1) === -1) return;
     G.march = {
       idx: idx,
       total: 7 + idx * 2.5,
@@ -463,7 +461,6 @@
       ratio >= 0.85 ? 0.5 : ratio >= 0.65 ? 0.8 : 1.0;
     applyLosses(losses);
     G.march = null;
-    G.flashes.push({ x: st.x, y: st.y, t: 1.2, win: win });
     if (win) {
       G.captured.push(m.idx);
       G.food = Math.min(capacity().food, G.food + st.food);
@@ -601,8 +598,7 @@
     }
     for (var s = 0; s < STAGES.length; s++) {
       var st = STAGES[s];
-      parts.push(G.captured.indexOf(s) !== -1 ? 2 :
-        (s === 0 || G.captured.indexOf(s - 1) !== -1 ? (armyPower(G.units) > st.power * 0.85 ? 1 : 0) : 0));
+      parts.push(G.captured.indexOf(s) !== -1 ? 2 : (armyPower(G.units) > st.power * 0.85 ? 1 : 0));
     }
     return parts.join('|');
   }
@@ -678,14 +674,14 @@
     for (var i = 0; i < STAGES.length; i++) {
       var st = STAGES[i];
       var done = G.captured.indexOf(i) !== -1;
-      var open = i === 0 || G.captured.indexOf(i - 1) !== -1;
       var mine = armyPower(G.units);
       var canWin = mine > st.power * 0.85;
-      var cls = 'cmd-card' + (done ? ' selected' : (!open ? ' locked' : (canWin ? '' : ' disabled')));
+      var cls = 'cmd-card' + (done ? ' selected' : (canWin ? '' : ' risky'));
+      var warn = done ? '—' : (canWin ? fmtCost({ food: st.food, gold: st.gold }) : '⚠ ' + fmtCost({ food: st.food, gold: st.gold }));
       html += '<button class="' + cls + '" data-act="march" data-key="' + i + '">' +
-        '<span class="card-name">' + (done ? '✅ ' : open ? '🚩 ' : '🔒 ') + t(st) + '</span>' +
-        '<span class="card-cost">' + t('defend') + ' ' + Math.round(st.power) + '</span>' +
-        '<span class="card-extra">' + (done ? '—' : fmtCost({ food: st.food, gold: st.gold })) + '</span></button>';
+        '<span class="card-name">' + (done ? '✅ ' : canWin ? '🚩 ' : '⚠ ') + t(st) + '</span>' +
+        '<span class="card-cost">⚔' + Math.round(mine) + ' vs ⚔' + Math.round(st.power) + '</span>' +
+        '<span class="card-extra">' + warn + '</span></button>';
     }
     host.innerHTML = html;
     var sum = $('army-summary');
@@ -754,24 +750,8 @@
     }
     ctx.globalAlpha = 1;
 
-    // mainland (top-left wedge)
-    ctx.fillStyle = pal.mainland;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(W * 0.62, 0);
-    ctx.bezierCurveTo(W * 0.52, 60, 300, 120, 170, 148);
-    ctx.bezierCurveTo(90, 166, 30, 150, 0, 172);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = pal.mainlandEdge;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // red capital marker on mainland
-    drawFlag(STAGES[5].x, STAGES[5].y, pal.flagRed, G.captured.indexOf(5) !== -1 ? pal.flagBlue : pal.flagRed);
-
-    // island
-    var ix = 590, iy = 300, irx = 175, iry = 125;
+    // island fills the canvas
+    var ix = 380, iy = 215, irx = 352, iry = 202;
     ctx.fillStyle = pal.sand;
     ctx.beginPath();
     ctx.ellipse(ix, iy, irx, iry, 0, 0, Math.PI * 2);
@@ -818,71 +798,6 @@
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText('Lv.' + G.hq, GRID_X - 42, GRID_Y + CELL * 1.6 + 26);
 
-    // campaign route
-    ctx.strokeStyle = pal.route;
-    ctx.globalAlpha = 0.75;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([7, 7]);
-    ctx.beginPath();
-    ctx.moveTo(700, 240);
-    for (var s = 0; s < STAGES.length; s++) {
-      ctx.lineTo(STAGES[s].x, STAGES[s].y);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-
-    // stage nodes
-    for (var s2 = 0; s2 < STAGES.length; s2++) {
-      var st = STAGES[s2];
-      var done = G.captured.indexOf(s2) !== -1;
-      var open = s2 === 0 || G.captured.indexOf(s2 - 1) !== -1;
-      ctx.fillStyle = done ? pal.flagBlue : (open ? pal.nodeFill : 'rgba(128,128,128,0.55)');
-      ctx.beginPath();
-      ctx.arc(st.x, st.y, 13, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = pal.cardEdge;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      if (!done) drawFlag(st.x + 10, st.y - 16, open ? pal.flagRed : 'rgba(128,128,128,0.8)', pal.flagRed);
-      ctx.fillStyle = pal.nodeText;
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(String(s2 + 1), st.x, st.y + 1);
-      // label
-      ctx.fillStyle = done ? pal.flagBlue : pal.nodeText;
-      ctx.font = '11px sans-serif';
-      ctx.fillText(t(STAGES[s2]), st.x, st.y + 26);
-    }
-
-    // march marker
-    if (G.march) {
-      var prog = 1 - G.march.timer / G.march.total;
-      var from = { x: 700, y: 240 }, to = STAGES[G.march.idx];
-      var mx = from.x + (to.x - from.x) * prog, my = from.y + (to.y - from.y) * prog;
-      ctx.fillStyle = pal.flagBlue;
-      ctx.beginPath();
-      ctx.arc(mx, my, 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('⚔', mx, my + 4);
-    }
-
-    // battle flashes
-    for (var f = G.flashes.length - 1; f >= 0; f--) {
-      var fl = G.flashes[f];
-      fl.t -= 0.016;
-      if (fl.t <= 0) { G.flashes.splice(f, 1); continue; }
-      ctx.globalAlpha = Math.min(1, fl.t);
-      ctx.fillStyle = fl.win ? pal.flagBlue : pal.flagRed;
-      ctx.beginPath();
-      ctx.arc(fl.x, fl.y, 16 + (1.2 - fl.t) * 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-
     // placing / demolish hint text
     if (G.placing || demolishMode) {
       ctx.fillStyle = pal.nodeText;
@@ -905,22 +820,6 @@
     ctx.arcTo(x, y + h, x, y, r);
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
-  }
-
-  function drawFlag(x, y, color, pole) {
-    ctx.strokeStyle = pole || '#8d6e63';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x, y + 22);
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + 16, y + 5);
-    ctx.lineTo(x, y + 11);
-    ctx.closePath();
-    ctx.fill();
   }
 
   // ---------- update ----------

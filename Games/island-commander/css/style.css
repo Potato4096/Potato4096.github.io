@@ -226,6 +226,15 @@
   cursor: not-allowed;
 }
 
+.cmd-card.risky {
+  border-color: #e06060;
+  border-style: dashed;
+}
+
+.cmd-card.risky:hover {
+  border-color: #e06060;
+}
+
 .cmd-card .card-name {
   display: block;
   font-size: 13px;
