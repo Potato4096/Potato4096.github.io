@@ -60,6 +60,12 @@
     marchGo: { zh: '远征军出征：', en: 'Army marching on ' },
     marchWin: { zh: '大捷！已攻占：', en: 'Victory! Captured: ' },
     marchLose: { zh: '进攻受挫，部队溃散', en: 'Assault repelled - forces scattered' },
+    ourSide: { zh: '我方', en: 'Ours' },
+    enemySide: { zh: '敌方', en: 'Enemy' },
+    battleWin: { zh: '大捷！', en: 'Victory!' },
+    battleLose: { zh: '败退…', en: 'Defeated…' },
+    battleClash: { zh: '交战中…', en: 'Fighting…' },
+    battleApproach: { zh: '敌军逼近…', en: 'Enemy approaching…' },
     needArmy: { zh: '至少需要 3 名士兵才能出征', en: 'You need at least 3 soldiers to march' },
     armyFull: { zh: '兵力已达上限', en: 'Army is at capacity' },
     marchBusy: { zh: '远征军尚未回岛', en: 'Army is still out on campaign' },
@@ -190,6 +196,7 @@
       time: 0,
       raidTimer: RAID_INTERVAL,
       march: null,         // { idx, timer, total }
+      battle: null,        // transient battle animation (not saved)
       placing: null,       // building key awaiting a tile
       banner: { text: '', t: 0 }
     };
@@ -434,6 +441,52 @@
   }
 
   // ---------- campaign ----------
+  // ---------- battle animation (top-left mini window, flavor only) ----------
+  function startBattle(kind, label, ourPow, enemyPow) {
+    G.battle = {
+      kind: kind, label: label,
+      ourPow: Math.max(1, ourPow), enemyPow: Math.max(1, enemyPow),
+      our: 1, enemy: 1,
+      prog: 0,
+      result: null,        // null | 'win' | 'lose'
+      resultT: 0,
+      sparks: [],
+      t: 0
+    };
+  }
+
+  function endBattle(win) {
+    var b = G.battle;
+    if (!b) return;
+    b.result = win ? 'win' : 'lose';
+    b.resultT = 2.8;
+    if (win) b.enemy = 0; else b.our = 0;
+    // burst of sparks at the clash line
+    for (var i = 0; i < 14; i++) {
+      b.sparks.push({
+        x: 85 + (Math.random() - 0.5) * 36,
+        y: 72 + (Math.random() - 0.5) * 30,
+        vx: (Math.random() - 0.5) * 90,
+        vy: (Math.random() - 0.5) * 90,
+        t: 0.4 + Math.random() * 0.4,
+        r: 1.5 + Math.random() * 2.5
+      });
+    }
+  }
+
+  function pushSpark() {
+    var b = G.battle;
+    if (!b) return;
+    b.sparks.push({
+      x: 85 + (Math.random() - 0.5) * 30,
+      y: 72 + (Math.random() - 0.5) * 24,
+      vx: (Math.random() - 0.5) * 50,
+      vy: (Math.random() - 0.5) * 50,
+      t: 0.3 + Math.random() * 0.3,
+      r: 1.2 + Math.random() * 2
+    });
+  }
+
   function launchMarch(idx) {
     if (state !== 'playing') return;
     if (G.march) { toast('marchBusy'); return; }
@@ -444,6 +497,7 @@
       total: 7 + idx * 2.5,
       timer: 7 + idx * 2.5
     };
+    startBattle('march', t(STAGES[idx]), armyPower(G.units), STAGES[idx].power);
     if (window.ICAudio) ICAudio.march();
     banner(t('marchGo') + t(STAGES[idx]));
     renderPanels();
@@ -461,6 +515,7 @@
       ratio >= 0.85 ? 0.5 : ratio >= 0.65 ? 0.8 : 1.0;
     applyLosses(losses);
     G.march = null;
+    endBattle(win);
     if (win) {
       G.captured.push(m.idx);
       G.food = Math.min(capacity().food, G.food + st.food);
@@ -496,6 +551,11 @@
     var mine = fullArmyPower();
     var theirs = raidPower() * (0.9 + Math.random() * 0.2);
     var ratio = mine / Math.max(1, theirs);
+    var win = ratio > 0.85;
+    // make sure the battle window shows this clash (replace any stale one)
+    if (!G.battle || G.battle.kind !== 'raid' || G.battle.result) {
+      startBattle('raid', t('raidIn'), mine, theirs);
+    }
     if (ratio > 0.85) {
       var loot = 60 + G.captured.length * 40;
       G.food = Math.min(capacity().food, G.food + loot);
@@ -512,10 +572,11 @@
       if (window.ICAudio) ICAudio.raid();
       toast('raidLose');
       banner(t('linesDown'));
-      if (G.hqLines <= 0) {
-        loseGame();
-        return;
-      }
+    }
+    endBattle(win);
+    if (G.hqLines <= 0) {
+      loseGame();
+      return;
     }
     updateHUD();
     saveGame();
@@ -781,10 +842,29 @@
           ctx.fill();
         }
         if (placed) {
-          ctx.font = '26px serif';
+          var bcol = BUILD_COLOR[placed] || '#795548';
+          // solid colored tile so the building stands out from the grass
+          ctx.fillStyle = bcol;
+          roundRect(x + 4, y + 4, CELL - 8, CELL - 8, 10);
+          ctx.fill();
+          // glossy top half
+          ctx.fillStyle = 'rgba(255,255,255,0.22)';
+          roundRect(x + 4, y + 4, CELL - 8, 18, 10);
+          ctx.fill();
+          // big glyph with outline (readable on any bg)
+          var glyph = BUILD_GLYPH[placed] || '🏠';
+          ctx.font = '22px "Segoe UI Emoji", "Apple Color Emoji", serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(BUILD_GLYPH[placed] || '🏠', x + CELL / 2, y + CELL / 2 + 1);
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+          ctx.strokeText(glyph, x + CELL / 2, y + CELL / 2 - 4);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(glyph, x + CELL / 2, y + CELL / 2 - 4);
+          // name label at the bottom of the tile
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.95)';
+          ctx.fillText(t(BUILDINGS[placed]), x + CELL / 2, y + CELL - 10);
         }
       }
     }
@@ -793,10 +873,10 @@
     ctx.font = '30px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🏛', GRID_X - 42, GRID_Y + CELL * 1.6);
+    ctx.fillText('🏛', GRID_X - 42, GRID_Y + CELL * 2.5);
     ctx.fillStyle = pal.nodeText;
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('Lv.' + G.hq, GRID_X - 42, GRID_Y + CELL * 1.6 + 26);
+    ctx.fillText('Lv.' + G.hq, GRID_X - 42, GRID_Y + CELL * 2.5 + 26);
 
     // placing / demolish hint text
     if (G.placing || demolishMode) {
@@ -805,11 +885,130 @@
       ctx.textAlign = 'left';
       ctx.fillText(demolishMode ? t('demolishMode') : t('placing'), 16, H - 16);
     }
+
+    // battle mini-window (top-left corner)
+    drawBattlePanel();
+  }
+
+  // ---------- battle mini-window (top-left) ----------
+  var BX = 10, BY = 10, BW = 150, BH = 156;
+
+  function drawBar(x, y, w, h, frac, color, label) {
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    roundRect(x, y, w, h, 4);
+    ctx.fill();
+    ctx.fillStyle = color;
+    roundRect(x, y, Math.max(3, w * Math.max(0, Math.min(1, frac))), h, 4);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(label, x, y - 3);
+  }
+
+  function drawBattlePanel() {
+    if (!G || !G.battle) return;
+    var b = G.battle;
+
+    // frame
+    ctx.fillStyle = 'rgba(16,20,28,0.88)';
+    roundRect(BX, BY, BW, BH, 10);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.5;
+    roundRect(BX, BY, BW, BH, 10);
+    ctx.stroke();
+
+    // title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⚔ ' + b.label, BX + 10, BY + 13);
+
+    // battlefield
+    var fx = BX + 8, fy = BY + 24, fw = BW - 16, fh = 82;
+    var midX = fx + fw / 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    roundRect(fx, fy, fw, fh, 6);
+    ctx.fill();
+
+    // unit pips advancing toward the clash line
+    var N = 8;
+    var ourN = Math.ceil(b.our * N);
+    var enemyN = Math.ceil(b.enemy * N);
+    var adv = Math.min(1, b.prog / 0.85);
+    var i, px, py;
+    for (i = 0; i < N; i++) {
+      if (i < ourN) {
+        px = fx + 8 + (i % 4) * 11 + adv * (fw / 2 - 52);
+        py = fy + 22 + Math.floor(i / 4) * 18 + Math.sin(b.t * 3 + i) * 1.5;
+        ctx.fillStyle = pal.flagBlue;
+        roundRect(px, py, 9, 9, 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        roundRect(px, py, 9, 3, 2);
+        ctx.fill();
+      }
+      if (i < enemyN) {
+        px = fx + fw - 17 - (i % 4) * 11 - adv * (fw / 2 - 52);
+        py = fy + 22 + Math.floor(i / 4) * 18 + Math.sin(b.t * 3.4 + i * 1.7) * 1.5;
+        ctx.fillStyle = pal.flagRed;
+        roundRect(px, py, 9, 9, 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        roundRect(px, py, 9, 3, 2);
+        ctx.fill();
+      }
+    }
+
+    // clash flash at the front line while fighting
+    if (!b.result && b.prog > 0.08 && b.kind === 'march') {
+      ctx.fillStyle = 'rgba(255,215,110,' + (0.14 + 0.12 * Math.sin(b.t * 12)).toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(midX, fy + fh / 2, 13, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // sparks
+    for (i = 0; i < b.sparks.length; i++) {
+      var s = b.sparks[i];
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.t * 2));
+      ctx.fillStyle = '#ffd54f';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // status line inside the field
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if (b.result) {
+      ctx.fillStyle = b.result === 'win' ? '#7ee787' : '#ff7b72';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText(b.result === 'win' ? t('battleWin') : t('battleLose'), midX, fy + fh - 12);
+    } else {
+      ctx.fillText(b.kind === 'raid' && b.prog < 0.5 ? t('battleApproach') : t('battleClash'), midX, fy + fh - 12);
+    }
+
+    // HP bars
+    drawBar(BX + 10, BY + 118, BW - 20, 8, b.our, pal.flagBlue, t('ourSide'));
+    drawBar(BX + 10, BY + 138, BW - 20, 8, b.enemy, pal.flagRed, t('enemySide'));
   }
 
   var BUILD_GLYPH = {
     farm: '🌾', mine: '⛏', barracks: '⛺', depot: '📦',
     tower: '🗼', range: '🏹', stable: '🐎', workshop: '🔨'
+  };
+
+  // per-building tile colors (high contrast on grass, works in both themes)
+  var BUILD_COLOR = {
+    farm: '#2e7d32', mine: '#6d4c41', barracks: '#c62828', depot: '#f9a825',
+    tower: '#1565c0', range: '#00695c', stable: '#ef6c00', workshop: '#455a64'
   };
 
   function roundRect(x, y, w, h, r) {
@@ -838,6 +1037,33 @@
     G.food = Math.min(cap.food, G.food + foodRate * dt);
     G.gold = Math.min(cap.gold, G.gold + goldRate * dt);
 
+    // battle animation tick (runs before resolutions so a fresh result
+    // set this frame is guaranteed its full display time)
+    if (G.battle) {
+      var bb = G.battle;
+      bb.t += dt;
+      if (bb.result) {
+        bb.resultT -= dt;
+        if (bb.resultT <= 0) G.battle = null;
+      } else if (bb.kind === 'march') {
+        if (G.march) bb.prog = Math.min(1, 1 - G.march.timer / G.march.total);
+        // both sides wear down; the stronger side wears down slower
+        var share = bb.ourPow / (bb.ourPow + bb.enemyPow);
+        bb.enemy = Math.max(0.08, bb.enemy - dt * 0.4 * share);
+        bb.our = Math.max(0.08, bb.our - dt * 0.4 * (1 - share));
+        if (Math.random() < dt * 5) pushSpark();
+      } else if (bb.kind === 'raid' && bb.prog < 0.5) {
+        bb.prog = Math.min(0.5, bb.prog + dt * 0.12); // enemy fleet approaches
+      }
+      for (var si = bb.sparks.length - 1; si >= 0; si--) {
+        var sp = bb.sparks[si];
+        sp.t -= dt;
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        if (sp.t <= 0) bb.sparks.splice(si, 1);
+      }
+    }
+
     // raid timer (paused while the army is away on campaign)
     if (!G.march) {
       G.raidTimer -= dt;
@@ -846,6 +1072,8 @@
         resolveRaid();
       } else if (G.raidTimer < 8 && G.raidTimer + dt >= 8) {
         toast('raidSoon');
+        // preview the raid in the battle window before it lands
+        if (!G.battle) startBattle('raid', t('raidIn'), fullArmyPower(), raidPower());
       }
     }
 
