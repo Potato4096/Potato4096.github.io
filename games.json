@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-03T13:36:38.859Z",
-  "count": 10,
+  "generatedAt": "2026-11-11T13:31:25.765Z",
+  "count": 12,
   "games": [
     {
       "id": "arena-survivor",
@@ -21,6 +21,14 @@
     {
       "id": "doudizhu",
       "dir": "Games/doudizhu"
+    },
+    {
+      "id": "go",
+      "dir": "Games/go"
+    },
+    {
+      "id": "gomoku",
+      "dir": "Games/gomoku"
     },
     {
       "id": "island-commander",
