@@ -461,11 +461,11 @@
     b.result = win ? 'win' : 'lose';
     b.resultT = 2.8;
     if (win) b.enemy = 0; else b.our = 0;
-    // burst of sparks at the clash line
+    // burst of sparks at the clash point (top-down scene center)
     for (var i = 0; i < 14; i++) {
       b.sparks.push({
         x: 85 + (Math.random() - 0.5) * 36,
-        y: 110 + (Math.random() - 0.5) * 26,
+        y: 89 + (Math.random() - 0.5) * 26,
         vx: (Math.random() - 0.5) * 90,
         vy: (Math.random() - 0.5) * 90,
         t: 0.4 + Math.random() * 0.4,
@@ -479,7 +479,7 @@
     if (!b) return;
     b.sparks.push({
       x: 85 + (Math.random() - 0.5) * 30,
-      y: 110 + (Math.random() - 0.5) * 22,
+      y: 89 + (Math.random() - 0.5) * 22,
       vx: (Math.random() - 0.5) * 50,
       vy: (Math.random() - 0.5) * 50,
       t: 0.3 + Math.random() * 0.3,
@@ -907,81 +907,57 @@
     ctx.fillText(label, x, y - 3);
   }
 
-  // one soldier figure (canvas-drawn): faces +1 right / -1 left, stands on (x, y)
-  function drawSoldier(x, y, facing, main, dark, pose, t) {
+  // one unit counter seen from above (2D top-down marker); faces +1 right / -1 left
+  function drawUnitToken(x, y, facing, main, dark, pose, t) {
     var f = facing;
     ctx.save();
     ctx.translate(x, y);
     if (pose === 'dead') {
-      // prone body + dropped sword (clearer than a rotated figure at this size)
-      ctx.globalAlpha = 0.72;
-      ctx.fillStyle = dark;
-      roundRect(-13, -8, 22, 8, 4);
-      ctx.fill();
-      ctx.fillStyle = main;
-      roundRect(-11, -8, 12, 7, 3);
-      ctx.fill();
-      ctx.fillStyle = '#e8c39e';
-      ctx.beginPath(); ctx.arc(11 * f, -6, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = main;
-      ctx.beginPath(); ctx.arc(11 * f, -7, 4.8, Math.PI * 1.05, Math.PI * 1.95); ctx.fill();
-      // dropped sword lying nearby
-      ctx.strokeStyle = '#e3e8ef';
+      // fallen counter: dimmed disc + X
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = '#4b5563';
+      ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#e5e7eb';
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-16 * f, -1); ctx.lineTo(-27 * f, -7); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-4, -4); ctx.lineTo(4, 4);
+      ctx.moveTo(4, -4); ctx.lineTo(-4, 4);
+      ctx.stroke();
       ctx.restore();
       return;
     }
     if (pose === 'fight') {
-      ctx.translate(0, Math.sin(t * 12) * 1.2);   // battle bob
+      ctx.translate(Math.sin(t * 12) * 1.5 * f, 0);   // clash shake toward the enemy
     } else {
-      ctx.translate(0, Math.sin(t * 2.5 + x) * 0.8); // idle breathing
+      ctx.translate(Math.sin(t * 2.5 + x) * 0.7, 0); // idle sway
     }
-    // legs
-    ctx.strokeStyle = dark;
-    ctx.lineWidth = 3.5;
-    ctx.lineCap = 'round';
-    var ls = pose === 'fight' ? Math.sin(t * 10) * 3 : Math.sin(t * 2.5 + x) * 1.2;
-    ctx.beginPath(); ctx.moveTo(-1, -13); ctx.lineTo(-5 + ls, 0); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(1, -13); ctx.lineTo(5 - ls, 0); ctx.stroke();
-    // torso armor
-    ctx.fillStyle = main;
-    roundRect(-7, -28, 14, 15, 4);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    roundRect(-7, -28, 14, 5, 4);
-    ctx.fill();
-    // belt
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath(); ctx.ellipse(0, 2.5, 10, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+    // team ring + disc
     ctx.fillStyle = dark;
-    ctx.fillRect(-7, -17, 14, 3);
-    // shield on the back arm
-    ctx.fillStyle = dark;
-    ctx.beginPath(); ctx.arc(-9 * f, -21, 5.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.beginPath(); ctx.arc(-9 * f, -21, 3, 0, Math.PI * 2); ctx.fill();
-    // head + helmet
-    ctx.fillStyle = '#e8c39e';
-    ctx.beginPath(); ctx.arc(0, -33, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, 9.5, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = main;
-    ctx.beginPath(); ctx.arc(0, -34.5, 5.8, Math.PI * 1.02, Math.PI * 1.98); ctx.fill();
-    ctx.fillRect(-5.8, -35.5, 11.6, 2.4);
-    // sword arm
-    var swing = pose === 'fight' ? -0.5 + Math.sin(t * 12) * 1.15
-      : -0.25 + Math.sin(t * 2 + x) * 0.15;
-    ctx.save();
-    ctx.translate(5 * f, -24);
-    ctx.rotate(f * swing);
-    ctx.strokeStyle = '#e8c39e';
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(11 * f, -1); ctx.stroke();
-    // blade + guard
-    ctx.strokeStyle = '#e3e8ef';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(11 * f, -1); ctx.lineTo(24 * f, -7); ctx.stroke();
-    ctx.strokeStyle = '#b08d55';
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(9 * f, 0); ctx.lineTo(13 * f, -2); ctx.stroke();
-    ctx.restore();
+    ctx.beginPath(); ctx.arc(0, 0, 7.5, 0, Math.PI * 2); ctx.fill();
+    // helmet highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath(); ctx.arc(-2 * f, -2, 3, 0, Math.PI * 2); ctx.fill();
+    // chevron pointing at the enemy (marks facing)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(2.5 * f, -4);
+    ctx.lineTo(8.5 * f, 0);
+    ctx.lineTo(2.5 * f, 4);
+    ctx.closePath(); ctx.fill();
+    if (pose === 'fight') {
+      // spark arc on the engaged edge
+      ctx.strokeStyle = 'rgba(255,215,110,0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (f > 0) ctx.arc(0, 0, 12.5, -0.7, 0.7);
+      else ctx.arc(0, 0, 12.5, Math.PI - 0.7, Math.PI + 0.7);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -1005,86 +981,93 @@
     ctx.textBaseline = 'middle';
     ctx.fillText('⚔ ' + b.label, BX + 10, BY + 13);
 
-    // ===== battlefield scene =====
+    // ===== battlefield scene (2D top-down: camps + unit counters) =====
     var fx = BX + 8, fy = BY + 22, fw = BW - 16, fh = 114;
-    var gy = fy + fh - 14;          // ground line (soldiers' feet)
-    var midX = fx + fw / 2;
+    var midX = fx + fw / 2, midY = fy + fh / 2;
 
     ctx.save();
     roundRect(fx, fy, fw, fh, 8);
     ctx.clip();
 
-    // dusk sky
-    var sky = ctx.createLinearGradient(0, fy, 0, gy);
-    sky.addColorStop(0, '#28456b');
-    sky.addColorStop(0.62, '#7d7492');
-    sky.addColorStop(1, '#c98d5a');
-    ctx.fillStyle = sky;
+    // grass field (viewed from above)
+    ctx.fillStyle = '#5c8f4a';
     ctx.fillRect(fx, fy, fw, fh);
+    ctx.fillStyle = '#527f42';
+    for (var gp = 0; gp < 7; gp++) {
+      ctx.beginPath();
+      ctx.ellipse(fx + 10 + gp * 19, fy + 16 + (gp % 4) * 26, 9, 5.5, gp * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-    // distant hills
-    ctx.fillStyle = 'rgba(38,58,86,0.85)';
-    ctx.beginPath();
-    ctx.ellipse(fx + fw * 0.28, gy - 8, 42, 20, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(fx + fw * 0.78, gy - 6, 46, 17, 0, Math.PI, 0);
-    ctx.fill();
+    // camp zones marking the two sides (blue left / red right)
+    ctx.fillStyle = 'rgba(47,111,237,0.18)';
+    ctx.fillRect(fx, fy, fw * 0.36, fh);
+    ctx.fillStyle = 'rgba(211,64,64,0.18)';
+    ctx.fillRect(fx + fw * 0.64, fy, fw * 0.36, fh);
 
-    // ground
-    ctx.fillStyle = '#57723e';
-    ctx.fillRect(fx, gy - 6, fw, fh - (gy - 6 - fy));
-    ctx.fillStyle = '#6b8a4a';
-    ctx.fillRect(fx, gy - 6, fw, 5);
-    // trampled dirt where the lines meet
-    ctx.fillStyle = '#7d6a4c';
-    ctx.beginPath();
-    ctx.ellipse(midX, gy - 2, 30, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // central clash road
+    ctx.fillStyle = '#8d7350';
+    ctx.fillRect(fx, midY - 10, fw, 20);
+    ctx.fillStyle = '#9c815c';
+    ctx.fillRect(fx, midY - 6, fw, 12);
 
-    // war banners on both flanks (poles rise above the soldiers' heads)
-    ctx.strokeStyle = '#6d4c41';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(fx + 7, gy); ctx.lineTo(fx + 7, gy - 52); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(fx + fw - 7, gy); ctx.lineTo(fx + fw - 7, gy - 52); ctx.stroke();
+    // ground arrows: each side pushes toward the middle
+    ctx.fillStyle = 'rgba(255,255,255,0.30)';
+    ctx.beginPath();
+    ctx.moveTo(fx + 8, midY - 4); ctx.lineTo(fx + 26, midY - 4); ctx.lineTo(fx + 26, midY - 9);
+    ctx.lineTo(fx + 36, midY); ctx.lineTo(fx + 26, midY + 9); ctx.lineTo(fx + 26, midY + 4);
+    ctx.lineTo(fx + 8, midY + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(fx + fw - 8, midY - 4); ctx.lineTo(fx + fw - 26, midY - 4); ctx.lineTo(fx + fw - 26, midY - 9);
+    ctx.lineTo(fx + fw - 36, midY); ctx.lineTo(fx + fw - 26, midY + 9); ctx.lineTo(fx + fw - 26, midY + 4);
+    ctx.lineTo(fx + fw - 8, midY + 4);
+    ctx.closePath(); ctx.fill();
+
+    // side label chips marking who is who
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
     ctx.fillStyle = pal.flagBlue;
-    ctx.beginPath();
-    ctx.moveTo(fx + 8, gy - 52); ctx.lineTo(fx + 26, gy - 46); ctx.lineTo(fx + 8, gy - 40);
-    ctx.closePath(); ctx.fill();
+    roundRect(fx + 6, fy + 6, 32, 13, 6); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t('ourSide'), fx + 11, fy + 13);
     ctx.fillStyle = pal.flagRed;
-    ctx.beginPath();
-    ctx.moveTo(fx + fw - 8, gy - 52); ctx.lineTo(fx + fw - 26, gy - 46); ctx.lineTo(fx + fw - 8, gy - 40);
-    ctx.closePath(); ctx.fill();
+    roundRect(fx + fw - 38, fy + 6, 32, 13, 6); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t('enemySide'), fx + fw - 33, fy + 13);
 
-    // soldiers: 3 per side, index 0 = front line
+    // unit counters: 3 per side, index 0 = front (on the clash road)
     var adv = Math.min(1, b.prog / 0.85);
     var ourStand = Math.ceil(b.our * 3 - 0.01);
     var enemyStand = Math.ceil(b.enemy * 3 - 0.01);
     if (b.result === 'win') { ourStand = 3; enemyStand = 0; }
     if (b.result === 'lose') { ourStand = 0; enemyStand = 3; }
     var approach = (b.kind === 'raid' && !b.result) ? Math.max(0, 1 - b.prog / 0.5) * 34 : 0;
-    var blueX = [fx + 52 + adv * 9, fx + 30 + adv * 6, fx + 10 + adv * 3];
-    var redX = [fx + 82 - adv * 9 + approach, fx + 104 - adv * 6 + approach, fx + 126 - adv * 3 + approach];
+    var blueFrontX = fx + 22 + adv * 29;
+    var redFrontX = fx + fw - 22 - adv * 29 + approach;
     var frontFight = !b.result && (b.prog > 0.05 || b.kind === 'raid') && approach < 4;
-    var i, sx, pose;
+    var i, sx, sy, pose;
 
-    // draw back ranks first so the front-line fighters overlap them
+    // draw back ranks first so the front-line counters overlap them
     for (i = 2; i >= 0; i--) {
-      // blue soldier i
-      sx = blueX[i];
+      // blue counter i
+      sx = blueFrontX - (i === 0 ? 0 : 13);
+      sy = midY + (i === 0 ? 0 : (i === 1 ? -22 : 22));
       pose = i >= ourStand ? 'dead' : (i === 0 && frontFight && enemyStand > 0 ? 'fight' : 'stand');
-      drawSoldier(sx, gy, 1, pal.flagBlue, '#1d4dbb', pose, b.t);
-      // red soldier i
-      sx = redX[i];
+      drawUnitToken(sx, sy, 1, pal.flagBlue, '#1d4dbb', pose, b.t);
+      // red counter i
+      sx = redFrontX + (i === 0 ? 0 : 13);
+      sy = midY + (i === 0 ? 0 : (i === 1 ? -22 : 22));
       pose = i >= enemyStand ? 'dead' : (i === 0 && frontFight && ourStand > 0 ? 'fight' : 'stand');
-      drawSoldier(sx, gy, -1, pal.flagRed, '#a52626', pose, b.t);
+      drawUnitToken(sx, sy, -1, pal.flagRed, '#a52626', pose, b.t);
     }
 
-    // glow + crossed blades at the clash point while the front line fights
+    // flash where the front counters meet
     if (!b.result && frontFight && enemyStand > 0 && ourStand > 0) {
       ctx.fillStyle = 'rgba(255,215,110,' + (0.16 + 0.14 * Math.sin(b.t * 12)).toFixed(3) + ')';
       ctx.beginPath();
-      ctx.arc(midX, gy - 22, 12, 0, Math.PI * 2);
+      ctx.arc(midX, midY, 13, 0, Math.PI * 2);
       ctx.fill();
     }
 
