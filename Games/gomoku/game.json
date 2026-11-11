@@ -1,0 +1,27 @@
+{
+  "id": "gomoku",
+  "title": {
+    "zh": "五子棋",
+    "en": "Gomoku"
+  },
+  "description": {
+    "zh": "经典五子棋（15×15 自由规则，无禁手）。支持双人对弈与人机对战，简单/中等/困难三档 AI 会判断活三、冲四与双威胁；附带悔棋、坐标棋谱与胜负统计。",
+    "en": "Classic Gomoku on a 15x15 board (free-style, no forbidden moves). Two-player and VS Computer modes with Easy/Medium/Hard AI that reads open threes, fours and double threats. Includes undo, coordinate move record and win stats."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "⚫",
+  "tags": ["board", "strategy", "ai", "classic", "gomoku"],
+  "category": "strategy",
+  "players": "1-2",
+  "controls": {
+    "zh": "点击交叉点落子",
+    "en": "Click an intersection to place a stone"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-11",
+  "updated": "2026-11-11"
+}

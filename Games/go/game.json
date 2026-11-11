@@ -1,0 +1,27 @@
+{
+  "id": "go",
+  "title": {
+    "zh": "围棋",
+    "en": "Go"
+  },
+  "description": {
+    "zh": "经典围棋，支持 19/13/9 路棋盘。完整实现气、整块提子、禁自杀与打劫，双方连续虚手后按中国规则数子法计分（黑贴 7.5 目）。支持双人对弈与人机对战（三档 AI），附带悔棋、认输与坐标棋谱。",
+    "en": "Classic Go on 19x19, 13x13 or 9x9 boards. Full liberties, group capture, suicide ban and ko rules, with Chinese area scoring (komi 7.5) after two consecutive passes. Two-player and VS Computer modes with three AI levels, plus undo, resignation and coordinate move record."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "⚪",
+  "tags": ["board", "strategy", "ai", "classic", "go"],
+  "category": "strategy",
+  "players": "1-2",
+  "controls": {
+    "zh": "点击交叉点落子",
+    "en": "Click an intersection to place a stone"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-11",
+  "updated": "2026-11-11"
+}
