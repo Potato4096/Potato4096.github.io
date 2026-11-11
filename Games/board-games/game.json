@@ -1,0 +1,27 @@
+{
+  "id": "board-games",
+  "title": {
+    "zh": "棋类合集",
+    "en": "Board Games"
+  },
+  "description": {
+    "zh": "国际象棋、中国象棋、五子棋、围棋四种经典棋类合为一体。大厅选棋种、就地选模式，双人对弈或三档人机随时开局；四种棋共用同一套棋谱、战绩、音效与主题，切换棋种不用回首页。",
+    "en": "Chess, Xiangqi, Gomoku and Go in one app. Pick a board and a mode in the lobby, then play locally or against one of three AI levels. Shared move record, stats, sound and theming across all four."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "♟",
+  "tags": ["board", "strategy", "chess", "xiangqi", "gomoku", "go", "ai", "collection"],
+  "category": "strategy",
+  "players": "1-2",
+  "controls": {
+    "zh": "大厅选择棋种与模式，点击棋盘落子",
+    "en": "Choose a board and mode in the lobby, then click the board"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-11",
+  "updated": "2026-11-11"
+}

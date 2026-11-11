@@ -1,34 +1,22 @@
 {
-  "generatedAt": "2026-11-11T13:31:25.765Z",
-  "count": 12,
+  "generatedAt": "2026-11-11T19:12:06.254Z",
+  "count": 9,
   "games": [
     {
       "id": "arena-survivor",
       "dir": "Games/arena-survivor"
     },
     {
+      "id": "board-games",
+      "dir": "Games/board-games"
+    },
+    {
       "id": "brick-breaker",
       "dir": "Games/brick-breaker"
     },
     {
-      "id": "chess",
-      "dir": "Games/chess"
-    },
-    {
-      "id": "chinese-chess",
-      "dir": "Games/chinese-chess"
-    },
-    {
       "id": "doudizhu",
       "dir": "Games/doudizhu"
-    },
-    {
-      "id": "go",
-      "dir": "Games/go"
-    },
-    {
-      "id": "gomoku",
-      "dir": "Games/gomoku"
     },
     {
       "id": "island-commander",

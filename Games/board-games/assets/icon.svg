@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Board Games">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f4a3c"/>
+      <stop offset="1" stop-color="#1b2c24"/>
+    </linearGradient>
+    <radialGradient id="white" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.6" stop-color="#e8ebf0"/>
+      <stop offset="1" stop-color="#b9c1cd"/>
+    </radialGradient>
+    <radialGradient id="black" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#6d7683"/>
+      <stop offset="0.5" stop-color="#2c333d"/>
+      <stop offset="1" stop-color="#0e1216"/>
+    </radialGradient>
+    <radialGradient id="red" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#f0705f"/>
+      <stop offset="0.55" stop-color="#c8342a"/>
+      <stop offset="1" stop-color="#8f1d16"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="128" height="128" rx="26" fill="url(#bg)"/>
+
+  <!-- 棋格 -->
+  <g stroke="#7fae94" stroke-opacity="0.45" stroke-width="2">
+    <path d="M32 16 V112 M64 16 V112 M96 16 V112"/>
+    <path d="M16 32 H112 M16 64 H112 M16 96 H112"/>
+  </g>
+
+  <!-- 左上：黑子 -->
+  <circle cx="40" cy="40" r="15" fill="#0b0e12" opacity="0.35" transform="translate(1.5 2.5)"/>
+  <circle cx="40" cy="40" r="15" fill="url(#black)"/>
+
+  <!-- 右上：白子 -->
+  <circle cx="88" cy="40" r="15" fill="#0b0e12" opacity="0.3" transform="translate(1.5 2.5)"/>
+  <circle cx="88" cy="40" r="15" fill="url(#white)"/>
+
+  <!-- 左下：中国象棋红子 -->
+  <circle cx="40" cy="88" r="15.5" fill="#7a1a13"/>
+  <circle cx="40" cy="88" r="13" fill="url(#red)"/>
+  <path d="M35 88 h10 M40 83 v10" stroke="#ffd9cf" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- 右下：国际象棋骑士剪影 -->
+  <path d="M80 100 h17 a3 3 0 0 0 3-3 v-2 a3 3 0 0 0-3-3 h-3 l-1-6 c4-3 6-7 5-12 -1-4-5-7-9-7 -3 0-5 1-7 4 l-4 6 4 1 -6 7 1 4 5-2 3 5 h-2 a3 3 0 0 0-3 3 v2 a3 3 0 0 0 3 3 z" fill="#e9eef5"/>
+  <circle cx="85" cy="72" r="1.5" fill="#243b30"/>
+</svg>

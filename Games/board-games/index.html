@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>棋类合集 · Potato4096 Arcade</title>
+  <meta name="description" content="国际象棋、中国象棋、五子棋、围棋，四种棋一个入口，支持双人对弈与三档人机难度。">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="css/shell.css">
+  <link rel="stylesheet" href="css/lobby.css">
+</head>
+<body>
+  <div class="game-wrap">
+    <!-- 大厅 -->
+    <main id="lobby" class="bg-lobby">
+      <header class="bg-hero">
+        <div class="bg-hero-copy">
+          <h1 class="bg-hero-title" data-t="hubTitle"></h1>
+          <p class="bg-hero-sub" data-t="hubSub"></p>
+        </div>
+        <span class="pg-tag" id="lobby-lang">中文</span>
+      </header>
+
+      <div class="bg-recent" id="recent" hidden></div>
+
+      <div class="bg-game-list" id="game-list"></div>
+
+      <footer class="bg-foot">
+        <a class="pg-btn pg-btn--ghost" href="../../index.html">
+          <span aria-hidden="true">←</span> <span data-t="backToSite"></span>
+        </a>
+      </footer>
+    </main>
+
+    <!-- 对局容器：由棋种模块挂载 -->
+    <section id="stage" class="bg-stage-host" hidden></section>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="js/core/i18n.js"></script>
+  <script src="js/core/sfx.js"></script>
+  <script src="js/core/canvas.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/shell.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
