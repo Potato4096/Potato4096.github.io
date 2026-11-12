@@ -185,6 +185,10 @@
   var state = 'menu'; // menu | playing | paused | gameover | victory
   var G = null;
 
+  // 修改器开关（见文件末尾 CheatKit.init）
+  var cheatNoCost = false; // 资源不减：训练/建造/升级不扣食粮与金币
+  var cheatGod = false;    // 无敌：红军反扑必定击退，且不损失兵力/资源/防线
+
   function newGame() {
     return {
       food: 220, gold: 160,
@@ -318,9 +322,11 @@
     return armyPower(G.units) + islandDefense();
   }
   function canAfford(cost) {
+    if (cheatNoCost) return true;
     return G.food >= (cost.food || 0) && G.gold >= (cost.gold || 0);
   }
   function pay(cost) {
+    if (cheatNoCost) return; // 资源不减：跳过扣费
     G.food -= (cost.food || 0);
     G.gold -= (cost.gold || 0);
   }
@@ -551,16 +557,16 @@
     var mine = fullArmyPower();
     var theirs = raidPower() * (0.9 + Math.random() * 0.2);
     var ratio = mine / Math.max(1, theirs);
-    var win = ratio > 0.85;
+    var win = ratio > 0.85 || cheatGod; // 无敌：反扑一律击退
     // make sure the battle window shows this clash (replace any stale one)
     if (!G.battle || G.battle.kind !== 'raid' || G.battle.result) {
       startBattle('raid', t('raidIn'), mine, theirs);
     }
-    if (ratio > 0.85) {
+    if (win) {
       var loot = 60 + G.captured.length * 40;
       G.food = Math.min(capacity().food, G.food + loot);
       G.gold = Math.min(capacity().gold, G.gold + loot * 0.8);
-      applyLosses(ratio >= 1.4 ? 0.06 : 0.16);
+      if (!cheatGod) applyLosses(ratio >= 1.4 ? 0.06 : 0.16); // 无敌：不损兵
       if (window.ICAudio) ICAudio.clash();
       toast('raidWin');
       banner(t('raidWin'));
@@ -1407,4 +1413,225 @@
     resolveRaid: resolveRaid,
     tick: function (s) { update(s); }
   };
+
+  // ---------- 修改器钩子（彩蛋面板）----------
+  var STATE_LABEL = {
+    menu: { zh: '菜单', en: 'Menu' },
+    playing: { zh: '游戏中', en: 'Playing' },
+    paused: { zh: '已暂停', en: 'Paused' },
+    victory: { zh: '胜利', en: 'Victory' },
+    gameover: { zh: '失败', en: 'Defeat' }
+  };
+
+  function cheatCap() { return G ? capacity() : { food: 0, gold: 0 }; }
+  function cheatArmyCap() { return G ? armyCap() : 0; }
+  function cheatArmyCount() { return G ? armyCount() : 0; }
+  function cheatBuildings() {
+    if (!G) return 0;
+    var n = 0;
+    for (var k in G.grid) n++;
+    return n;
+  }
+
+  // 只刷 HUD（滑杆拖动时用，卡片由帧循环的 computeSig 自行刷新）
+  function cheatHud() {
+    if (!G) return;
+    updateHUD();
+    renderRaidInfo();
+  }
+  // 刷 HUD + 卡片（动作按钮用，改完立刻可见）
+  function cheatApply() {
+    if (!G) return;
+    renderPanels();
+    updateHUD();
+    renderRaidInfo();
+    saveGame();
+  }
+
+  // 食粮/金币：受仓库上限约束，超上限部分会被夹回（update 每帧也会夹）
+  function cheatSetFood(v) {
+    if (!G) return;
+    G.food = Math.max(0, Math.min(capacity().food, Math.round(v)));
+    cheatHud();
+  }
+  function cheatSetGold(v) {
+    if (!G) return;
+    G.gold = Math.max(0, Math.min(capacity().gold, Math.round(v)));
+    cheatHud();
+  }
+
+  // 人口：只调整总兵力，多退少补（先民兵，不足再按兵种顺序削减）
+  function cheatSetPop(n) {
+    if (!G) return;
+    var target = Math.max(0, Math.min(armyCap(), Math.round(n)));
+    var cur = armyCount();
+    var d = target - cur;
+    if (d > 0) {
+      G.units.militia += d;
+    } else if (d < 0) {
+      var cut = -d;
+      for (var i = 0; i < UNIT_KEYS.length && cut > 0; i++) {
+        var k = UNIT_KEYS[i];
+        var take = Math.min(G.units[k], cut);
+        G.units[k] -= take;
+        cut -= take;
+      }
+    }
+    cheatApply();
+  }
+
+  function cheatMaxResources() {
+    if (!G) return;
+    var cap = capacity();
+    G.food = cap.food;
+    G.gold = cap.gold;
+    cheatApply();
+  }
+
+  function cheatFillArmy() {
+    if (!G) return;
+    cheatSetPop(armyCap());
+  }
+
+  function cheatAddFood(n) {
+    if (!G) return;
+    G.food = Math.min(capacity().food, G.food + n);
+    cheatApply();
+  }
+  function cheatAddGold(n) {
+    if (!G) return;
+    G.gold = Math.min(capacity().gold, G.gold + n);
+    cheatApply();
+  }
+
+  function cheatSkipCooldown() {
+    if (!G) return;
+    if (G.march) G.march.timer = 0.05; // 远征军立刻回岛结算
+    else G.raidTimer = 0.05;           // 下一帧触发红军反扑
+    cheatApply();
+  }
+
+  if (window.CheatKit) {
+    CheatKit.init({
+      id: 'island-commander',
+      title: { zh: '🔧 修改器', en: '🔧 Modifier' },
+      hint: {
+        zh: '彩蛋面板 · 参数即时生效；食粮/金币受仓库上限约束，超过部分会被夹回',
+        en: 'Easter egg · applies instantly; food/gold are capped by storage and clamp back'
+      },
+      stats: [
+        {
+          label: { zh: '食粮', en: 'Food' },
+          get: function () { return G ? Math.floor(G.food) + '/' + cheatCap().food : '—'; }
+        },
+        {
+          label: { zh: '金币', en: 'Gold' },
+          get: function () { return G ? Math.floor(G.gold) + '/' + cheatCap().gold : '—'; }
+        },
+        {
+          label: { zh: '人口', en: 'Population' },
+          get: function () { return cheatArmyCount() + '/' + cheatArmyCap(); }
+        },
+        {
+          label: { zh: '士兵', en: 'Soldiers' },
+          get: cheatArmyCount,
+          tone: 'success'
+        },
+        {
+          label: { zh: '建筑', en: 'Buildings' },
+          get: cheatBuildings
+        },
+        {
+          label: { zh: '大本营', en: 'HQ' },
+          get: function () { return 'Lv.' + (G ? G.hq : 1); }
+        },
+        {
+          label: { zh: '状态', en: 'State' },
+          tone: 'warning',
+          get: function () { return STATE_LABEL[state] || { zh: state, en: state }; },
+          format: function (v) { return t(v); }
+        }
+      ],
+      params: [
+        {
+          key: 'food',
+          label: { zh: '食粮（≤ 仓容）', en: 'Food (≤ storage)' },
+          min: 0, max: 99999, step: 10,
+          get: function () { return G ? Math.floor(G.food) : 0; },
+          set: cheatSetFood
+        },
+        {
+          key: 'gold',
+          label: { zh: '金币（≤ 仓容）', en: 'Gold (≤ storage)' },
+          min: 0, max: 99999, step: 10,
+          get: function () { return G ? Math.floor(G.gold) : 0; },
+          set: cheatSetGold
+        },
+        {
+          key: 'pop',
+          label: { zh: '人口（≤ 兵力上限）', en: 'Population (≤ army cap)' },
+          min: 0, max: 9999, step: 1,
+          get: cheatArmyCount,
+          set: cheatSetPop
+        },
+        {
+          key: 'raid',
+          label: { zh: '反扑倒计时(秒)', en: 'Raid countdown (s)' },
+          min: 0, max: RAID_INTERVAL, step: 1,
+          get: function () { return G ? Math.max(0, Math.round(G.raidTimer)) : 0; },
+          set: function (v) {
+            if (!G) return;
+            G.raidTimer = Math.max(0, Math.min(RAID_INTERVAL, v));
+            cheatHud();
+          }
+        }
+      ],
+      toggles: [
+        {
+          label: { zh: '资源不减', en: 'Free costs' },
+          on: { zh: '资源不减：开', en: 'Free Costs: ON' },
+          off: { zh: '资源不减：关', en: 'Free Costs: OFF' },
+          get: function () { return cheatNoCost; },
+          set: function (v) { cheatNoCost = !!v; }
+        },
+        {
+          label: { zh: '无敌', en: 'God mode' },
+          on: { zh: '无敌：开', en: 'God Mode: ON' },
+          off: { zh: '无敌：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; }
+        }
+      ],
+      actions: [
+        {
+          label: { zh: '资源拉满', en: 'Fill resources' },
+          run: cheatMaxResources,
+          toast: { zh: '食粮与金币已拉满', en: 'Food & gold filled' }
+        },
+        {
+          label: { zh: '瞬间补满士兵', en: 'Fill army' },
+          run: cheatFillArmy,
+          toast: { zh: '兵力已补满', en: 'Army at capacity' }
+        },
+        {
+          label: { zh: '食粮 +1000', en: 'Food +1000' },
+          run: function () { cheatAddFood(1000); }
+        },
+        {
+          label: { zh: '金币 +1000', en: 'Gold +1000' },
+          run: function () { cheatAddGold(1000); }
+        },
+        {
+          label: { zh: '跳过反扑冷却', en: 'Skip raid cooldown' },
+          run: cheatSkipCooldown,
+          toast: { zh: '冷却已跳过', en: 'Cooldown skipped' }
+        },
+        {
+          label: { zh: '立即胜利', en: 'Instant victory' },
+          tone: 'danger',
+          run: function () { if (state === 'playing') winGame(); }
+        }
+      ]
+    });
+  }
 })();

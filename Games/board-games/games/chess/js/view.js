@@ -785,6 +785,7 @@
 
   function scheduleAi() {
     if (mode !== 'ai' || !state || !status || status.over) return;
+    if (cheatFreeze || cheatGod) return;
     if (state.turn !== aiColor || aiThinking) return;
 
     aiThinking = true;
@@ -921,6 +922,194 @@
   }
 
   /* ---------------- 挂载 / 卸载 ---------------- */
+  /* ------------------------------------------------------------ */
+  /* 修改器：暗号 potato4096 唤出（platform/cheat-kit.js）          */
+  /* ------------------------------------------------------------ */
+
+  var cheatGod = false;      // 上帝模式：允许任意摆子 + 冻结 AI
+  var cheatFreeze = false;   // 单独冻结 AI
+
+  var CHEAT_GLYPH = {
+    'w:K': '♔', 'w:Q': '♕', 'w:R': '♖', 'w:B': '♗', 'w:N': '♘', 'w:P': '♙',
+    'b:K': '♚', 'b:Q': '♛', 'b:R': '♜', 'b:B': '♝', 'b:N': '♞', 'b:P': '♟'
+  };
+
+  function cheatPalette() {
+    var out = [{ label: { zh: '空', en: 'Empty' }, value: '', swatch: '#0000' }];
+    var order = [['K', '王'], ['Q', '后'], ['R', '车'], ['B', '象'], ['N', '马'], ['P', '兵']];
+    order.forEach(function (it) {
+      out.push({
+        label: { zh: CHEAT_GLYPH['w:' + it[0]] + ' 白' + it[1], en: CHEAT_GLYPH['w:' + it[0]] + ' White ' + it[0] },
+        value: 'w:' + it[0],
+        swatch: '#f2efe6'
+      });
+    });
+    order.forEach(function (it) {
+      out.push({
+        label: { zh: CHEAT_GLYPH['b:' + it[0]] + ' 黑' + it[1], en: CHEAT_GLYPH['b:' + it[0]] + ' Black ' + it[0] },
+        value: 'b:' + it[0],
+        swatch: '#2b2f38'
+      });
+    });
+    return out;
+  }
+
+  function cheatHumanSide() { return 'w'; }
+
+  function cheatRefreshStatus() {
+    if (!state) return;
+    status = X.statusAfter(state, repKeys);
+    render();
+    updateStatus();
+  }
+
+  function cheatSetPiece(r, c, v) {
+    if (!cheatGod || !state) return;
+    var parts = v ? String(v).split(':') : null;
+    state.board[r][c] = parts ? { t: parts[1], s: parts[0] } : null;
+    // 摆子后易位权与吃过路兵都已失效
+    state.castling = { K: false, Q: false, k: false, q: false };
+    state.ep = null;
+    cheatRefreshStatus();
+  }
+
+  function cheatReset() {
+    if (!state) return;
+    state = X.initialState();
+    history.length = 0;
+    repKeys.length = 0;
+    cheatRefreshStatus();
+    renderMoves();
+  }
+
+  function cheatWipe(keepKings) {
+    if (!state) return;
+    var y, x;
+    for (y = 0; y < 8; y++) {
+      for (x = 0; x < 8; x++) state.board[y][x] = null;
+    }
+    state.castling = { K: false, Q: false, k: false, q: false };
+    state.ep = null;
+    if (keepKings) {
+      state.board[7][4] = { t: 'K', s: 'w' };
+      state.board[0][4] = { t: 'K', s: 'b' };
+    }
+    cheatRefreshStatus();
+  }
+
+  function cheatGiveQueen() {
+    if (!state) return;
+    // 放在己方底线第一个空位，避免覆盖现有棋子
+    for (var x = 0; x < 8; x++) {
+      if (!state.board[7][x]) { state.board[7][x] = { t: 'Q', s: 'w' }; break; }
+    }
+    cheatRefreshStatus();
+  }
+
+  function cheatCrushEnemy() {
+    if (!state) return;
+    for (var y = 0; y < 8; y++) {
+      for (var x = 0; x < 8; x++) {
+        var p = state.board[y][x];
+        if (p && p.s === 'b' && p.t !== 'K') state.board[y][x] = null;
+      }
+    }
+    if (!state.board[0][4] || state.board[0][4].s !== 'b') state.board[0][4] = { t: 'K', s: 'b' };
+    if (!state.board[7][4] || state.board[7][4].s !== 'w') state.board[7][4] = { t: 'K', s: 'w' };
+    cheatRefreshStatus();
+  }
+
+  function cheatSideOf(p) {
+    if (!p) return '';
+    return p.s === cheatHumanSide() ? 'own' : 'enemy';
+  }
+
+  function setupCheat() {
+    if (!global.CheatKit) return;
+    CheatKit.init({
+      id: GAME_ID,
+      dock: root,
+      title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
+      hint: {
+        zh: '开启上帝模式后，直接在下方棋盘点格子摆子；AI 同时冻结',
+        en: 'Enable God Mode, then tap any square below to place a piece. AI freezes too.'
+      },
+      stats: [
+        { label: { zh: '手数', en: 'Plies' }, get: function () { return history.length; } },
+        { label: { zh: '轮到', en: 'Turn' }, get: function () { return state ? sideName(state.turn) : '-'; } },
+        { label: { zh: '我方子', en: 'Your pieces' }, get: function () { return countSide('w'); }, tone: 'success' },
+        { label: { zh: '对方子', en: 'Enemy pieces' }, get: function () { return countSide('b'); }, tone: 'danger' },
+        { label: { zh: '子力差', en: 'Material' }, get: function () { return materialDiff(); }, tone: 'warning' },
+        { label: { zh: '状态', en: 'State' }, get: function () {
+          if (!status) return '-';
+          if (status.over) return status.winner ? i18n.t('youWin') : i18n.t('drawText');
+          return status.check ? (i18n.lang() === 'en' ? 'Check' : '将军') : (i18n.lang() === 'en' ? 'Live' : '进行中');
+        } }
+      ],
+      toggles: [
+        { label: { zh: '上帝模式', en: 'God mode' },
+          on: { zh: '上帝模式：开', en: 'God Mode: ON' },
+          off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+        { label: { zh: '冻结 AI', en: 'Freeze AI' },
+          on: { zh: 'AI：已冻结', en: 'AI: frozen' },
+          off: { zh: 'AI：正常', en: 'AI: live' },
+          get: function () { return cheatFreeze; },
+          set: function (v) { cheatFreeze = !!v; } }
+      ],
+      actions: [
+        { label: { zh: '清空棋盘（留双王）', en: 'Clear (keep kings)' }, run: function () { cheatWipe(true); } },
+        { label: { zh: '恢复开局', en: 'Reset position' }, run: cheatReset },
+        { label: { zh: '我方加后', en: 'Add a queen' }, run: cheatGiveQueen, toast: { zh: '已在我方底线加后', en: 'Queen added' } },
+        { label: { zh: '对面只剩王', en: 'Leave king only' }, run: cheatCrushEnemy, tone: 'danger', toast: { zh: '对面已被清空', en: 'Enemy wiped' } }
+      ],
+      board: {
+        title: { zh: '棋盘摆子（点格子放置所选棋子）', en: 'Board editor (tap a square to place)' },
+        rows: 8,
+        cols: 8,
+        palette: cheatPalette(),
+        cell: function (r, c) {
+          if (!state) return { value: '', label: '' };
+          var p = state.board[r][c];
+          if (!p) return { value: '', label: '' };
+          return {
+            value: p.s + ':' + p.t,
+            label: CHEAT_GLYPH[p.s + ':' + p.t] || p.t,
+            side: cheatSideOf(p),
+            title: p.s + p.t
+          };
+        },
+        place: cheatSetPiece
+      }
+    });
+  }
+
+  function countSide(side) {
+    if (!state) return 0;
+    var n = 0;
+    for (var y = 0; y < 8; y++) {
+      for (var x = 0; x < 8; x++) {
+        if (state.board[y][x] && state.board[y][x].s === side) n++;
+      }
+    }
+    return n;
+  }
+
+  function materialDiff() {
+    if (!state) return 0;
+    var val = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
+    var d = 0;
+    for (var y = 0; y < 8; y++) {
+      for (var x = 0; x < 8; x++) {
+        var p = state.board[y][x];
+        if (!p) continue;
+        d += (p.s === 'w' ? 1 : -1) * (val[p.t] || 0);
+      }
+    }
+    return d > 0 ? '+' + d : String(d);
+  }
+
   function mount(host, opts) {
     X = global.Chess;
     ai = global.ChessAI;
@@ -986,6 +1175,7 @@
     global.addEventListener('resize', onResize);
 
     newGame();
+    setupCheat();
 
     if (mode === 'ai' && state.turn === aiColor) scheduleAi();
   }
@@ -994,6 +1184,7 @@
     alive = false;
     gameToken++;
     aiThinking = false;
+    if (global.CheatKit) CheatKit.detach();
     if (aiTimer) {
       clearTimeout(aiTimer);
       aiTimer = null;

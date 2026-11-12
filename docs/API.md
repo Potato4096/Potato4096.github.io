@@ -310,6 +310,143 @@ GamePlatform.events.off('score-changed', handler); // 或调用 off()
 
 ---
 
+## 修改器 CheatKit
+
+`platform/cheat-kit.js` 提供的共用修改器（彩蛋面板）。与 `GamePlatform` 相互独立，只依赖 `--pg-*` 变量做主题适配，可单独引入：
+
+```html
+<link rel="stylesheet" href="../../platform/game-base.css">
+<link rel="stylesheet" href="../../platform/cheat-kit.css">
+<script src="../../platform/game-api.js"></script>
+<script src="../../platform/cheat-kit.js"></script>
+```
+
+引入后在**任意页面**连续敲入 `potato4096` 即开面板：无需聚焦输入框，棋子/画布聚焦时也算；在 `input` / `textarea` / `select` / `contenteditable` 内打字不会触发；长按（`e.repeat`）不重复计字符。字符间隔超过 700 ms 则缓冲清零（首字母 `p` 会补发一次暂停，见下）。
+
+### 总览
+
+```js
+CheatKit = {
+  init(spec),        // 注册一个修改器；重复调用先销毁旧的再重建（切棋种时用）
+  detach(),          // 销毁：移除 DOM、解绑监听、清定时器 + 缓冲（SPA 卸载时必调）
+  open(), close(), toggle(),
+  isOpen(),          // boolean
+  refresh(),         // 立即重算面板数值
+  capturing(),       // boolean，面板是否展开（供游戏侧判断是否让出键盘）
+  toast(text)        // 借用面板样式吐一条提示
+}
+```
+
+### `spec` 字段
+
+```js
+CheatKit.init({
+  id: 'brick-breaker',   // 必填，面板标识（缺失会抛错）
+  dock: el,              // 可选，挂载点；缺省依次回退 .pg-container → document.body
+  title: { zh, en },     // 可选，面板标题，默认「🔧 修改器」
+  hint:  { zh, en },     // 可选，标题下方小字，默认「彩蛋面板 · 参数即时生效」
+  stats:    [],          // 只读数值条
+  params:   [],          // 可改数值（滑杆 + 数字框）
+  toggles:  [],          // 开关
+  actions:  [],          // 一次性按钮
+  board:    null,        // 棋盘编辑区（棋类）
+  onOpen, onClose        // 可选回调
+});
+```
+
+面板渲染顺序固定为 `头 → 数值 → 数值改写 → 开关 → 操作 → 棋盘`，保证小屏上按钮不会被巨大的棋盘挤到下面。`label` / `title` / `hint` 均可传 `{zh, en}` 对象或纯字符串。
+
+#### `stats[]`
+
+| 字段 | 说明 |
+|------|------|
+| `label` | `{ zh, en }` 或字符串 |
+| `get()` | 返回当前值（数字或字符串）；面板展开后每 500 ms 自动刷新 |
+| `tone` | 可选，`'danger'` / `'success'` / `'warning'`，给数字加对应配色 |
+| `format(v)` | 可选，自定义展示文本，优先级高于默认格式化 |
+| `prefix` / `suffix` | 可选，拼在数值前后（如 `×`） |
+| `digits` | 可选，数字保留小数位 |
+| `key` | 可选，写进 `data-stat` 便于外部断言 |
+
+#### `params[]`
+
+| 字段 | 说明 |
+|------|------|
+| `label` / `get()` / `set(v)` | `set` 收到的是已 clamp 到 `[min, max]` 的 Number |
+| `min` / `max` / `step` | 滑杆与数字框范围，`step` 默认 `1` |
+| `digits` | 可选，数字框显示的小数位 |
+
+拖滑杆（`input`）、松开滑杆（`change`）、改数字框（`input`）都会立即回调 `set` 并重算面板；输入框处于焦点时不会被 500 ms 轮询覆盖。
+
+#### `toggles[]`
+
+| 字段 | 说明 |
+|------|------|
+| `label` / `get()` / `set(on)` | `get` 返回布尔，`set` 收到布尔 |
+| `on` / `off` | 可选，自定义开/关文案（`{zh,en}`），默认「已开启 / 已关闭」 |
+| `onAfter()` | 可选，切换后执行（如重建棋盘） |
+
+#### `actions[]`
+
+| 字段 | 说明 |
+|------|------|
+| `label` / `run()` | 点击后执行 |
+| `tone` | 可选，`'primary'` 实心按钮 / `'danger'` 红色危险按钮，缺省幽灵按钮 |
+| `toast` | 可选，执行完后弹出的提示文案（`{zh,en}`） |
+
+#### `board`（棋盘上帝模式）
+
+```js
+board: {
+  rows: 8, cols: 8,
+  title: { zh: '棋盘编辑', en: 'Board editor' },
+  // 可选：色调板。首个 value 会被默认选中；swatch 是圆点的 CSS 颜色
+  palette: [
+    { value: 'w:K', label: { zh: '♔ 白王', en: '♔ King' }, swatch: '#fff' },
+    { value: 'b:q', label: { zh: '♛ 黑后', en: '♛ Queen' }, swatch: '#222' }
+  ],
+  // 必填：返回该格当前状态
+  cell(r, c) {
+    return { value: 'w:K', label: '♔', side: 'own', title: 'White King' };
+    //    value  —— 用于判断是否空格（null / undefined / '' 视为空格）
+    //    label  —— 格子内显示的文字/符号
+    //    side   —— 'own' | 'enemy'，给格子上敌我染色
+    //    title  —— 可选，hover 提示
+  },
+  // 必填：落子。value 为当前选中色板的 value（未选时即首个），传 null 表示清空
+  place(r, c, value) { /* 写回游戏状态，需自行允许"上帝模式"下的非法局面 */ },
+  // 可选：棋盘下方的整盘操作按钮
+  actions: [{ label: { zh: '清空棋盘', en: 'Wipe board' }, run() {}, toast: '...' }]
+}
+```
+
+- 格子用 `data-shade`（`light`/`dark`）画棋盘格纹，`is-own` / `is-enemy` 区分敌我染色，`is-empty` 标空格
+- 点格子 → 调 `place(r, c, selected)` → 重建棋盘并刷新数值；连续点可快速摆子
+- 棋盘区在小屏上横向滚动（固定 22 px 格子）并允许横向滚动，不会把格子压到点不中
+- 棋盘尺寸变化（如围棋切 19/13/9 路）后重新 `init` 即可重建网格（`refresh` 只更新内容，不改行列数）
+- 摆了非法局面后游戏规则可能直接崩，所以棋类都顺手在 `place` 里清掉 `castling` / `ep` / `ko` 这类历史缓存，并在 AI 调度处加 `cheatGod` 短路
+
+### 生命周期
+
+```js
+// 挂载（通常在脚本末尾）
+if (window.CheatKit) CheatKit.init({ /* spec */ });
+
+// 卸载（SPA 内切换视图时必调，否则监听与 DOM 会残留）
+if (global.CheatKit) CheatKit.detach();
+```
+
+`detach()` 会移除面板节点、解绑 capture 阶段键盘监听、清理刷新定时器与暗号缓冲；之后再 `init` 是干净的重新挂载（棋类合集切棋种就靠这一对）。
+
+### 注意事项
+
+- 暗号检测是 **capture 阶段** 的 `keydown`，命中前缀时会 `preventDefault + stopPropagation`。若游戏用 `p` 做暂停，首个被吞掉的 `p` 会在序列中断或超时后**自动补发**一次 `keydown`，手感不受影响
+- 页面若**自动聚焦输入框**（如猜数字），字符会进到 `input` 里而进不了暗号缓冲 —— 这类页面需要自己额外挂一层键盘监听转发首字母
+- 修改器只改运行时状态，不写存档；重开一局即恢复
+- `refresh()` 不重建 DOM（只改文本/样式），所以行数、色板、按钮数量变化后要重新 `init`
+
+---
+
 ## 完整示例
 
 ```html

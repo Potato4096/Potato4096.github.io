@@ -480,6 +480,7 @@
   }
 
   function scheduleAi() {
+    if (cheatFreeze || cheatGod) return;
     aiThinking = true;
     updateStatus();
     var token = gameToken;
@@ -548,6 +549,115 @@
   }
 
   /* ---------------- 挂载 / 卸载 ---------------- */
+  /* ------------------------------------------------------------ */
+  /* 修改器：暗号 potato4096 唤出（platform/cheat-kit.js）          */
+  /* ------------------------------------------------------------ */
+
+  var cheatGod = false;
+  var cheatFreeze = false;
+
+  function cheatPalette() {
+    return [
+      { label: { zh: '空', en: 'Empty' }, value: '', swatch: '#0000' },
+      { label: { zh: '● 黑子', en: '● Black' }, value: '1', swatch: '#22252c' },
+      { label: { zh: '○ 白子', en: '○ White' }, value: '2', swatch: '#f6f6f6' }
+    ];
+  }
+
+  function cheatAt(r, c) {
+    if (!board) return g.EMPTY;
+    return board[g.idx(c, r)];
+  }
+
+  function cheatSetPiece(r, c, v) {
+    if (!cheatGod || !board) return;
+    board[g.idx(c, r)] = v === '' || v == null ? g.EMPTY : Number(v);
+    render();
+  }
+
+  function cheatWipe() {
+    if (!board) return;
+    for (var i = 0; i < board.length; i++) board[i] = g.EMPTY;
+    over = false;
+    winCells = null;
+    history.length = 0;
+    render();
+    renderMoves();
+    updateStatus();
+  }
+
+  function cheatFour() {
+    if (!board) return;
+    // 在中间偏下摆一条四连，留出两端让玩家补第五子
+    for (var i = 0; i < 4; i++) board[g.idx(5 + i, 9)] = g.BLACK;
+    render();
+    ui.toast(i18n.lang() === 'en' ? 'Four in a row placed — add the fifth' : '已摆好四连，补第五子即可获胜');
+  }
+
+  function cheatCount(color) {
+    if (!board) return 0;
+    var n = 0;
+    for (var i = 0; i < board.length; i++) if (board[i] === color) n++;
+    return n;
+  }
+
+  function setupCheat() {
+    if (!global.CheatKit) return;
+    CheatKit.init({
+      id: GAME_ID,
+      dock: root,
+      title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
+      hint: {
+        zh: '开启上帝模式后，在下方棋盘点格子摆子；AI 同时冻结',
+        en: 'Enable God Mode, then tap a cell below to place a stone. AI freezes too.'
+      },
+      stats: [
+        { label: { zh: '手数', en: 'Moves' }, get: function () { return history.length; } },
+        { label: { zh: '轮到', en: 'Turn' }, get: function () { return sideName(turn); } },
+        { label: { zh: '黑子', en: 'Black' }, get: function () { return cheatCount(g.BLACK); } },
+        { label: { zh: '白子', en: 'White' }, get: function () { return cheatCount(g.WHITE); } },
+        { label: { zh: '空点', en: 'Empty' }, get: function () { return cheatCount(g.EMPTY); }, tone: 'warning' },
+        { label: { zh: '状态', en: 'State' }, get: function () {
+          if (over) return i18n.lang() === 'en' ? 'Finished' : '已结束';
+          return i18n.lang() === 'en' ? 'Live' : '进行中';
+        } }
+      ],
+      toggles: [
+        { label: { zh: '上帝模式', en: 'God mode' },
+          on: { zh: '上帝模式：开', en: 'God Mode: ON' },
+          off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+        { label: { zh: '冻结 AI', en: 'Freeze AI' },
+          on: { zh: 'AI：已冻结', en: 'AI: frozen' },
+          off: { zh: 'AI：正常', en: 'AI: live' },
+          get: function () { return cheatFreeze; },
+          set: function (v) { cheatFreeze = !!v; } }
+      ],
+      actions: [
+        { label: { zh: '清空棋盘', en: 'Clear board' }, run: cheatWipe },
+        { label: { zh: '恢复开局', en: 'New game' }, run: function () { newGame(); } },
+        { label: { zh: '给我方四连', en: 'Give me four' }, run: cheatFour, toast: { zh: '四连已就位', en: 'Four placed' } }
+      ],
+      board: {
+        title: { zh: '棋盘摆子（点交叉点放置所选棋子）', en: 'Board editor (tap to place)' },
+        rows: 15,
+        cols: 15,
+        palette: cheatPalette(),
+        cell: function (r, c) {
+          var v = cheatAt(r, c);
+          if (v === g.EMPTY || v == null) return { value: '', label: '' };
+          return {
+            value: String(v),
+            label: v === g.BLACK ? '●' : '○',
+            side: v === g.BLACK ? 'own' : 'enemy'
+          };
+        },
+        place: cheatSetPiece
+      }
+    });
+  }
+
   function mount(host, opts) {
     g = global.Gomoku;
     ai = global.GomokuAI;
@@ -598,6 +708,7 @@
     global.addEventListener('resize', onResize);
 
     newGame();
+    setupCheat();
 
     if (mode === 'ai' && turn === aiColor) scheduleAi();
   }
@@ -606,6 +717,7 @@
     alive = false;
     gameToken++;
     aiThinking = false;
+    if (global.CheatKit) CheatKit.detach();
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
     if (canvas) {
       canvas.removeEventListener('click', onClick);

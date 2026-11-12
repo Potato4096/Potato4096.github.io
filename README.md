@@ -95,7 +95,9 @@ Potato4096.github.io/
 │   └── main.js                # 首页逻辑
 ├── platform/
 │   ├── game-api.js            # ★ 通用游戏框架（GamePlatform API）
-│   └── game-base.css          # 游戏基础样式（主题变量 / 通用组件）
+│   ├── game-base.css          # 游戏基础样式（主题变量 / 通用组件）
+│   ├── cheat-kit.js           # ★ 修改器面板（共用触发、数值编辑、棋盘上帝模式）
+│   └── cheat-kit.css          # 修改器样式（只使用 --pg-* 变量，随主题适配）
 ├── Games/
 │   ├── number-guess/          # 示例：猜数字
 │   │   ├── game.json          #   游戏配置（必填）
@@ -126,6 +128,37 @@ Games/board-games/
 ```
 
 新增棋种只需在 `catalog.js` 追加一项，并提供 `games/<id>/js/{rules,ai,view}.js`；`view.js` 在末尾调用 `BG.registerGame(id, { mount, unmount })`。共享层负责顶栏、状态条、侧栏、棋谱、双语与主题，棋种只实现规则、AI 与棋盘绘制。
+
+## 修改器（彩蛋）
+
+任意游戏页面里连续敲入 **`potato4096`**（不用点输入框，棋子/画布聚焦时也算），左下角会滑出该游戏的修改器面板：
+
+- **数值面板**：实时显示当前局势的关键数值（分数、生命、关卡、子力差、地主倍数……），带渐变发光条，一眼看穿
+- **数值改写**：滑杆 / 数字框直接改分数、生命、重力、底分等，回车或拖动即刻生效
+- **开关**：无敌、透视、AI 冻结、免资源等作弊态
+- **一键操作**：直接通关、补满资源、发王炸……
+- **棋盘上帝模式**：棋类游戏额外给出整张棋盘网格，点格子即可摆子 / 清空，并附带「我方加后」「对面只剩将」这类降维打击按钮
+
+敲入时若首字母 `p` 被游戏自身的暂停键吞掉，`CheatKit` 会把这次暂停补发回去，不会把手感搞坏。再敲一次口令或点面板右上角 × 即可关闭。
+
+实现上，`platform/cheat-kit.js` 是一层与游戏无关的公共组件；各游戏只需在脚本末尾用闭包把自己的私有状态接进去（详见 [docs/API.md](docs/API.md#修改器-cheatkit)）：
+
+```js
+if (window.CheatKit) {
+  CheatKit.init({
+    id: 'brick-breaker',                 // 存储与 DOM 前缀
+    dock: document.querySelector('.pg-container'),
+    title: { zh: '修改器', en: 'Modifier' },
+    stats: [{ label: { zh: '得分', en: 'Score' }, get: function () { return score; } }],
+    params: [{ label: { zh: '生命', en: 'Lives' }, min: 1, max: 99, get: ..., set: ... }],
+    toggles: [{ label: { zh: '无敌', en: 'God mode' }, get: ..., set: ... }],
+    actions: [{ label: { zh: '一击通关', en: 'Instant win' }, run: ... }],
+    board: { /* 可选：rows/cols/palette/place，用于棋盘编辑 */ }
+  });
+}
+```
+
+游戏若运行在会切换视图的外壳里（如棋类合集），`unmount()` 里调用 `CheatKit.detach()` 即可摘干净监听与 DOM，避免重复挂载。
 
 ## 它是怎么工作的
 

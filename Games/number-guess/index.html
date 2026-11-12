@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Number Guess · Potato4096 Arcade</title>
   <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="../../platform/cheat-kit.css">
   <style>
     .game-wrap { max-width: 520px; margin: 0 auto; padding: 24px 20px 60px; }
     .panel { padding: 28px; }
@@ -88,6 +89,7 @@
   </div>
 
   <script src="../../platform/game-api.js"></script>
+  <script src="../../platform/cheat-kit.js"></script>
   <script>
     (function () {
       'use strict';
@@ -105,7 +107,24 @@
           lower: '再小一点 ↓',
           win: '猜对了！答案就是 {n}，用了 {t} 次',
           invalid: '请输入 1 - 100 之间的整数',
-          newBest: '🎉 新纪录！'
+          newBest: '🎉 新纪录！',
+          cheatTitle: '🔧 修改器',
+          cheatHint: '彩蛋面板 · 键入 potato4096 开关；改目标数字会清空历史与提示',
+          cheatTarget: '目标数字',
+          cheatTries: '已猜次数',
+          cheatRange: '剩余范围',
+          cheatState: '当前状态',
+          cheatPlaying: '进行中',
+          cheatWon: '已猜中',
+          cheatAnswer: '答案：{n}',
+          cheatAnswerOn: '显示答案：开',
+          cheatAnswerOff: '显示答案：关',
+          cheatWin: '直接猜中',
+          cheatRestart: '重开一局',
+          cheatMid: '猜中间值',
+          cheatChanged: '目标已改为 {n}，历史记录已清空',
+          cheatAlreadyWon: '本局已结束，先重开一局',
+          cheatRestartToast: '已重开一局'
         },
         en: {
           back: 'Back to Home',
@@ -119,7 +138,24 @@
           lower: 'Lower ↓',
           win: 'Correct! The answer was {n}, in {t} tries',
           invalid: 'Please enter an integer between 1 and 100',
-          newBest: '🎉 New record!'
+          newBest: '🎉 New record!',
+          cheatTitle: '🔧 Modifier',
+          cheatHint: 'Easter egg · type potato4096 to toggle; changing the target clears history',
+          cheatTarget: 'Target',
+          cheatTries: 'Tries',
+          cheatRange: 'Possible range',
+          cheatState: 'Status',
+          cheatPlaying: 'Playing',
+          cheatWon: 'Solved',
+          cheatAnswer: 'Answer: {n}',
+          cheatAnswerOn: 'Answer: ON',
+          cheatAnswerOff: 'Answer: OFF',
+          cheatWin: 'Instant win',
+          cheatRestart: 'Restart round',
+          cheatMid: 'Guess midpoint',
+          cheatChanged: 'Target set to {n}, history cleared',
+          cheatAlreadyWon: 'Round is over — restart first',
+          cheatRestartToast: 'New round started'
         }
       };
 
@@ -150,6 +186,7 @@
         el.badge.textContent = GamePlatform.settings.get('lang') === 'en' ? 'EN' : '中文';
         if (!won) el.hint.textContent = t('idle');
         renderBest();
+        renderAnswer();
       }
 
       function renderBest() {
@@ -173,6 +210,7 @@
         el.input.value = '';
         el.input.disabled = false;
         renderHistory();
+        renderAnswer();
         el.input.focus();
       }
 
@@ -225,6 +263,153 @@
         applyText();
         restart();
       });
+
+      /* ------------------------------------------------------------ */
+      /* 修改器钩子（暗号 potato4096，见 platform/cheat-kit.js）        */
+      /* ------------------------------------------------------------ */
+
+      var cheatShowAnswer = false;
+      var cheatAnswerEl = null;
+
+      function both(key) {
+        return { zh: TEXT.zh[key], en: TEXT.en[key] };
+      }
+
+      // 由 history 推导当前可能的区间（1 ~ 100）
+      function cheatBounds() {
+        var lo = 1;
+        var hi = 100;
+        history.forEach(function (item) {
+          if (item.dir === 'low') {
+            if (item.value + 1 > lo) lo = item.value + 1;
+          } else if (item.value - 1 < hi) {
+            hi = item.value - 1;
+          }
+        });
+        return { lo: lo, hi: hi };
+      }
+
+      function renderAnswer() {
+        if (!cheatAnswerEl) return;
+        cheatAnswerEl.hidden = !cheatShowAnswer;
+        cheatAnswerEl.textContent = t('cheatAnswer').replace('{n}', target ? String(target) : '-');
+      }
+
+      // 改目标：重开一局的状态（历史与提示词的比较结果都会失效）
+      function cheatSetTarget(v) {
+        var n = Math.round(v);
+        if (n < 1) n = 1;
+        if (n > 100) n = 100;
+        if (n === target) return;
+        target = n;
+        tries = 0;
+        history = [];
+        won = false;
+        el.tries.textContent = '0';
+        el.input.value = '';
+        el.input.disabled = false;
+        renderHistory();
+        el.hint.textContent = t('cheatChanged').replace('{n}', String(n));
+        renderAnswer();
+      }
+
+      function cheatWin() {
+        if (!target) return;
+        if (won) {
+          GamePlatform.ui.toast(t('cheatAlreadyWon'));
+          return;
+        }
+        el.input.value = String(target);
+        guess();
+      }
+
+      function cheatMid() {
+        if (won) {
+          GamePlatform.ui.toast(t('cheatAlreadyWon'));
+          return;
+        }
+        var b = cheatBounds();
+        el.input.value = String(Math.floor((b.lo + b.hi) / 2));
+        guess();
+      }
+
+      (function cheatMount() {
+        if (!window.CheatKit) return;
+
+        cheatAnswerEl = document.createElement('div');
+        cheatAnswerEl.id = 'cheat-answer';
+        cheatAnswerEl.className = 'pg-tag';
+        cheatAnswerEl.style.display = 'block';
+        cheatAnswerEl.style.textAlign = 'center';
+        cheatAnswerEl.style.marginBottom = '10px';
+        cheatAnswerEl.hidden = true;
+        el.hint.parentNode.insertBefore(cheatAnswerEl, el.hint);
+
+        // 输入框自动聚焦时，平台监听会跳过 input，这里补一条暗号监听
+        var CODE = 'potato4096';
+        var buf = '';
+        var bufTimer = 0;
+        el.input.addEventListener('keydown', function (e) {
+          var ch = (e.key || '').toLowerCase();
+          if (ch.length !== 1 || !/[a-z0-9]/.test(ch)) {
+            buf = '';
+            return;
+          }
+          var next = buf + ch;
+          if (CODE.indexOf(next) !== 0) {
+            buf = '';
+            return;
+          }
+          e.preventDefault();
+          buf = next;
+          clearTimeout(bufTimer);
+          bufTimer = setTimeout(function () { buf = ''; }, 700);
+          if (buf === CODE) {
+            buf = '';
+            clearTimeout(bufTimer);
+            CheatKit.toggle();
+          }
+        });
+
+        CheatKit.init({
+          id: 'number-guess',
+          dock: document.querySelector('.game-wrap'),
+          title: both('cheatTitle'),
+          hint: both('cheatHint'),
+          stats: [
+            { label: both('cheatTarget'), tone: 'danger',
+              get: function () { return target ? target : '-'; } },
+            { label: both('cheatTries'),
+              get: function () { return tries; } },
+            { label: both('cheatRange'),
+              get: function () {
+                if (won) return target ? String(target) : '-';
+                var b = cheatBounds();
+                return b.lo + ' - ' + b.hi;
+              } },
+            { label: both('cheatState'), tone: 'success',
+              get: function () { return t(won ? 'cheatWon' : 'cheatPlaying'); } }
+          ],
+          params: [
+            { key: 'target', label: both('cheatTarget'), min: 1, max: 100, step: 1,
+              get: function () { return target || 1; },
+              set: cheatSetTarget }
+          ],
+          toggles: [
+            { label: both('cheatAnswer'),
+              on: both('cheatAnswerOn'),
+              off: both('cheatAnswerOff'),
+              get: function () { return cheatShowAnswer; },
+              set: function (v) { cheatShowAnswer = !!v; renderAnswer(); } }
+          ],
+          actions: [
+            { label: both('cheatWin'), run: cheatWin },
+            { label: both('cheatMid'), run: cheatMid },
+            { label: both('cheatRestart'), run: function () { restart(); },
+              toast: both('cheatRestartToast') }
+          ]
+        });
+      })();
     })();
   </script>
 </body>

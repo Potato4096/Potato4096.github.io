@@ -120,6 +120,9 @@
   var dyingTimer = 0, winTimer = 0, flagY = 0, nowSec = 0;
   var clouds = [];
 
+  // ---------- cheat toggles (platform CheatKit) ----------
+  var cheatInfJump = false, cheatGod = false, cheatAutoCoin = false;
+
   function initClouds() {
     clouds = [];
     for (var i = 0; i < 14; i++) {
@@ -401,7 +404,7 @@
       player.buffer -= dt;
     }
 
-    if (player.buffer > 0 && player.coyote > 0) {
+    if (player.buffer > 0 && (player.coyote > 0 || cheatInfJump)) {
       player.vy = JUMP_VEL;
       player.jumping = true;
       player.onGround = false;
@@ -476,7 +479,7 @@
           updateHUD();
           SJ.Audio.play('stomp');
           spawnSparkles(e.x + e.w / 2, e.y);
-        } else {
+        } else if (!cheatGod) {
           killPlayer();
           updateEffects(dt);
           return;
@@ -485,19 +488,26 @@
     }
 
     // ----- coins -----
+    var gotCoin = false, quietCoin = false;
     for (var c = 0; c < coins.length; c++) {
       var cn = coins[c];
       if (cn.taken) continue;
-      if (player.x < cn.x + cn.w && player.x + player.w > cn.x &&
-          player.y < cn.y + cn.h && player.y + player.h > cn.y) {
-        cn.taken = true;
-        coinCount += 1;
-        score += 200;
-        updateHUD();
+      var near = player.x < cn.x + cn.w && player.x + player.w > cn.x &&
+          player.y < cn.y + cn.h && player.y + player.h > cn.y;
+      if (!near && !cheatAutoCoin) continue;
+      cn.taken = true;
+      coinCount += 1;
+      score += 200;
+      gotCoin = true;
+      if (near) {
         SJ.Audio.play('coin');
         spawnSparkles(cn.x + 5, cn.y + 7);
+      } else {
+        quietCoin = true;
       }
     }
+    if (gotCoin) updateHUD();
+    if (quietCoin) SJ.Audio.play('coin');
 
     updateEffects(dt);
 
@@ -887,4 +897,122 @@
   }
 
   GamePlatform.ready.then(boot);
+
+  // ---------- 修改器钩子（平台共享 CheatKit） ----------
+  var CHEAT_STATE = {
+    menu: { zh: '菜单', en: 'Menu' },
+    playing: { zh: '进行中', en: 'Playing' },
+    paused: { zh: '已暂停', en: 'Paused' },
+    dying: { zh: '死亡', en: 'Dying' },
+    levelclear: { zh: '通关', en: 'Clear' },
+    gameover: { zh: '结束', en: 'Game Over' }
+  };
+
+  function cheatStateName() {
+    var m = CHEAT_STATE[gameState] || { zh: gameState, en: gameState };
+    return GamePlatform.i18n ? GamePlatform.i18n.t(m) : m.zh;
+  }
+
+  // 单关卡构建，L 无 index/name 时回落到关卡下标 0（展示为第 1 关）
+  function cheatLevelNo() {
+    if (L && L.index != null) return L.index;
+    if (L && L.name) return L.name;
+    return 1;
+  }
+
+  function cheatToFlag() {
+    if (!player) return;
+    player.x = L.flag.x - player.w - 4;
+    player.y = L.flag.bottomY - player.h - 2;
+    player.vx = 0;
+    player.vy = 0;
+    player.coyote = COYOTE;
+  }
+
+  function cheatClearEnemies() {
+    if (!enemies) return;
+    for (var i = 0; i < enemies.length; i++) enemies[i].alive = false;
+  }
+
+  function cheatAllCoins() {
+    if (!coins) return;
+    var n = 0;
+    for (var i = 0; i < coins.length; i++) {
+      if (coins[i].taken) continue;
+      coins[i].taken = true;
+      coinCount += 1;
+      score += 200;
+      n++;
+    }
+    if (n) {
+      updateHUD();
+      SJ.Audio.play('coin');
+    }
+  }
+
+  if (window.CheatKit) {
+    CheatKit.init({
+      id: 'super-jump',
+      title: { zh: '🔧 修改器', en: '🔧 Modifier' },
+      hint: { zh: '彩蛋面板 · 参数即时生效', en: 'Easter egg · changes apply instantly' },
+      stats: [
+        { label: { zh: '得分', en: 'Score' }, get: function () { return score; },
+          format: function (v) { return GamePlatform.util.formatNumber(v); } },
+        { label: { zh: '生命', en: 'Lives' }, get: function () { return lives; }, tone: 'danger' },
+        { label: { zh: '金币', en: 'Coins' }, get: function () { return coinCount; }, tone: 'warning' },
+        { label: { zh: '关卡', en: 'Level' }, get: cheatLevelNo },
+        { label: { zh: 'X 坐标', en: 'X pos' }, get: function () { return player ? Math.round(player.x) : 0; } },
+        { label: { zh: '状态', en: 'State' }, get: cheatStateName, tone: 'success' }
+      ],
+      params: [
+        { key: 'gravity', label: { zh: '重力', en: 'Gravity' }, min: 0, max: 6000, step: 10,
+          get: function () { return GRAVITY; },
+          set: function (v) { GRAVITY = v; } },
+        { key: 'jump', label: { zh: '跳跃初速', en: 'Jump vel' }, min: -2000, max: -150, step: 5,
+          get: function () { return JUMP_VEL; },
+          set: function (v) { JUMP_VEL = v; } },
+        { key: 'runmax', label: { zh: '最大跑速', en: 'Run speed' }, min: 50, max: 2000, step: 5,
+          get: function () { return RUN_MAX; },
+          set: function (v) { RUN_MAX = v; } },
+        { key: 'lives', label: { zh: '生命', en: 'Lives' }, min: 0, max: 99, step: 1,
+          get: function () { return lives; },
+          set: function (v) { lives = Math.round(v); updateHUD(); } },
+        { key: 'score', label: { zh: '得分', en: 'Score' }, min: 0, max: 999999, step: 100,
+          get: function () { return score; },
+          set: function (v) { score = Math.round(v); updateHUD(); } }
+      ],
+      toggles: [
+        { label: { zh: '无限跳', en: 'Infinite jump' },
+          on: { zh: '无限跳：开', en: 'Infinite Jump: ON' },
+          off: { zh: '无限跳：关', en: 'Infinite Jump: OFF' },
+          get: function () { return cheatInfJump; },
+          set: function (v) { cheatInfJump = !!v; } },
+        { label: { zh: '无敌', en: 'God mode' },
+          on: { zh: '无敌：开', en: 'God Mode: ON' },
+          off: { zh: '无敌：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; } },
+        { label: { zh: '自动收币', en: 'Auto coins' },
+          on: { zh: '自动收币：开', en: 'Auto Coins: ON' },
+          off: { zh: '自动收币：关', en: 'Auto Coins: OFF' },
+          get: function () { return cheatAutoCoin; },
+          set: function (v) { cheatAutoCoin = !!v; } }
+      ],
+      actions: [
+        { label: { zh: '传到旗杆', en: 'Teleport to flag' }, run: cheatToFlag,
+          toast: { zh: '已传送到旗杆前', en: 'Teleported to the flag' } },
+        { label: { zh: '清空敌人', en: 'Clear enemies' }, run: cheatClearEnemies,
+          toast: { zh: '敌人已清空', en: 'Enemies cleared' } },
+        { label: { zh: '收集全部金币', en: 'Collect all coins' }, run: cheatAllCoins,
+          toast: { zh: '金币已收集', en: 'Coins collected' } },
+        { label: { zh: '加 3 条命', en: '+3 lives' }, run: function () { lives += 3; updateHUD(); },
+          toast: { zh: '生命 +3', en: '+3 lives' } },
+        { label: { zh: '重开本关', en: 'Restart level' }, run: function () {
+          resetLevel();
+          if (gameState === 'dying') gameState = 'playing';
+          updateHUD();
+        }, tone: 'danger', toast: { zh: '本关已重置', en: 'Level restarted' } }
+      ]
+    });
+  }
 })();

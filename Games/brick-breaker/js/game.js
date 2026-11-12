@@ -144,7 +144,12 @@
   var aliveBricks = 0;
   var keys = {};
 
+  /* 修改器状态（见文件末尾 CheatKit.init） */
+  var cheatGod = false;
+  var cheatSpeed = 0;
+
   function baseSpeed() {
+    if (cheatSpeed > 0) return cheatSpeed;
     return Math.min(BASE_SPEED + (level - 1) * 16, 520);
   }
 
@@ -407,13 +412,18 @@
 
       // all balls lost -> lose a life
       if (balls.length === 0) {
-        lives--;
-        BB.audio.play('lose');
-        updateHUD();
-        if (lives <= 0) {
-          endGame();
-        } else {
+        if (cheatGod) {
+          // 无敌：不扣命，直接补球
           resetBallOnPaddle();
+        } else {
+          lives--;
+          BB.audio.play('lose');
+          updateHUD();
+          if (lives <= 0) {
+            endGame();
+          } else {
+            resetBallOnPaddle();
+          }
         }
       }
 
@@ -854,4 +864,105 @@
     get state() { return state; },
     get score() { return score; }
   };
+
+  /* ------------------------------------------------------------ */
+  /* 修改器钩子（暗号 potato4096，见 platform/cheat-kit.js）        */
+  /* ------------------------------------------------------------ */
+
+  function cheatLiveBalls() { return balls ? balls.length : 0; }
+
+  function cheatSetBallSpeed(v) {
+    cheatSpeed = v > 0 ? v : 0;
+    if (!balls) return;
+    for (var i = 0; i < balls.length; i++) {
+      var b = balls[i];
+      if (b.stuck) continue;
+      var cur = Math.sqrt(b.vx * b.vx + b.vy * b.vy) || 1;
+      var target = cheatSpeed || baseSpeed();
+      b.vx = b.vx / cur * target;
+      b.vy = b.vy / cur * target;
+    }
+  }
+
+  function cheatSetBallCount(n) {
+    if (!balls || !balls.length) return;
+    n = Math.max(1, Math.min(12, Math.round(n)));
+    while (balls.length > n) balls.pop();
+    var base = balls[0];
+    while (balls.length < n) {
+      var ang = Math.random() * Math.PI * 2;
+      var sp = Math.sqrt(base.vx * base.vx + base.vy * base.vy) || baseSpeed();
+      balls.push({
+        x: base.x, y: base.y - 6,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        stuck: base.stuck
+      });
+    }
+    updateHUD();
+  }
+
+  function cheatWipeBricks() {
+    if (!bricks) return;
+    for (var i = 0; i < bricks.length; i++) bricks[i].alive = false;
+    aliveBricks = 0;
+    updateHUD();
+  }
+
+  function cheatNextLevel() {
+    cheatWipeBricks();
+    levelClear();
+  }
+
+  if (window.CheatKit) {
+    CheatKit.init({
+      id: 'brick-breaker',
+      title: { zh: '🔧 修改器', en: '🔧 Modifier' },
+      hint: { zh: '彩蛋面板 · 参数即时生效', en: 'Easter egg · changes apply instantly' },
+      stats: [
+        { label: { zh: '得分', en: 'Score' }, get: function () { return score; }, format: function (v) { return GamePlatform.util.formatNumber(v); } },
+        { label: { zh: '生命', en: 'Lives' }, get: function () { return lives; }, tone: 'danger' },
+        { label: { zh: '关卡', en: 'Level' }, get: function () { return level; } },
+        { label: { zh: '球数', en: 'Balls' }, get: cheatLiveBalls },
+        { label: { zh: '剩余砖块', en: 'Bricks' }, get: function () { return aliveBricks; }, tone: 'warning' },
+        { label: { zh: '球速', en: 'Ball speed' }, get: function () { return cheatSpeed || Math.round(baseSpeed()); }, tone: 'success' }
+      ],
+      params: [
+        { key: 'score', label: { zh: '得分', en: 'Score' }, min: 0, max: 9999999, step: 100,
+          get: function () { return score; },
+          set: function (v) { score = Math.round(v); updateHUD(); } },
+        { key: 'lives', label: { zh: '生命', en: 'Lives' }, min: 0, max: 99, step: 1,
+          get: function () { return lives; },
+          set: function (v) { lives = Math.round(v); updateHUD(); } },
+        { key: 'level', label: { zh: '关卡', en: 'Level' }, min: 1, max: 30, step: 1,
+          get: function () { return level; },
+          set: function (v) { startLevel(Math.round(v)); } },
+        { key: 'paddle', label: { zh: '挡板宽度', en: 'Paddle width' }, min: 40, max: 420, step: 5,
+          get: function () { return paddle ? paddle.w : 0; },
+          set: function (v) { if (paddle) { paddle.w = v; paddle.baseW = v; } } },
+        { key: 'speed', label: { zh: '球速(0=自动)', en: 'Ball speed (0=auto)' }, min: 0, max: 2400, step: 10,
+          get: function () { return cheatSpeed; },
+          set: cheatSetBallSpeed },
+        { key: 'balls', label: { zh: '球数', en: 'Ball count' }, min: 1, max: 12, step: 1,
+          get: cheatLiveBalls,
+          set: cheatSetBallCount }
+      ],
+      toggles: [
+        { label: { zh: '无敌', en: 'God mode' },
+          on: { zh: '无敌：开', en: 'God Mode: ON' },
+          off: { zh: '无敌：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; } }
+      ],
+      actions: [
+        { label: { zh: '一击通关', en: 'Instant clear' }, run: cheatNextLevel, toast: { zh: '砖块已清空', en: 'Bricks cleared' } },
+        { label: { zh: '加 3 条命', en: '+3 lives' }, run: function () { lives += 3; updateHUD(); } },
+        { label: { zh: '撒强化道具', en: 'Drop power-ups' }, run: function () {
+          if (!bricks) return;
+          for (var i = 0; i < bricks.length; i++) if (bricks[i].alive) dropCapsule(bricks[i]);
+        } },
+        { label: { zh: '下一关', en: 'Next level' }, run: function () { startLevel(level + 1); } }
+      ]
+    });
+  }
 })();

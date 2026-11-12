@@ -131,6 +131,7 @@ Games/<game-id>/
 - **必须**使用 `GamePlatform.ready` 后再读取设置 / 应用文本
 - 入口页不要用 `<frameset>` / 跳转中转页；保持单页直达
 - 提供"返回主页"按钮，调用 `GamePlatform.navigate.goHome()`
+- **建议**接入共用修改器：在 `game-base.css` 后加 `platform/cheat-kit.css`，在 `game-api.js` 后加 `platform/cheat-kit.js`，脚本末尾用 `CheatKit.init({...})` 声明本作的数值与作弊项（格式见 [API.md](API.md#修改器-cheatkit)）。面板只在玩家键入暗号 `potato4096` 后出现，不占界面、不影响正常玩法
 
 ---
 
@@ -227,6 +228,7 @@ Games/<game-id>/
 - [ ] 有"返回主页"按钮
 - [ ] 控制台无报错
 - [ ] `api` 字段声明完整
+- [ ] （建议）接入 `CheatKit`：键入 `potato4096` 能开出本作的修改器，面板内数值与实际局势一致，棋类棋盘编辑可用；SPA 类游戏在 `unmount` 里调 `CheatKit.detach()`
 
 ---
 

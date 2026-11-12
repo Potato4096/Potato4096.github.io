@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reaction Test · Potato4096 Arcade</title>
   <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="../../platform/cheat-kit.css">
   <style>
     .game-wrap { max-width: 560px; margin: 0 auto; padding: 24px 20px 60px; }
 
@@ -85,6 +86,7 @@
   </div>
 
   <script src="../../platform/game-api.js"></script>
+  <script src="../../platform/cheat-kit.js"></script>
   <script>
     (function () {
       'use strict';
@@ -105,7 +107,11 @@
           resultSub: '点击再来一局',
           tooSoon: '抢跑了！等变绿再点',
           result: '{ms} ms',
-          cleared: '记录已清除'
+          cleared: '记录已清除',
+          sIdle: '待机',
+          sWaiting: '等待变绿',
+          sGo: '可点击',
+          sResult: '已出成绩'
         },
         en: {
           back: 'Back to Home',
@@ -122,7 +128,11 @@
           resultSub: 'Click to play again',
           tooSoon: 'Too early! Wait for green',
           result: '{ms} ms',
-          cleared: 'Records cleared'
+          cleared: 'Records cleared',
+          sIdle: 'Idle',
+          sWaiting: 'Waiting',
+          sGo: 'Go',
+          sResult: 'Result'
         }
       };
 
@@ -130,6 +140,10 @@
       var state = 'idle';
       var goAt = 0;
       var timer = null;
+
+      // 修改器变量：延迟覆盖（null=沿用 1200~3600 随机）、秒开
+      var cheatDelay = null;
+      var cheatInstant = false;
 
       var el = {
         arena: document.getElementById('arena'),
@@ -196,7 +210,10 @@
           el.arena.classList.add('is-waiting');
           el.title.textContent = t('waitTitle');
           el.sub.textContent = t('waitSub');
-          var delay = GamePlatform.util.randInt(1200, 3600);
+          var delay = cheatInstant
+            ? 0
+            : (cheatDelay == null ? GamePlatform.util.randInt(1200, 3600) : cheatDelay);
+          delay = Math.max(0, Math.round(delay));
           if (timer) clearTimeout(timer);
           timer = setTimeout(function () {
             state = 'go';
@@ -262,6 +279,103 @@
         applyThemeColors();
         setState('idle');
       });
+
+      /* ------------------------------------------------------------ */
+      /* 修改器钩子（暗号 potato4096，见 platform/cheat-kit.js）        */
+      /* 界面刷新一律复用 setState() / renderStats()，不绕过原流程      */
+      /* ------------------------------------------------------------ */
+
+      function cheatRecords() {
+        var r = GamePlatform.storage.get('records', []);
+        return Array.isArray(r) ? r : [];
+      }
+
+      function cheatLast() {
+        var r = cheatRecords();
+        return r.length ? r[r.length - 1] : null;
+      }
+
+      function cheatBest() {
+        var r = cheatRecords();
+        return r.length ? Math.min.apply(null, r) : null;
+      }
+
+      function cheatAvg() {
+        var r = cheatRecords();
+        if (!r.length) return null;
+        return Math.round(r.reduce(function (a, b) { return a + b; }, 0) / r.length);
+      }
+
+      function cheatMs(v) {
+        return v == null ? '-' : v + ' ms';
+      }
+
+      function cheatStateText() {
+        var key = state === 'waiting' ? 'sWaiting'
+          : state === 'go' ? 'sGo'
+          : state === 'result' ? 'sResult'
+          : 'sIdle';
+        return t(key);
+      }
+
+      /** 伪造一条 1ms 记录：沿用原「追加 + 最多保留 20 条」的存储结构（纯数字数组） */
+      function cheatForge() {
+        var records = cheatRecords();
+        records.push(1);
+        if (records.length > 20) records = records.slice(-20);
+        GamePlatform.storage.set('records', records);
+        renderStats();
+      }
+
+      /** 清空成绩：与「清除记录」按钮完全同一条路径 */
+      function cheatClearRecords() {
+        GamePlatform.storage.remove('records');
+        renderStats();
+        GamePlatform.ui.toast(t('cleared'));
+      }
+
+      /** 立即开始一轮：清掉待触发的定时器后走原 setState */
+      function cheatStartRound() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        setState('waiting');
+      }
+
+      if (window.CheatKit) {
+        CheatKit.init({
+          id: 'reaction-test',
+          title: { zh: '🔧 修改器', en: '🔧 Modifier' },
+          hint: { zh: '彩蛋面板 · 参数即时生效', en: 'Easter egg · applies instantly' },
+          dock: document.querySelector('.game-wrap'),
+          stats: [
+            { label: { zh: '当前状态', en: 'State' }, get: cheatStateText, tone: 'success' },
+            { label: { zh: '本次成绩', en: 'Last run' }, get: cheatLast, format: cheatMs },
+            { label: { zh: '平均成绩', en: 'Average' }, get: cheatAvg, format: cheatMs },
+            { label: { zh: '最佳成绩', en: 'Best' }, get: cheatBest, format: cheatMs, tone: 'warning' },
+            { label: { zh: '测试次数', en: 'Runs' }, get: function () { return cheatRecords().length; } }
+          ],
+          params: [
+            { key: 'delay',
+              label: { zh: '模拟延迟ms(拖动即覆盖1200~3600随机)', en: 'Delay ms (overrides 1200-3600 random)' },
+              min: 0, max: 2000, step: 50,
+              get: function () { return cheatDelay; },
+              set: function (v) { cheatDelay = Math.round(v); } }
+          ],
+          toggles: [
+            { label: { zh: '秒开', en: 'Instant green' },
+              on: { zh: '秒开：开（0 延迟）', en: 'Instant: ON (0 delay)' },
+              off: { zh: '秒开：关', en: 'Instant: OFF' },
+              get: function () { return cheatInstant; },
+              set: function (v) { cheatInstant = !!v; } }
+          ],
+          actions: [
+            { label: { zh: '伪造神迹成绩 (1ms)', en: 'Forge miracle run (1ms)' },
+              run: cheatForge,
+              toast: { zh: '已写入 1ms 成绩', en: '1ms run saved' } },
+            { label: { zh: '立即开始一轮', en: 'Start a round' }, run: cheatStartRound },
+            { label: { zh: '清空成绩', en: 'Clear records' }, run: cheatClearRecords, tone: 'danger' }
+          ]
+        });
+      }
     })();
   </script>
 </body>

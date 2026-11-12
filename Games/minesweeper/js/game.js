@@ -74,6 +74,10 @@
   var flagMode = false;
   var bests = {};
 
+  /* 修改器状态（见文件末尾 CheatKit.init） */
+  var cheatXray = false;
+  var cheatGod = false;
+
   function bestKey(key) { return 'best-' + key; }
 
   function fmtTime(sec) {
@@ -187,6 +191,7 @@
       started = true;
       gameState = 'playing';
       startTimer();
+      if (cheatXray) cheatRenderCovered();
     }
     var c = cells[idx];
     if (c.flagged) return;
@@ -195,6 +200,7 @@
       return;
     }
     if (c.mine) {
+      if (cheatGod) { cheatStepMine(idx); return; }
       revealCell(idx);
       lose(idx);
       return;
@@ -223,7 +229,7 @@
         floodReveal(ns[i]);
       }
     }
-    if (hitMine) { lose(-1); return; }
+    if (hitMine && !cheatGod) { lose(-1); return; }
     MS.audio.play('chord');
     checkWin();
   }
@@ -251,6 +257,7 @@
       flagCount++;
       MS.audio.play('flag');
     }
+    if (cheatXray) cheatRenderCovered();
     updateHUD();
   }
 
@@ -523,4 +530,224 @@
     get elapsed() { return elapsed; },
     get flags() { return flagCount; }
   };
+
+  /* ------------------------------------------------------------ */
+  /* 修改器钩子（暗号 potato4096，见 platform/cheat-kit.js）        */
+  /* ------------------------------------------------------------ */
+
+  var CHEAT_STATUS = {
+    menu:    { zh: '未开始', en: 'Not started' },
+    ready:   { zh: '未开始', en: 'Not started' },
+    playing: { zh: '进行中', en: 'In progress' },
+    paused:  { zh: '已暂停', en: 'Paused' },
+    won:     { zh: '胜利',   en: 'Won' },
+    lost:    { zh: '失败',   en: 'Lost' }
+  };
+
+  function cheatStatus() {
+    return GamePlatform.i18n.t(CHEAT_STATUS[gameState] || CHEAT_STATUS.menu);
+  }
+
+  function cheatCellCount() { return cols * rows || cells.length; }
+
+  // 透视重绘：只碰未翻开的格子，关掉后逐格复原（旗子优先保留）
+  function cheatRenderCovered() {
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      if (c.revealed || c.flagged) continue;
+      var cls = 'cell covered';
+      var text = '';
+      if (!cheatXray) {
+        if (c.question) { cls += ' question'; text = '?'; }
+      } else if (c.mine) {
+        text = '💣';
+      } else if (c.adj > 0) {
+        cls += ' n' + c.adj;
+        text = String(c.adj);
+      }
+      c.el.className = cls;
+      c.el.textContent = text;
+    }
+  }
+
+  // 无敌踩雷：亮出地雷但不判负，也不计入安全格（避免破坏胜利条件）
+  function cheatStepMine(idx) {
+    var c = cells[idx];
+    c.revealed = true;
+    c.el.className = 'cell revealed';
+    c.el.innerHTML = MINE_SVG;
+    updateHUD();
+  }
+
+  // 保证当前有一局布雷中的棋（菜单/失败时先开新局）
+  function cheatArm() {
+    if (gameState === 'menu' || gameState === 'lost') newGame(diffKey);
+    if (gameState === 'paused') togglePause();
+    if (started) return true;
+    if (!cells.length) return false;
+    placeMines(Math.floor(cells.length / 2));
+    started = true;
+    gameState = 'playing';
+    startTimer();
+    if (cheatXray) cheatRenderCovered();
+    return true;
+  }
+
+  function cheatWin() {
+    if (!cheatArm()) return;
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      if (c.mine) continue;
+      if (c.flagged) {
+        c.flagged = false;
+        flagCount--;
+        c.el.classList.remove('flagged');
+      }
+      if (c.revealed) continue;
+      c.revealed = true;
+      c.el.className = 'cell revealed' + (c.adj > 0 ? ' n' + c.adj : '');
+      c.el.textContent = c.adj > 0 ? String(c.adj) : '';
+      revealedSafe++;
+    }
+    updateHUD();
+    checkWin();
+  }
+
+  function cheatFlagMines() {
+    if (!cheatArm()) return;
+    var n = 0;
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      if (c.mine) {
+        if (c.revealed) continue;
+        if (!c.flagged) {
+          c.flagged = true;
+          c.question = false;
+          c.el.classList.remove('question');
+          c.el.classList.add('flagged');
+          c.el.innerHTML = FLAG_SVG;
+        }
+        n++;
+      } else if (c.flagged) {
+        c.flagged = false;
+        c.el.classList.remove('flagged');
+        c.el.textContent = '';
+      }
+    }
+    flagCount = n;
+    updateHUD();
+    if (cheatXray) cheatRenderCovered();
+  }
+
+  function cheatShowMines() {
+    if (!cheatArm()) return;
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      if (!c.mine || c.revealed) continue;
+      if (c.flagged) { c.flagged = false; flagCount--; }
+      c.revealed = true;
+      c.el.className = 'cell revealed';
+      c.el.innerHTML = MINE_SVG;
+    }
+    updateHUD();
+  }
+
+  // 直接改写旗子数：先清空再按数量补（只插在未翻开格上）
+  function cheatSetFlags(n) {
+    n = Math.max(0, Math.min(cheatCellCount(), Math.round(n)));
+    var i, c;
+    for (i = 0; i < cells.length; i++) {
+      c = cells[i];
+      if (!c.flagged) continue;
+      c.flagged = false;
+      c.el.classList.remove('flagged');
+      if (c.question) c.el.textContent = '?';
+      else c.el.textContent = '';
+    }
+    flagCount = 0;
+    for (i = 0; i < cells.length && flagCount < n; i++) {
+      c = cells[i];
+      if (c.revealed) continue;
+      c.flagged = true;
+      c.question = false;
+      c.el.classList.remove('question');
+      c.el.classList.add('flagged');
+      c.el.innerHTML = FLAG_SVG;
+      flagCount++;
+    }
+    updateHUD();
+    if (cheatXray) cheatRenderCovered();
+  }
+
+  // 翻到指定安全格数量：只增不减，逐格随机翻开真实安全格
+  function cheatRevealUntil(target) {
+    target = Math.round(target);
+    if (!started || gameState !== 'playing') return;
+    var guard = cells.length * 3;
+    var pool, i, c;
+    while (revealedSafe < target && guard-- > 0 && gameState === 'playing') {
+      pool = [];
+      for (i = 0; i < cells.length; i++) {
+        c = cells[i];
+        if (!c.revealed && !c.flagged && !c.mine) pool.push(i);
+      }
+      if (!pool.length) break;
+      floodReveal(pool[Math.floor(Math.random() * pool.length)]);
+    }
+    if (cheatXray) cheatRenderCovered();
+    updateHUD();
+    checkWin();
+  }
+
+  if (window.CheatKit) {
+    CheatKit.init({
+      id: 'minesweeper',
+      title: { zh: '🔧 修改器', en: '🔧 Modifier' },
+      hint: { zh: '彩蛋面板 · 参数即时生效', en: 'Easter egg · changes apply instantly' },
+      stats: [
+        { label: { zh: '已翻开安全格', en: 'Safe cells opened' }, get: function () { return revealedSafe; }, tone: 'success' },
+        { label: { zh: '剩余雷数', en: 'Mines left' }, get: function () { return mineTotal - flagCount; }, tone: 'warning' },
+        { label: { zh: '旗子数', en: 'Flags' }, get: function () { return flagCount; } },
+        { label: { zh: '棋盘尺寸', en: 'Board size' }, get: function () { return cols + '×' + rows; } },
+        { label: { zh: '雷密度', en: 'Mine density' }, get: function () {
+          var total = cheatCellCount();
+          return total ? mineTotal / total * 100 : 0;
+        }, format: function (v) { return v.toFixed(1) + '%'; } },
+        { label: { zh: '当前状态', en: 'State' }, get: cheatStatus }
+      ],
+      params: [
+        { key: 'flags', label: { zh: '旗子数（自动同步）', en: 'Flags (synced)' }, min: 0, max: 480, step: 1,
+          get: function () { return flagCount; },
+          set: cheatSetFlags },
+        { key: 'opened', label: { zh: '已翻开安全格（只增）', en: 'Safe cells opened (up only)' }, min: 0, max: 480, step: 1,
+          get: function () { return revealedSafe; },
+          set: cheatRevealUntil }
+      ],
+      toggles: [
+        { label: { zh: '透视', en: 'X-ray' },
+          on: { zh: '透视：开', en: 'X-ray: ON' },
+          off: { zh: '透视：关', en: 'X-ray: OFF' },
+          get: function () { return cheatXray; },
+          set: function (v) { cheatXray = !!v; },
+          onAfter: cheatRenderCovered },
+        { label: { zh: '无敌', en: 'God mode' },
+          on: { zh: '无敌：开', en: 'God Mode: ON' },
+          off: { zh: '无敌：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; } }
+      ],
+      actions: [
+        { label: { zh: '一键胜利', en: 'Instant win' }, tone: 'danger', run: cheatWin,
+          toast: { zh: '安全格已全部翻开', en: 'All safe cells opened' } },
+        { label: { zh: '自动插旗', en: 'Auto flag mines' }, run: cheatFlagMines,
+          toast: { zh: '所有地雷已插旗', en: 'All mines flagged' } },
+        { label: { zh: '揭示全部地雷', en: 'Reveal all mines' }, run: cheatShowMines,
+          toast: { zh: '地雷已亮出（不判负）', en: 'Mines revealed (no penalty)' } },
+        { label: { zh: '重开本局', en: 'Restart board' }, run: function () {
+          newGame(diffKey);
+          if (cheatXray) cheatRenderCovered();
+        } }
+      ]
+    });
+  }
 })();

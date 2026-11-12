@@ -362,7 +362,8 @@
             '<div class="seat-name">' + seatName(idx) + '</div>' +
             (role ? '<div class="seat-role">' + role + '</div>' : '') +
             '<div class="seat-count">' + s.cards.length + '</div>' +
-            (bubble ? '<div class="seat-bubble">' + bubble + '</div>' : '')
+            (bubble ? '<div class="seat-bubble">' + bubble + '</div>' : '') +
+            cheatXrayHtml(idx)
     };
   }
 
@@ -1038,6 +1039,207 @@
     newRound();
 
     if (!hadPrefs) setTimeout(showModeOverlay, 260);
+  }
+
+  /* ============================================================
+   * 修改器钩子（暗号 potato4096，见 platform/cheat-kit.js）
+   * 只新增 cheat* 变量与工具函数，界面刷新一律走原有 render()
+   * ========================================================== */
+
+  var cheatXray = false;        // 透视：仅显示 AI 座位手牌
+  var cheatCardId = 1000;       // 作弊插入牌的 id 起点（发牌 id 为 0~53）
+
+  function cheatEn() { return GamePlatform.i18n.getLang() === 'en'; }
+
+  function cheatTr(zh, en) { return cheatEn() ? en : zh; }
+
+  /** 作弊面向的“自己”：优先当前视角，若视角是 AI 则取第一个真人 */
+  function cheatHeroSeat() {
+    return isAI(G.viewSeat) ? firstHuman() : G.viewSeat;
+  }
+
+  /** 新牌对象：id 全局自增，花色避开同点数已有花色 */
+  function cheatNewCard(hand, rank) {
+    var suit = 'joker';
+    if (rank < 16) {
+      var used = {}, pick = '';
+      for (var i = 0; i < hand.length; i++) {
+        if (hand[i].rank === rank) used[hand[i].suit] = 1;
+      }
+      for (var j = 0; j < D.SUITS.length; j++) {
+        if (!used[D.SUITS[j]]) { pick = D.SUITS[j]; break; }
+      }
+      suit = pick || D.SUITS[Math.floor(Math.random() * D.SUITS.length)];
+    }
+    return { id: cheatCardId++, rank: rank, suit: suit };
+  }
+
+  /** 座位上的透视小牌面（文本形式），热座遮罩期间一律不泄露 */
+  function cheatXrayHtml(idx) {
+    if (!cheatXray || G.curtainOpen || !isAI(idx)) return '';
+    var s = G.seats[idx];
+    if (!s || !s.cards.length) return '';
+
+    var parts = D.sortDesc(s.cards).map(function (c) {
+      var red = c.suit === 'heart' || c.suit === 'diamond';
+      var txt = rankLabel(c.rank) + (SUIT_CHAR[c.suit] || '');
+      return '<span style="color:' + (red ? 'var(--pg-danger)' : 'inherit') + '">' + txt + '</span>';
+    });
+    return '<div class="seat-xray" style="display:flex;flex-wrap:wrap;gap:1px 4px;' +
+           'justify-content:center;font-size:10px;line-height:1.25;opacity:.85;max-width:100%">' +
+           parts.join('') + '</div>';
+  }
+
+  function cheatRoleText() {
+    if (G.landlord < 0) return cheatTr('未定', '—');
+    if (G.landlord === G.viewSeat) return cheatTr('你是地主', 'You: landlord');
+    if (isAI(G.viewSeat)) return cheatTr('电脑', 'CPU');
+    return cheatTr('你是农民', 'You: farmer');
+  }
+
+  function cheatHandCountText() {
+    var out = [];
+    for (var i = 0; i < 3; i++) {
+      var s = G.seats[i];
+      out.push(seatName(i) + ' ' + (s ? s.cards.length : 0));
+    }
+    return out.join('/');
+  }
+
+  function cheatLastText() {
+    return G.last ? typeLabel(G.last.type) : cheatTr('无', 'none');
+  }
+
+  /* ---------- 动作 ---------- */
+
+  function cheatGiveRocket() {
+    var s = G.seats[cheatHeroSeat()];
+    if (!s) return;
+    var has = D.rankCounts(s.cards);
+    var added = 0;
+    [17, 16].forEach(function (r) {
+      if (has[r]) return;
+      s.cards.push(cheatNewCard(s.cards, r));
+      added++;
+    });
+    if (!added) s.cards.push(cheatNewCard(s.cards, 15));
+    s.cards = D.sortDesc(s.cards);
+    render();
+    toast(cheatTr('王炸已入手', 'Rocket added to your hand'));
+  }
+
+  function cheatWinNow() {
+    var seat = cheatHeroSeat();
+    if (!G.seats[seat]) return;
+
+    // 叫分阶段：直接把当前玩家抬成 3 分地主，跳过叫分再结算
+    if (G.phase === 'bidding') {
+      G.bid.highest = 3;
+      G.bid.best = seat;
+      G.bid.count = 3;
+      G.seats[seat].bid = 3;
+      finishBidding();
+    }
+    if (G.phase !== 'playing') {
+      toast(cheatTr('对局还没开始', 'The deal is not in play yet'));
+      return;
+    }
+
+    G.seats[seat].cards = [];
+    G.selected = {};
+    G.curtainOpen = false;
+    G.last = null;
+    endRound(seat);   // 沿用原结算：地主/农民阵营由 endRound 判定
+  }
+
+  function cheatSmallRank(counts) {
+    for (var i = 0; i < 60; i++) {
+      var r = 3 + Math.floor(Math.random() * 8);   // 3~10
+      if ((counts[r] || 0) < 4) return r;
+    }
+    return 3;
+  }
+
+  function cheatWeakenAI() {
+    var touched = 0;
+    for (var seat = 0; seat < 3; seat++) {
+      if (!isAI(seat) || !G.seats[seat]) continue;
+      var hand = G.seats[seat].cards;
+      var counts = D.rankCounts(hand);
+      var bombs = {};
+      Object.keys(counts).forEach(function (k) {
+        if (counts[k] === 4) bombs[k] = 1;
+      });
+
+      hand.forEach(function (c) {
+        if (!bombs[c.rank] && c.rank < 14) return;
+        counts[c.rank]--;
+        var r = cheatSmallRank(counts);
+        counts[r] = (counts[r] || 0) + 1;
+        c.rank = r;
+        if (c.suit === 'joker') c.suit = D.SUITS[Math.floor(Math.random() * D.SUITS.length)];
+        touched++;
+      });
+
+      G.seats[seat].cards = D.sortDesc(hand);
+    }
+    render();
+    toast(touched
+      ? cheatTr('对手的大牌都变小了', 'CPU big cards downgraded')
+      : cheatTr('对手本来就没大牌', 'CPU had no big cards'));
+  }
+
+  function cheatNewRound() {
+    newRound();
+    toast(cheatTr('重新叫地主', 'Re-bidding'));
+  }
+
+  if (window.CheatKit) {
+    CheatKit.init({
+      id: 'doudizhu',
+      title: { zh: '🔧 修改器', en: '🔧 Modifier' },
+      hint: { zh: '彩蛋面板 · 参数即时生效', en: 'Easter egg · changes apply instantly' },
+      stats: [
+        { label: { zh: '底分', en: 'Base' }, get: function () { return G.base; } },
+        { label: { zh: '倍数', en: 'Multiplier' }, get: function () { return G.multiplier; }, tone: 'warning' },
+        { label: { zh: '本局输赢分', en: 'Stake' }, get: function () { return G.base * G.multiplier; }, tone: 'success' },
+        { label: { zh: '地主身份', en: 'Your role' }, get: cheatRoleText },
+        { label: { zh: '三家手牌', en: 'Hands' }, get: cheatHandCountText },
+        { label: { zh: '场上最大牌', en: 'Top play' }, get: cheatLastText }
+      ],
+      params: [
+        { key: 'base', label: { zh: '底分', en: 'Base score' }, min: 1, max: 100, step: 1,
+          get: function () { return G.base; },
+          set: function (v) { G.base = Math.round(v); render(); } },
+        { key: 'multiplier', label: { zh: '倍数', en: 'Multiplier' }, min: 1, max: 1000, step: 1,
+          get: function () { return G.multiplier; },
+          set: function (v) { G.multiplier = Math.round(v); render(); } }
+      ],
+      toggles: [
+        { label: { zh: '透视 AI 手牌', en: 'X-ray CPU hands' },
+          on: { zh: '透视：开', en: 'X-ray: ON' },
+          off: { zh: '透视：关', en: 'X-ray: OFF' },
+          get: function () { return cheatXray; },
+          set: function (v) { cheatXray = !!v; render(); } },
+        { label: { zh: '托管全开', en: 'Autoplay all' },
+          on: { zh: '托管：开', en: 'Autoplay: ON' },
+          off: { zh: '托管：关', en: 'Autoplay: OFF' },
+          get: function () { return !!G.auto[0] && !!G.auto[1] && !!G.auto[2]; },
+          set: function (v) {
+            // AI 座位不吃 G.auto（isAuto 只对真人生效），关闭时等同只还原自己那家
+            G.auto = !!v ? [true, true, true] : [false, false, false];
+            G.curtainOpen = false;
+            render();
+            scheduleAI();
+          } }
+      ],
+      actions: [
+        { label: { zh: '🃏 发我一手王炸', en: '🃏 Give me a rocket' }, run: cheatGiveRocket },
+        { label: { zh: '🏆 一键获胜', en: '🏆 Instant win' }, run: cheatWinNow, tone: 'danger' },
+        { label: { zh: '😴 对手变菜', en: '😴 Weaken CPU' }, run: cheatWeakenAI },
+        { label: { zh: '🎲 重新叫地主', en: '🎲 Re-deal' }, run: cheatNewRound }
+      ]
+    });
   }
 
   GamePlatform.ready.then(init);

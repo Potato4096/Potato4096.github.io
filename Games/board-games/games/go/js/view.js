@@ -550,6 +550,8 @@
     size = n;
     syncSizeButtons();
     resetGame();
+    if (cheatGod) cheatGod = false;
+    setupCheat();   // 棋盘尺寸变了，重建编辑网格
     ui.toast(i18n.fmt('boardChanged', { n: n }));
   }
 
@@ -564,6 +566,7 @@
 
   function scheduleAi() {
     if (mode !== 'ai' || over) return;
+    if (cheatFreeze || cheatGod) return;
     if (turn !== aiColor) return;
     aiThinking = true;
     updateStatus();
@@ -796,6 +799,124 @@
   }
 
   /* ---------------- 挂载 / 卸载 ---------------- */
+  /* ------------------------------------------------------------ */
+  /* 修改器：暗号 potato4096 唤出（platform/cheat-kit.js）          */
+  /* ------------------------------------------------------------ */
+
+  var cheatGod = false;
+  var cheatFreeze = false;
+
+  function cheatPalette() {
+    return [
+      { label: { zh: '空', en: 'Empty' }, value: '', swatch: '#0000' },
+      { label: { zh: '● 黑子', en: '● Black' }, value: '1', swatch: '#22252c' },
+      { label: { zh: '○ 白子', en: '○ White' }, value: '2', swatch: '#f6f6f6' }
+    ];
+  }
+
+  function cheatAt(r, c) {
+    if (!board) return R.EMPTY;
+    return board[R.idx(size, c, r)];
+  }
+
+  function cheatSetPiece(r, c, v) {
+    if (!cheatGod || !board) return;
+    board[R.idx(size, c, r)] = v === '' || v == null ? R.EMPTY : Number(v);
+    ko = -1;          // 摆子后劫争状态失效
+    lastMove = null;  // 避免最后一手标记指向被改动的点
+    render();
+  }
+
+  function cheatWipe() {
+    if (!board) return;
+    for (var i = 0; i < board.length; i++) board[i] = R.EMPTY;
+    ko = -1;
+    lastMove = null;
+    history.length = 0;
+    passes = 0;
+    captures[1] = 0;
+    captures[2] = 0;
+    over = false;
+    resultInfo = null;
+    render();
+    renderMoves();
+    updateStatus();
+  }
+
+  function cheatCorners() {
+    if (!board) return;
+    var d = size >= 19 ? 3 : 2;
+    var pts = [[d, d], [size - 1 - d, d], [d, size - 1 - d], [size - 1 - d, size - 1 - d]];
+    for (var i = 0; i < pts.length; i++) {
+      board[R.idx(size, pts[i][0], pts[i][1])] = R.BLACK;
+    }
+    render();
+    ui.toast(i18n.lang() === 'en' ? 'Four corners claimed' : '四角已占');
+  }
+
+  function cheatCount(color) {
+    if (!board) return 0;
+    var n = 0;
+    for (var i = 0; i < board.length; i++) if (board[i] === color) n++;
+    return n;
+  }
+
+  function setupCheat() {
+    if (!global.CheatKit) return;
+    CheatKit.init({
+      id: GAME_ID,
+      dock: root,
+      title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
+      hint: {
+        zh: '开启上帝模式后，在下方棋盘点交叉点摆子；AI 同时冻结',
+        en: 'Enable God Mode, then tap an intersection below to place a stone. AI freezes too.'
+      },
+      stats: [
+        { label: { zh: '手数', en: 'Moves' }, get: function () { return history.length; } },
+        { label: { zh: '轮到', en: 'Turn' }, get: function () { return sideName(turn); } },
+        { label: { zh: '黑子', en: 'Black' }, get: function () { return cheatCount(R.BLACK); } },
+        { label: { zh: '白子', en: 'White' }, get: function () { return cheatCount(R.WHITE); } },
+        { label: { zh: '提子(黑/白)', en: 'Captures B/W' }, get: function () {
+          return (captures[1] || 0) + '/' + (captures[2] || 0);
+        } },
+        { label: { zh: '路数', en: 'Board' }, get: function () { return size + '×' + size; } }
+      ],
+      toggles: [
+        { label: { zh: '上帝模式', en: 'God mode' },
+          on: { zh: '上帝模式：开', en: 'God Mode: ON' },
+          off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
+          get: function () { return cheatGod; },
+          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+        { label: { zh: '冻结 AI', en: 'Freeze AI' },
+          on: { zh: 'AI：已冻结', en: 'AI: frozen' },
+          off: { zh: 'AI：正常', en: 'AI: live' },
+          get: function () { return cheatFreeze; },
+          set: function (v) { cheatFreeze = !!v; } }
+      ],
+      actions: [
+        { label: { zh: '清空棋盘', en: 'Clear board' }, run: cheatWipe },
+        { label: { zh: '恢复开局', en: 'New game' }, run: function () { resetGame(); } },
+        { label: { zh: '我方占四角', en: 'Claim four corners' }, run: cheatCorners }
+      ],
+      board: {
+        title: { zh: '棋盘摆子（点交叉点放置所选棋子）', en: 'Board editor (tap to place)' },
+        rows: size,
+        cols: size,
+        palette: cheatPalette(),
+        cell: function (r, c) {
+          var v = cheatAt(r, c);
+          if (v === R.EMPTY || v == null) return { value: '', label: '' };
+          return {
+            value: String(v),
+            label: v === R.BLACK ? '●' : '○',
+            side: v === R.BLACK ? 'own' : 'enemy'
+          };
+        },
+        place: cheatSetPiece
+      }
+    });
+  }
+
   function mount(host, opts) {
     R = global.GoRules;
     AI = global.GoAI;
@@ -868,6 +989,7 @@
 
     syncSizeButtons();
     resetGame();
+    setupCheat();
 
     if (mode === 'ai' && turn === aiColor) scheduleAi();
   }
@@ -876,6 +998,7 @@
     alive = false;
     gameToken++;
     aiThinking = false;
+    if (global.CheatKit) CheatKit.detach();
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
 
     if (canvas) {
