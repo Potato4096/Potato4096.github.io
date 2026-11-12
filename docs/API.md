@@ -333,6 +333,8 @@ CheatKit = {
   isOpen(),          // boolean
   refresh(),         // 立即重算面板数值
   capturing(),       // boolean，面板是否展开（供游戏侧判断是否让出键盘）
+  active(),          // 取子栏当前选中的子（棋盘类游戏在自己的 onClick 里用）
+  hasPalette(),      // boolean，是否配置了 board.palette
   toast(text)        // 借用面板样式吐一条提示
 }
 ```
@@ -394,37 +396,41 @@ CheatKit.init({
 | `tone` | 可选，`'primary'` 实心按钮 / `'danger'` 红色危险按钮，缺省幽灵按钮 |
 | `toast` | 可选，执行完后弹出的提示文案（`{zh,en}`） |
 
-#### `board`（棋盘上帝模式）
+#### `board`（棋盘取子栏）
+
+棋盘类游戏**不画第二块棋盘**：面板只提供一排"取子"按钮，玩家选好子后直接点游戏原来的棋盘落子。
 
 ```js
 board: {
-  rows: 8, cols: 8,
-  title: { zh: '棋盘编辑', en: 'Board editor' },
-  // 可选：色调板。首个 value 会被默认选中；swatch 是圆点的 CSS 颜色
+  title: { zh: '取子：选一个子，然后点原棋盘落子', en: 'Pick a piece, then tap the real board' },
+  tip: { zh: '选「空」后点格子 = 清空该格。', en: 'Pick "Empty" and tap to clear a square.' },
+  // 色板。value 会原样交给 CheatKit.active()，''/null 表示清空
   palette: [
-    { value: 'w:K', label: { zh: '♔ 白王', en: '♔ King' }, swatch: '#fff' },
-    { value: 'b:q', label: { zh: '♛ 黑后', en: '♛ Queen' }, swatch: '#222' }
+    { value: '',    label: { zh: '空', en: 'Empty' },  swatch: '#0000' },
+    { value: 'w:Q', label: { zh: '♕ 白后', en: '♕ White Q' }, swatch: '#f2efe6' }
   ],
-  // 必填：返回该格当前状态
-  cell(r, c) {
-    return { value: 'w:K', label: '♔', side: 'own', title: 'White King' };
-    //    value  —— 用于判断是否空格（null / undefined / '' 视为空格）
-    //    label  —— 格子内显示的文字/符号
-    //    side   —— 'own' | 'enemy'，给格子上敌我染色
-    //    title  —— 可选，hover 提示
-  },
-  // 必填：落子。value 为当前选中色板的 value（未选时即首个），传 null 表示清空
-  place(r, c, value) { /* 写回游戏状态，需自行允许"上帝模式"下的非法局面 */ },
-  // 可选：棋盘下方的整盘操作按钮
-  actions: [{ label: { zh: '清空棋盘', en: 'Wipe board' }, run() {}, toast: '...' }]
+  // 可选：取子栏下方的整盘操作（清空棋盘、恢复开局……）
+  actions: [{ label: { zh: '清空棋盘', en: 'Clear board' }, run: fn, toast: { zh, en } }]
 }
 ```
 
-- 格子用 `data-shade`（`light`/`dark`）画棋盘格纹，`is-own` / `is-enemy` 区分敌我染色，`is-empty` 标空格
-- 点格子 → 调 `place(r, c, selected)` → 重建棋盘并刷新数值；连续点可快速摆子
-- 棋盘区在小屏上横向滚动（固定 22 px 格子）并允许横向滚动，不会把格子压到点不中
-- 棋盘尺寸变化（如围棋切 19/13/9 路）后重新 `init` 即可重建网格（`refresh` 只更新内容，不改行列数）
-- 摆了非法局面后游戏规则可能直接崩，所以棋类都顺手在 `place` 里清掉 `castling` / `ep` / `ko` 这类历史缓存，并在 AI 调度处加 `cheatGod` 短路
+配套的取值/落子由游戏自己完成，公共层不碰棋盘数据：
+
+```js
+// games/<id>/js/view.js 的 onClick
+function onClick(e) {
+  if (cheatGod && global.CheatKit && global.CheatKit.hasPalette()) {
+    var sq = pointToCell(e.clientX, e.clientY);      // 游戏自己的坐标换算
+    if (sq) cheatSetPiece(sq.y, sq.x, global.CheatKit.active());
+    return;                                          // 跳过正常走子/轮次/规则判定
+  }
+  // …正常对局逻辑
+}
+```
+
+- `active()` 返回色板选中项的 `value`；首个色板项默认选中，面板重建时尽量保留上次选择
+- 上位摆子会留下非法局面，所以棋类在 `cheatSetPiece` 里顺手清掉 `castling` / `ep` / `ko` 这类历史缓存，并在 `scheduleAi()` 里用 `cheatGod` 短路 AI
+- 建议同时给原棋盘加视觉提示（本仓库用 `.bg-board.is-god`：虚线描边 + `cursor: crosshair`），玩家才知道"现在可以直接点"
 
 ### 生命周期
 

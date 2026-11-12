@@ -137,7 +137,7 @@ Games/board-games/
 - **数值改写**：滑杆 / 数字框直接改分数、生命、重力、底分等，回车或拖动即刻生效
 - **开关**：无敌、透视、AI 冻结、免资源等作弊态
 - **一键操作**：直接通关、补满资源、发王炸……
-- **棋盘上帝模式**：棋类游戏额外给出整张棋盘网格，点格子即可摆子 / 清空，并附带「我方加后」「对面只剩将」这类降维打击按钮
+- **棋盘上帝模式**：棋类游戏不另开一块棋盘 —— 面板里只选子（白后 / 红车 / 黑子…），然后**直接点原棋盘**就落子，选「空」再点就把子拿走。原棋盘会闪一圈虚线描边并换成准星光标，摆完直接接着下，AI 同时冻结
 
 敲入时若首字母 `p` 被游戏自身的暂停键吞掉，`CheatKit` 会把这次暂停补发回去，不会把手感搞坏。再敲一次口令或点面板右上角 × 即可关闭。
 
@@ -153,12 +153,27 @@ if (window.CheatKit) {
     params: [{ label: { zh: '生命', en: 'Lives' }, min: 1, max: 99, get: ..., set: ... }],
     toggles: [{ label: { zh: '无敌', en: 'God mode' }, get: ..., set: ... }],
     actions: [{ label: { zh: '一击通关', en: 'Instant win' }, run: ... }],
-    board: { /* 可选：rows/cols/palette/place，用于棋盘编辑 */ }
+    board: { /* 可选：palette 取子栏，落子由游戏在原棋盘上处理 */ }
   });
 }
 ```
 
+棋盘类游戏在 `board` 里只声明"能拿哪些子"，落子逻辑仍留在游戏自己的点击处理里：
+
+```js
+// 游戏 onClick 里
+if (cheatGod && CheatKit.hasPalette()) {
+  var sq = pointToCell(e.clientX, e.clientY);
+  if (sq) cheatSetPiece(sq.y, sq.x, CheatKit.active());   // active() = 当前选中的子
+  return;
+}
+```
+
 游戏若运行在会切换视图的外壳里（如棋类合集），`unmount()` 里调用 `CheatKit.detach()` 即可摘干净监听与 DOM，避免重复挂载。
+
+### 棋子为什么是清晰的
+
+`Games/board-games/js/core/canvas.js` 会按 **实际显示尺寸 × devicePixelRatio** 分配画布缓冲区，再把绘制坐标系缩放到逻辑尺寸。早先固定按 576×576 分配、CSS 又拉到 678～842 px，等于整块棋盘被放大 1.2～1.5 倍，线条和棋子都会发虚；现在缓冲区与屏幕像素 1:1（高分屏 2:1），四个棋种的绘制代码一行没改。
 
 ## 它是怎么工作的
 

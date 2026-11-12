@@ -16,8 +16,11 @@
  *                 set: function (v) { ball.speed = v; } } ],
  *     toggles: [ { label: {...}, get: fn, set: fn, on: {...}, off: {...} } ],
  *     actions: [ { label: {...}, run: fn, tone: 'danger' } ],
- *     board: { rows, cols, palette: [...], cell: fn, place: fn, actions: [...] }
+ *     board: { title, tip, palette: [ { value, label, swatch } ], actions: [...] }
  *   });
+ *
+ * 棋盘类游戏不画第二块棋盘：面板只提供"取子栏"，游戏在自己的 onClick 里
+ * 读取 CheatKit.active() 把子直接摆到原棋盘上。
  *
  * 棋类等需要随视图卸载的场景，调用 CheatKit.detach() 移除面板与键盘监听。
  */
@@ -141,9 +144,9 @@
       dock.appendChild(acts);
     }
 
-    /* 棋盘编辑器（放最后，摆子时不用来回滚） */
+    /* 棋盘取子栏（只选子，落子回到游戏原棋盘） */
     if (spec.board) {
-      dock.appendChild(buildBoard(spec.board));
+      dock.appendChild(buildBoardBar(spec.board));
     }
 
     mountPoint(spec).appendChild(dock);
@@ -153,7 +156,6 @@
     rebuildParams();
     rebuildToggles();
     rebuildActions();
-    rebuildBoard();
 
     if (GamePlatform.i18n && !state.offLang) {
       state.offLang = GamePlatform.i18n.onChange(function () {
@@ -189,8 +191,11 @@
       var titleEl = board.querySelector('.cheat-board-title');
       if (titleEl) titleEl.textContent = t(spec.board.title);
       buildPalette(board, spec.board);
+      var tipEl = board.querySelector('.cheat-board-tip');
+      if (tipEl) tipEl.textContent = t(spec.board.tip) || (lang() === 'en'
+        ? 'Tap the real board to place or clear squares'
+        : '直接点原棋盘落子 / 清空格');
     }
-    rebuildBoard();
     refresh();
   }
 
@@ -297,9 +302,9 @@
     });
   }
 
-  /* ---------- 棋盘编辑器 ---------- */
+  /* ---------- 棋盘取子（不画棋盘，直接在游戏原棋盘上落子） ---------- */
 
-  function buildBoard(board) {
+  function buildBoardBar(board) {
     var wrap = h('div', 'cheat-board');
     wrap.appendChild(h('h3', 'cheat-board-title', t(board.title)));
 
@@ -308,10 +313,10 @@
     wrap.appendChild(pal);
     buildPalette(wrap, board);
 
-    var grid = h('div', 'cheat-board-grid');
-    grid.dataset.role = 'board';
-    grid.style.setProperty('--cols', String(board.cols));
-    wrap.appendChild(grid);
+    wrap.appendChild(h('p', 'cheat-board-tip',
+      t(board.tip) || (lang() === 'en'
+        ? 'Tap the real board to place or clear squares'
+        : '直接点原棋盘落子 / 清空格')));
 
     if (board.actions && board.actions.length) {
       var acts = h('div', 'cheat-board-actions');
@@ -320,7 +325,7 @@
         b.textContent = t(a.label);
         b.addEventListener('click', function () {
           a.run();
-          rebuildBoard();
+          refresh();
           if (a.toast) toast(t(a.toast));
         });
         acts.appendChild(b);
@@ -328,7 +333,11 @@
       wrap.appendChild(acts);
     }
 
-    if (board.palette && board.palette.length) state.selected = board.palette[0].value;
+    if (board.palette && board.palette.length) {
+      // 保留上次所选的子（只在当前色板里不存在时才重置），切棋种/重开不必重选
+      var keep = board.palette.some(function (p) { return p.value === state.selected; });
+      if (!keep) state.selected = board.palette[0].value;
+    }
     return wrap;
   }
 
@@ -358,36 +367,6 @@
     var chips = state.el.querySelectorAll('.cheat-chip');
     for (var i = 0; i < chips.length; i++) {
       chips[i].classList.toggle('is-active', chips[i].dataset.value === String(state.selected));
-    }
-  }
-
-  function rebuildBoard() {
-    var spec = state.spec;
-    if (!spec || !spec.board || !state.el) return;
-    var grid = state.el.querySelector('[data-role="board"]');
-    if (!grid) return;
-    var b = spec.board;
-    grid.innerHTML = '';
-    for (var r = 0; r < b.rows; r++) {
-      for (var c = 0; c < b.cols; c++) {
-        (function (rr, cc) {
-          var info = b.cell(rr, cc) || {};
-          var cell = h('button', 'cheat-cell');
-          cell.textContent = info.label != null ? info.label : '';
-          cell.dataset.row = String(rr);
-          cell.dataset.col = String(cc);
-          cell.dataset.shade = (rr + cc) % 2 ? 'dark' : 'light';
-          if (info.side) cell.classList.add('is-' + info.side);
-          if (info.value === null || info.value === undefined || info.value === '') cell.classList.add('is-empty');
-          if (info.title) cell.title = info.title;
-          cell.addEventListener('click', function () {
-            b.place(rr, cc, state.selected);
-            rebuildBoard();
-            refresh();
-          });
-          grid.appendChild(cell);
-        })(r, c);
-      }
     }
   }
 
@@ -449,25 +428,6 @@
       });
     }
 
-    /* 棋盘 */
-    if (spec.board) {
-      var cells = el.querySelectorAll('.cheat-cell');
-      if (cells.length) {
-        var idx = 0;
-        for (var r = 0; r < spec.board.rows; r++) {
-          for (var c = 0; c < spec.board.cols; c++) {
-            var info = spec.board.cell(r, c) || {};
-            var cell = cells[idx++];
-            if (!cell) continue;
-            var label = info.label != null ? String(info.label) : '';
-            if (cell.textContent !== label) cell.textContent = label;
-            cell.className = 'cheat-cell' +
-              (info.side ? ' is-' + info.side : '') +
-              (info.value === null || info.value === undefined || info.value === '' ? ' is-empty' : '');
-          }
-        }
-      }
-    }
   }
 
   /* ------------------------------------------------------------ */
@@ -629,7 +589,14 @@
     isOpen: function () { return state.open; },
     toast: toast,
     /** 供游戏侧判断：面板打开时是否应停掉键盘操作（可选） */
-    capturing: function () { return state.open; }
+    capturing: function () { return state.open; },
+    /**
+     * 当前取子栏选中的棋子值（棋盘类游戏在自己的 onClick 里取用）。
+     * 没有配置 board.palette 时返回 null；选中「空」时返回值可能为 ''。
+     */
+    active: function () { return state.selected; },
+    /** 是否配置了取子栏（没有就不用理会棋盘点击） */
+    hasPalette: function () { return !!(state.spec && state.spec.board && state.spec.board.palette); }
   };
 
   global.CheatKit = API;
