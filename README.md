@@ -109,6 +109,24 @@ Potato4096.github.io/
     └── API.md                 # ★ GamePlatform API 文档
 ```
 
+### 棋类合集（`Games/board-games/`）
+
+国际象棋、中国象棋、五子棋、围棋合并为一个入口：大厅选棋种与模式（双人 / 人机三档），共用一套对局外壳。
+
+```
+Games/board-games/
+├── index.html          # 单页外壳：大厅 + 对局容器
+├── game.json
+├── js/
+│   ├── catalog.js      # 四个棋种的元数据（卡片、图标、AI 执何方）
+│   ├── main.js         # 大厅渲染、hash 路由（#/<id>/<pvp|ai>/<难度>）、懒加载与卸载
+│   ├── core/           # 共享层：i18n · sfx · canvas · storage · 对局外壳 shell
+│   └── games/<id>/     # rules.js · ai.js · view.js（view 只填棋盘与交互）
+└── css/                # lobby.css 大厅 · shell.css 对局外壳
+```
+
+新增棋种只需在 `catalog.js` 追加一项，并提供 `games/<id>/js/{rules,ai,view}.js`；`view.js` 在末尾调用 `BG.registerGame(id, { mount, unmount })`。共享层负责顶栏、状态条、侧栏、棋谱、双语与主题，棋种只实现规则、AI 与棋盘绘制。
+
 ## 它是怎么工作的
 
 1. **游戏发现（注册表）**：主页读取 `games.json` 全局注册表拿到游戏列表。注册表由 `node scripts/generate-games-json.mjs` 生成——脚本扫描 `Games/` 目录、校验各游戏的 `game.json` 后输出清单。**无需构建步骤**，新增游戏后重新运行脚本并提交 `games.json` 即可。
