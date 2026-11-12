@@ -140,6 +140,7 @@
   /* ---------------- 绘制 ---------------- */
   function render() {
     if (!alive || !ctx) return;
+    ctx = BG.canvas.fit(canvas, ctx, W, W);   // 缓冲区跟随实际显示尺寸，避免被 CSS 放大发虚
     var c = palette();
     var ac = BG.canvas.accent();
     ctx.clearRect(0, 0, W, W);
@@ -512,6 +513,12 @@
 
   /* ---------------- 交互 ---------------- */
   function onClick(e) {
+    // 上帝模式：点原棋盘直接摆子 / 拿子，不判空点、不判轮次
+    if (cheatGod && global.CheatKit && global.CheatKit.hasPalette()) {
+      var pt = pointToCell(e.clientX, e.clientY);
+      if (pt) { hover = null; cheatSetPiece(pt.y, pt.x, global.CheatKit.active()); }
+      return;
+    }
     if (!canHumanPlay()) return;
     var cell = pointToCell(e.clientX, e.clientY);
     if (!cell || !g.isEmpty(board, cell.x, cell.y)) return;
@@ -564,11 +571,6 @@
     ];
   }
 
-  function cheatAt(r, c) {
-    if (!board) return g.EMPTY;
-    return board[g.idx(c, r)];
-  }
-
   function cheatSetPiece(r, c, v) {
     if (!cheatGod || !board) return;
     board[g.idx(c, r)] = v === '' || v == null ? g.EMPTY : Number(v);
@@ -608,8 +610,8 @@
       dock: root,
       title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
       hint: {
-        zh: '开启上帝模式后，在下方棋盘点格子摆子；AI 同时冻结',
-        en: 'Enable God Mode, then tap a cell below to place a stone. AI freezes too.'
+        zh: '打开上帝模式后，下面选黑/白，直接点原棋盘交叉点就能摆/拿子；AI 同时冻结',
+        en: 'Turn on God Mode, pick black or white below, then tap the real board. AI freezes too.'
       },
       stats: [
         { label: { zh: '手数', en: 'Moves' }, get: function () { return history.length; } },
@@ -627,7 +629,11 @@
           on: { zh: '上帝模式：开', en: 'God Mode: ON' },
           off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
           get: function () { return cheatGod; },
-          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+          set: function (v) {
+            cheatGod = !!v;
+            if (cheatGod) cheatFreeze = true;
+            if (canvas) canvas.classList.toggle('is-god', cheatGod);
+          } },
         { label: { zh: '冻结 AI', en: 'Freeze AI' },
           on: { zh: 'AI：已冻结', en: 'AI: frozen' },
           off: { zh: 'AI：正常', en: 'AI: live' },
@@ -635,25 +641,19 @@
           set: function (v) { cheatFreeze = !!v; } }
       ],
       actions: [
-        { label: { zh: '清空棋盘', en: 'Clear board' }, run: cheatWipe },
-        { label: { zh: '恢复开局', en: 'New game' }, run: function () { newGame(); } },
         { label: { zh: '给我方四连', en: 'Give me four' }, run: cheatFour, toast: { zh: '四连已就位', en: 'Four placed' } }
       ],
       board: {
-        title: { zh: '棋盘摆子（点交叉点放置所选棋子）', en: 'Board editor (tap to place)' },
-        rows: 15,
-        cols: 15,
+        title: { zh: '取子：选黑/白，然后点原棋盘落子', en: 'Pick a stone, then tap the real board' },
         palette: cheatPalette(),
-        cell: function (r, c) {
-          var v = cheatAt(r, c);
-          if (v === g.EMPTY || v == null) return { value: '', label: '' };
-          return {
-            value: String(v),
-            label: v === g.BLACK ? '●' : '○',
-            side: v === g.BLACK ? 'own' : 'enemy'
-          };
+        tip: {
+          zh: '选「空」后点交叉点 = 拿走该子。可以直接摆出五连。',
+          en: 'Pick "Empty" and tap to remove a stone. You can even build five in a row.'
         },
-        place: cheatSetPiece
+        actions: [
+          { label: { zh: '清空棋盘', en: 'Clear board' }, run: cheatWipe },
+          { label: { zh: '恢复开局', en: 'New game' }, run: function () { newGame(); } }
+        ]
       }
     });
   }

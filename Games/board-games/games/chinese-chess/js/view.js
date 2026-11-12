@@ -176,6 +176,7 @@
   /* ---------------- 绘制 ---------------- */
   function render() {
     if (!alive || !ctx || !board) return;
+    ctx = BG.canvas.fit(canvas, ctx, W, H);   // 缓冲区跟随实际显示尺寸，避免被 CSS 放大发虚
     var c = palette();
     var ac = BG.canvas.accent();
     var x, y;
@@ -655,6 +656,12 @@
   }
 
   function onClick(e) {
+    // 上帝模式：点原棋盘交叉点直接摆子，跳过正常走子与轮次限制
+    if (cheatGod && global.CheatKit && global.CheatKit.hasPalette()) {
+      var pt = pointToCell(e.clientX, e.clientY);
+      if (pt) cheatSetPiece(pt.y, pt.x, global.CheatKit.active());
+      return;
+    }
     if (!canHumanPlay()) return;
     var cell = pointToCell(e.clientX, e.clientY);
     if (!cell) return;
@@ -690,12 +697,6 @@
 
   var cheatGod = false;
   var cheatFreeze = false;
-
-  function cheatGlyph(p) {
-    if (!p || !X || !X.PIECE_CHARS) return '';
-    var set = X.PIECE_CHARS[p.s];
-    return set ? (set[p.t] || '') : '';
-  }
 
   function cheatPalette() {
     var out = [{ label: { zh: '空', en: 'Empty' }, value: '', swatch: '#0000' }];
@@ -796,8 +797,8 @@
       dock: root,
       title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
       hint: {
-        zh: '开启上帝模式后，在下方棋盘点格子摆子；AI 同时冻结',
-        en: 'Enable God Mode, then tap a point below to place a piece. AI freezes too.'
+        zh: '打开上帝模式后，下面选一个子，直接点原棋盘交叉点就能摆/拿；AI 同时冻结',
+        en: 'Turn on God Mode, pick a piece below, then tap any point on the real board. AI freezes too.'
       },
       stats: [
         { label: { zh: '手数', en: 'Moves' }, get: function () { return history.length; } },
@@ -816,7 +817,11 @@
           on: { zh: '上帝模式：开', en: 'God Mode: ON' },
           off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
           get: function () { return cheatGod; },
-          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+          set: function (v) {
+            cheatGod = !!v;
+            if (cheatGod) cheatFreeze = true;
+            if (canvas) canvas.classList.toggle('is-god', cheatGod);
+          } },
         { label: { zh: '冻结 AI', en: 'Freeze AI' },
           on: { zh: 'AI：已冻结', en: 'AI: frozen' },
           off: { zh: 'AI：正常', en: 'AI: live' },
@@ -824,28 +829,20 @@
           set: function (v) { cheatFreeze = !!v; } }
       ],
       actions: [
-        { label: { zh: '清空棋盘（留双将）', en: 'Clear (keep generals)' }, run: cheatKeepGenerals },
-        { label: { zh: '恢复开局', en: 'Reset position' }, run: function () { newGame(); } },
         { label: { zh: '红方加车', en: 'Add a chariot' }, run: cheatAddRook, toast: { zh: '红方底线已加车', en: 'Chariot added' } },
         { label: { zh: '黑方只剩将', en: 'Leave general only' }, run: cheatCrush, tone: 'danger', toast: { zh: '黑方已被清空', en: 'Black wiped' } }
       ],
       board: {
-        title: { zh: '棋盘摆子（点交叉点放置所选棋子）', en: 'Board editor (tap a point to place)' },
-        rows: 10,
-        cols: 9,
+        title: { zh: '取子：选一个子，然后点原棋盘交叉点落子', en: 'Pick a piece, then tap the real board' },
         palette: cheatPalette(),
-        cell: function (r, c) {
-          if (!board) return { value: '', label: '' };
-          var p = board[r][c];
-          if (!p) return { value: '', label: '' };
-          return {
-            value: p.s + ':' + p.t,
-            label: cheatGlyph(p),
-            side: p.s === 'r' ? 'own' : 'enemy',
-            title: p.s + p.t
-          };
+        tip: {
+          zh: '选「空」后点交叉点 = 移走该子。摆完直接接着下，AI 已冻结。',
+          en: 'Pick "Empty" and tap a point to remove a piece. AI stays frozen while God Mode is on.'
         },
-        place: cheatSetPiece
+        actions: [
+          { label: { zh: '清空棋盘（留双将）', en: 'Clear (keep generals)' }, run: cheatKeepGenerals },
+          { label: { zh: '恢复开局', en: 'Reset position' }, run: function () { newGame(); } }
+        ]
       }
     });
   }
@@ -897,7 +894,6 @@
 
     canvas = ui.el.canvas;
     ctx = BG.canvas.setup(canvas, W, H);
-    canvas.style.cursor = 'pointer';
 
     canvas.addEventListener('click', onClick);
     global.addEventListener('resize', onResize);

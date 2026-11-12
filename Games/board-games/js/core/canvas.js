@@ -11,24 +11,53 @@
 
   var accentCache = null;
 
-  /** 设置逻辑尺寸并按 DPR 放大物理像素，返回已缩放的 2D 上下文 */
-  function setup(canvas, w, h) {
+  /**
+   * 按"实际显示尺寸 × devicePixelRatio"分配画布缓冲区，再把绘制坐标系
+   * 缩放到逻辑尺寸（w × h）。
+   *
+   * 早先的写法是 canvas.width = w * dpr，但 CSS 是 width:100%，容器比 w 大
+   * 时画布被整体拉伸，缓冲区分辨率不够 → 线条和棋子都发虚、带锯齿。
+   * 现在缓冲区永远等于屏幕上的物理像素数，逻辑坐标不变，所以各棋种的
+   * 绘制代码不需要改任何一行。
+   */
+  var fitCache = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+  function fit(canvas, ctx, w, h) {
+    if (!canvas || !ctx || !w || !h) return ctx;
     var dpr = global.devicePixelRatio || 1;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    var ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var prev = fitCache ? fitCache.get(canvas) : null;
+    if (!prev || prev.w !== w || prev.h !== h) {
+      // 首次（或逻辑尺寸改了）：先让属性给出正确纵横比，CSS 的 height:auto 才算得对
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    var rect = canvas.getBoundingClientRect();
+    var cssW = rect.width || w;
+    var bw = Math.max(1, Math.round(cssW * dpr));
+    var bh = Math.max(1, Math.round((h * bw) / w));
+
+    if (!prev || prev.bw !== bw || prev.bh !== bh || prev.dpr !== dpr ||
+        prev.w !== w || prev.h !== h || canvas.width !== bw || canvas.height !== bh) {
+      canvas.width = bw;
+      canvas.height = bh;
+      if (fitCache) fitCache.set(canvas, { bw: bw, bh: bh, dpr: dpr, w: w, h: h });
+    }
+    // 改 width/height 会重置上下文状态，这里每帧重设一次变换（幂等且便宜）
+    ctx.setTransform(bw / w, 0, 0, bh / h, 0, 0);
     return ctx;
   }
 
-  /** 尺寸变化（如切换棋盘路数）时重设，逻辑尺寸不变只重建缓冲 */
+  /** 设置逻辑尺寸并按显示尺寸适配物理像素，返回已缩放的 2D 上下文 */
+  function setup(canvas, w, h) {
+    var ctx = canvas.getContext('2d');
+    return fit(canvas, ctx, w, h);
+  }
+
+  /** 尺寸变化（窗口缩放 / 切换棋盘路数 / 换屏）时重新适配 */
   function resize(canvas, ctx, w, h) {
-    var dpr = global.devicePixelRatio || 1;
-    if (canvas.width === Math.round(w * dpr) && canvas.height === Math.round(h * dpr)) return ctx;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return ctx;
+    return fit(canvas, ctx, w, h);
   }
 
   function readVar(name, fallback) {
@@ -96,6 +125,7 @@
 
   BG.canvas = {
     setup: setup,
+    fit: fit,
     resize: resize,
     accent: accent,
     invalidate: invalidate,

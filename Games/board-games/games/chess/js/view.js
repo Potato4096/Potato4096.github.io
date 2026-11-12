@@ -183,6 +183,7 @@
   /* ---------------- 绘制 ---------------- */
   function render() {
     if (!alive || !ctx || !state) return;
+    ctx = BG.canvas.fit(canvas, ctx, W, W);   // 缓冲区跟随实际显示尺寸，避免被 CSS 放大发虚
     var c = palette();
     var ac = BG.canvas.accent();
     var x, y;
@@ -879,6 +880,12 @@
 
   /* ---------------- 交互 ---------------- */
   function onClick(e) {
+    // 上帝模式：点原棋盘直接摆子，不再走正常走子逻辑（也不必轮到己方）
+    if (cheatGod && global.CheatKit && global.CheatKit.hasPalette()) {
+      var sq = pointToCell(e.clientX, e.clientY);
+      if (sq) cheatSetPiece(sq.y, sq.x, global.CheatKit.active());
+      return;
+    }
     if (!canHumanPlay()) return;
     var cell = pointToCell(e.clientX, e.clientY);
     if (!cell) return;
@@ -954,8 +961,6 @@
     return out;
   }
 
-  function cheatHumanSide() { return 'w'; }
-
   function cheatRefreshStatus() {
     if (!state) return;
     status = X.statusAfter(state, repKeys);
@@ -1019,11 +1024,6 @@
     cheatRefreshStatus();
   }
 
-  function cheatSideOf(p) {
-    if (!p) return '';
-    return p.s === cheatHumanSide() ? 'own' : 'enemy';
-  }
-
   function setupCheat() {
     if (!global.CheatKit) return;
     CheatKit.init({
@@ -1031,8 +1031,8 @@
       dock: root,
       title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
       hint: {
-        zh: '开启上帝模式后，直接在下方棋盘点格子摆子；AI 同时冻结',
-        en: 'Enable God Mode, then tap any square below to place a piece. AI freezes too.'
+        zh: '打开上帝模式后，下面选一个子，直接点原棋盘就能摆/拿；AI 同时冻结',
+        en: 'Turn on God Mode, pick a piece below, then tap the real board to place or clear. AI freezes too.'
       },
       stats: [
         { label: { zh: '手数', en: 'Plies' }, get: function () { return history.length; } },
@@ -1051,7 +1051,11 @@
           on: { zh: '上帝模式：开', en: 'God Mode: ON' },
           off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
           get: function () { return cheatGod; },
-          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+          set: function (v) {
+            cheatGod = !!v;
+            if (cheatGod) cheatFreeze = true;
+            if (canvas) canvas.classList.toggle('is-god', cheatGod);
+          } },
         { label: { zh: '冻结 AI', en: 'Freeze AI' },
           on: { zh: 'AI：已冻结', en: 'AI: frozen' },
           off: { zh: 'AI：正常', en: 'AI: live' },
@@ -1059,28 +1063,20 @@
           set: function (v) { cheatFreeze = !!v; } }
       ],
       actions: [
-        { label: { zh: '清空棋盘（留双王）', en: 'Clear (keep kings)' }, run: function () { cheatWipe(true); } },
-        { label: { zh: '恢复开局', en: 'Reset position' }, run: cheatReset },
         { label: { zh: '我方加后', en: 'Add a queen' }, run: cheatGiveQueen, toast: { zh: '已在我方底线加后', en: 'Queen added' } },
         { label: { zh: '对面只剩王', en: 'Leave king only' }, run: cheatCrushEnemy, tone: 'danger', toast: { zh: '对面已被清空', en: 'Enemy wiped' } }
       ],
       board: {
-        title: { zh: '棋盘摆子（点格子放置所选棋子）', en: 'Board editor (tap a square to place)' },
-        rows: 8,
-        cols: 8,
+        title: { zh: '取子：选一个子，然后点原棋盘落子', en: 'Pick a piece, then tap the real board' },
         palette: cheatPalette(),
-        cell: function (r, c) {
-          if (!state) return { value: '', label: '' };
-          var p = state.board[r][c];
-          if (!p) return { value: '', label: '' };
-          return {
-            value: p.s + ':' + p.t,
-            label: CHEAT_GLYPH[p.s + ':' + p.t] || p.t,
-            side: cheatSideOf(p),
-            title: p.s + p.t
-          };
+        tip: {
+          zh: '选「空」后点格子 = 清空该格。摆完直接接着下，AI 已冻结。',
+          en: 'Pick "Empty" and tap to clear a square. AI stays frozen while God Mode is on.'
         },
-        place: cheatSetPiece
+        actions: [
+          { label: { zh: '清空棋盘（留双王）', en: 'Clear (keep kings)' }, run: function () { cheatWipe(true); } },
+          { label: { zh: '恢复开局', en: 'Reset position' }, run: cheatReset }
+        ]
       }
     });
   }
@@ -1161,7 +1157,6 @@
 
     canvas = root.querySelector('.bg-board');
     ctx = BG.canvas.setup(canvas, W, W);
-    canvas.style.cursor = 'pointer';
 
     root.insertAdjacentHTML('beforeend', buildPromoHtml());
     promoEl = root.querySelector('.bg-overlay');

@@ -223,6 +223,7 @@
   /* ---------------- 绘制 ---------------- */
   function render() {
     if (!alive || !ctx || !board) return;
+    ctx = BG.canvas.fit(canvas, ctx, W, W);   // 缓冲区跟随实际显示尺寸，避免被 CSS 放大发虚
 
     var c = palette();
     var ac = BG.canvas.accent();
@@ -747,6 +748,12 @@
 
   /* ---------------- 交互 ---------------- */
   function onClick(e) {
+    // 上帝模式：点原棋盘直接摆子，跳过劫争/提子等规则判定
+    if (cheatGod && global.CheatKit && global.CheatKit.hasPalette()) {
+      var pt = pointToCell(e.clientX, e.clientY);
+      if (pt) { hover = null; cheatSetPiece(pt.y, pt.x, global.CheatKit.active()); }
+      return;
+    }
     if (!canHumanPlay()) return;
     var cell = pointToCell(e.clientX, e.clientY);
     if (!cell) return;
@@ -814,11 +821,6 @@
     ];
   }
 
-  function cheatAt(r, c) {
-    if (!board) return R.EMPTY;
-    return board[R.idx(size, c, r)];
-  }
-
   function cheatSetPiece(r, c, v) {
     if (!cheatGod || !board) return;
     board[R.idx(size, c, r)] = v === '' || v == null ? R.EMPTY : Number(v);
@@ -868,8 +870,8 @@
       dock: root,
       title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
       hint: {
-        zh: '开启上帝模式后，在下方棋盘点交叉点摆子；AI 同时冻结',
-        en: 'Enable God Mode, then tap an intersection below to place a stone. AI freezes too.'
+        zh: '打开上帝模式后，下面选黑/白，直接点原棋盘交叉点就能摆/拿子；AI 同时冻结',
+        en: 'Turn on God Mode, pick black or white below, then tap the real board. AI freezes too.'
       },
       stats: [
         { label: { zh: '手数', en: 'Moves' }, get: function () { return history.length; } },
@@ -886,7 +888,11 @@
           on: { zh: '上帝模式：开', en: 'God Mode: ON' },
           off: { zh: '上帝模式：关', en: 'God Mode: OFF' },
           get: function () { return cheatGod; },
-          set: function (v) { cheatGod = !!v; if (cheatGod) cheatFreeze = true; } },
+          set: function (v) {
+            cheatGod = !!v;
+            if (cheatGod) cheatFreeze = true;
+            if (canvas) canvas.classList.toggle('is-god', cheatGod);
+          } },
         { label: { zh: '冻结 AI', en: 'Freeze AI' },
           on: { zh: 'AI：已冻结', en: 'AI: frozen' },
           off: { zh: 'AI：正常', en: 'AI: live' },
@@ -894,25 +900,19 @@
           set: function (v) { cheatFreeze = !!v; } }
       ],
       actions: [
-        { label: { zh: '清空棋盘', en: 'Clear board' }, run: cheatWipe },
-        { label: { zh: '恢复开局', en: 'New game' }, run: function () { resetGame(); } },
         { label: { zh: '我方占四角', en: 'Claim four corners' }, run: cheatCorners }
       ],
       board: {
-        title: { zh: '棋盘摆子（点交叉点放置所选棋子）', en: 'Board editor (tap to place)' },
-        rows: size,
-        cols: size,
+        title: { zh: '取子：选黑/白，然后点原棋盘落子', en: 'Pick a stone, then tap the real board' },
         palette: cheatPalette(),
-        cell: function (r, c) {
-          var v = cheatAt(r, c);
-          if (v === R.EMPTY || v == null) return { value: '', label: '' };
-          return {
-            value: String(v),
-            label: v === R.BLACK ? '●' : '○',
-            side: v === R.BLACK ? 'own' : 'enemy'
-          };
+        tip: {
+          zh: '选「空」后点交叉点 = 拿走该子。上帝模式下不受劫争与提子限制。',
+          en: 'Pick "Empty" and tap to remove a stone. No ko or capture rules apply.'
         },
-        place: cheatSetPiece
+        actions: [
+          { label: { zh: '清空棋盘', en: 'Clear board' }, run: cheatWipe },
+          { label: { zh: '恢复开局', en: 'New game' }, run: function () { resetGame(); } }
+        ]
       }
     });
   }

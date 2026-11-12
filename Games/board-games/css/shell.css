@@ -164,6 +164,14 @@
   height: auto;
   border-radius: 6px;
   touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* 修改器上帝模式：直接在这张棋盘上摆子，用描边 + 准星光标提示"可以点" */
+.bg-board.is-god {
+  cursor: crosshair;
+  outline: 2px dashed var(--pg-accent);
+  outline-offset: 3px;
 }
 
 .bg-hint {
