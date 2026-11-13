@@ -5,6 +5,14 @@
  * .cheat-dock，额外提供属性看板与棋盘编辑器。
  */
 
+/* 移动端长按召唤面板时临时关闭选择与呼出菜单（不拦截点击，只压长按副作用） */
+html.p4096-holding,
+html.p4096-holding body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .cheat-dock {
   margin-top: 16px;
   padding: 14px 16px 16px;

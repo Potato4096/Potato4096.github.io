@@ -4,6 +4,10 @@
  * 触发方式与 arena-survivor 一致：直接键入暗号 "potato4096"，弹出常驻面板，
  * 游戏不暂停、参数即时生效。面板挂在页面底部，可再次输入暗号或点"关闭"收起。
  *
+ * 移动端没有键盘，改用两种手势（等效于打暗号）：
+ *   · 三指同时轻点屏幕（1 秒内松开）
+ *   · 长按页面顶部 1.5 秒（顶部 96px 热区，滑动超过 12px 即取消）
+ *
  * 用法（必须在 GamePlatform 之后、游戏脚本之后调用）：
  *
  *   CheatKit.init({
@@ -579,10 +583,99 @@
   /* 对外接口                                                      */
   /* ------------------------------------------------------------ */
 
+  /* ------------------------------------------------------------ */
+  /* 移动端触发：三指轻点 / 长按页面顶部 1.5 秒                     */
+  /* 手机上没法打暗号，用这两个手势代替（都不影响正常点按与滚动）   */
+  /* ------------------------------------------------------------ */
+
+  var LONG_MS = 1500;   // 长按判定时长
+  var LONG_ZONE = 96;   // 顶部热区高度（px）
+  var MULTI_MS = 900;   // 三指轻点最长按住时间
+  var longTimer = 0;
+  var longArmed = false;
+  var longX = 0;
+  var longY = 0;
+  var multiStart = 0;
+  var selectTimer = 0;
+
+  function cancelLong() {
+    if (longTimer) { clearTimeout(longTimer); longTimer = 0; }
+    if (selectTimer) { clearTimeout(selectTimer); selectTimer = 0; }
+    longArmed = false;
+    document.documentElement.classList.remove('p4096-holding');
+  }
+
+  function summon() {
+    buffer = '';
+    if (bufTimer) { clearTimeout(bufTimer); bufTimer = 0; }
+    pendingPause = false;
+    cancelLong();
+    togglePanel();
+  }
+
+  function onTouchStart(e) {
+    if (isTypingTarget(e)) return;
+
+    if (e.touches.length >= 3) {          // 三指同按
+      if (!multiStart) multiStart = Date.now();
+      cancelLong();
+      return;
+    }
+    multiStart = 0;
+
+    if (e.touches.length !== 1) { cancelLong(); return; }
+    var t = e.touches[0];
+    if (t.clientY > LONG_ZONE) { cancelLong(); return; }   // 只在页面顶部热区
+
+    longArmed = true;
+    longX = t.clientX;
+    longY = t.clientY;
+    /* 不 preventDefault：顶部按钮的点按、页面滚动都必须照常；
+       200ms 后才屏蔽长按选择/呼出菜单，那时点按判定早已完成 */
+    if (selectTimer) clearTimeout(selectTimer);
+    selectTimer = setTimeout(function () {
+      selectTimer = 0;
+      if (longArmed) document.documentElement.classList.add('p4096-holding');
+    }, 200);
+
+    if (longTimer) clearTimeout(longTimer);
+    longTimer = setTimeout(function () {
+      longTimer = 0;
+      if (!longArmed) return;
+      longArmed = false;
+      summon();
+    }, LONG_MS);
+  }
+
+  function onTouchMove(e) {
+    if (!longArmed) return;
+    var t = e.touches[0];
+    if (!t) { cancelLong(); return; }
+    if (Math.abs(t.clientX - longX) > 12 || Math.abs(t.clientY - longY) > 12) cancelLong();
+  }
+
+  function onTouchEnd(e) {
+    if (longArmed) cancelLong();
+    if (multiStart && e.touches.length === 0) {
+      var dur = Date.now() - multiStart;
+      multiStart = 0;
+      if (dur <= MULTI_MS) summon();
+    }
+  }
+
+  function onTouchCancel() {
+    cancelLong();
+    multiStart = 0;
+  }
+
   function bindOnce() {
     if (state.bound) return;
     state.bound = true;
     window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('touchstart', onTouchStart, { capture: true, passive: false });
+    window.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
+    window.addEventListener('touchend', onTouchEnd, { capture: true, passive: true });
+    window.addEventListener('touchcancel', onTouchCancel, { capture: true, passive: true });
   }
 
   var API = {
@@ -609,9 +702,15 @@
       state.selected = null;
       if (state.bound) {
         window.removeEventListener('keydown', onKeyDown, true);
+        window.removeEventListener('touchstart', onTouchStart, true);
+        window.removeEventListener('touchmove', onTouchMove, true);
+        window.removeEventListener('touchend', onTouchEnd, true);
+        window.removeEventListener('touchcancel', onTouchCancel, true);
         state.bound = false;
       }
       buffer = '';
+      cancelLong();
+      multiStart = 0;
       if (bufTimer) { clearTimeout(bufTimer); bufTimer = 0; }
     },
     open: openPanel,
