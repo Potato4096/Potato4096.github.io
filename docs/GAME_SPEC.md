@@ -228,7 +228,7 @@ Games/<game-id>/
 - [ ] 有"返回主页"按钮
 - [ ] 控制台无报错
 - [ ] `api` 字段声明完整
-- [ ] （建议）接入 `CheatKit`：键入 `potato4096` 能开出本作的修改器，面板内数值与实际局势一致，棋类棋盘编辑可用；SPA 类游戏在 `unmount` 里调 `CheatKit.detach()`
+- [ ] （建议）接入 `CheatKit`：键入 `potato4096` 能开出本作的修改器，面板内数值与实际局势一致；棋类在上帝模式下能直接点**原棋盘**摆子 / 拿子；SPA 类游戏在 `unmount` 里调 `CheatKit.detach()`
 
 ---
 

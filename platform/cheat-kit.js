@@ -434,6 +434,28 @@
   /* 开关面板                                                      */
   /* ------------------------------------------------------------ */
 
+  /* 面板是普通文档流里的卡片，长页面（尤其手机）打开时可能落在折线以下，
+     只有大部分看不见时才滚一下，已经可见就别动玩家的滚动位置 */
+  function revealDock() {
+    var el = state.el;
+    if (!el || !el.getBoundingClientRect) return;
+    var r = el.getBoundingClientRect();
+    var vh = global.innerHeight || document.documentElement.clientHeight || 0;
+    if (!vh || !r.height) return;
+    var visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+    if (visible >= Math.min(r.height, vh) * 0.6) return;
+    var reduce = false;
+    try {
+      reduce = !!(global.GamePlatform && GamePlatform.ui && GamePlatform.ui.shouldReduceMotion &&
+        GamePlatform.ui.shouldReduceMotion());
+    } catch (e) { reduce = false; }
+    try {
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    } catch (e) {
+      el.scrollIntoView();
+    }
+  }
+
   function openPanel() {
     if (!state.el) build();
     if (!state.el) return;
@@ -445,6 +467,8 @@
     state.tick = setInterval(refresh, 500);
     if (state.spec.onOpen) state.spec.onOpen();
     toast(lang() === 'en' ? '🔧 Modifier unlocked' : '🔧 修改器已解锁');
+    // 等一帧，动画起点的高度测准了再决定要不要滚
+    setTimeout(revealDock, 40);
   }
 
   function closePanel() {
