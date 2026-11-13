@@ -803,8 +803,15 @@
     renderStats();
     updateStatus();
     saveGame();
-    if (mode === 'ai') ui.toast(state.turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'));
-    else ui.toast(i18n.t('whiteFirst'));
+    announceFirst();
+  }
+
+  /* 每次对局开始：提示先手方 */
+  function announceFirst() {
+    var msg = mode === 'ai'
+      ? (state.turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'))
+      : i18n.t('whiteFirst');
+    setTimeout(function () { if (alive) ui.toast(msg); }, 200);
   }
 
   /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
@@ -1220,8 +1227,7 @@
       onAction: function (act) {
         if (act === 'undo') undo();
         else if (act === 'restart') {
-          newGame();
-          ui.toast(i18n.t('restarted'));
+          newGame();          // newGame 内部会提示先手方
         } else if (act === 'clear') {
           BG.store.clear(GAME_ID);
           saveGame();          // 只清战绩，当前这盘继续留着

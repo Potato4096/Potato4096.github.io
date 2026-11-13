@@ -567,8 +567,15 @@
     BG.store.remove(GAME_ID, KEYS.session);   // 开新局 = 丢掉续盘存档
     refresh();
     saveGame();
-    if (mode === 'ai') ui.toast(turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'));
-    else ui.toast(i18n.t('blackFirst'));
+    announceFirst();
+  }
+
+  /* 每次对局开始：提示先手方 */
+  function announceFirst() {
+    var msg = mode === 'ai'
+      ? (turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'))
+      : i18n.t('blackFirst');
+    setTimeout(function () { if (alive) ui.toast(msg); }, 200);
   }
 
   /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
@@ -903,8 +910,7 @@
     BG.sfx.click();
     if (act === 'again') {
       closeResult();
-      resetGame();
-      ui.toast(i18n.t('restarted'));
+      resetGame();          // resetGame 内部会提示先手方
     } else {
       closeResult();
     }
@@ -1066,8 +1072,7 @@
           doPass(turn, false);
         } else if (act === 'resign') resign();
         else if (act === 'restart') {
-          resetGame();
-          ui.toast(i18n.t('restarted'));
+          resetGame();          // resetGame 内部会提示先手方
         }
       },
       onExit: function () { if (opts && opts.exit) opts.exit(); },
