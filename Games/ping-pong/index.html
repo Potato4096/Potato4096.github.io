@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>乒乓球 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="../../platform/cheat-kit.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-home" data-i18n="home">返回主页</button>
+      <div class="hud">
+        <span class="hud-item"><span class="hud-label" data-i18n="score">比分</span><b id="hud-score">我 0 : 0 AI</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="round">回合数</span><b id="hud-round">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="diff">难度</span><b id="hud-diff">普通</b></span>
+      </div>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-pause" data-i18n="pauseBtn">暂停</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-fullscreen" data-i18n="fullscreen">全屏</button>
+      </div>
+    </div>
+
+    <div class="game-wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="640" height="400"></canvas>
+
+        <div class="overlay" id="ov-menu">
+          <div class="panel pg-card">
+            <h1 class="game-title" data-i18n="title">乒乓球</h1>
+            <p class="tagline" data-i18n="tagline"></p>
+            <div class="diff-row" id="diff-row">
+              <button class="pg-btn pg-btn--ghost diff-btn" data-diff="easy" data-i18n="diffEasy">简单</button>
+              <button class="pg-btn pg-btn--ghost diff-btn" data-diff="normal" data-i18n="diffNormal">普通</button>
+              <button class="pg-btn pg-btn--ghost diff-btn" data-diff="hard" data-i18n="diffHard">困难</button>
+            </div>
+            <p class="best-line"><span data-i18n="best">最高连胜</span> <b id="menu-best">0</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-start" data-i18n="start">开始游戏</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-pause" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="paused">已暂停</h2>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-resume" data-i18n="resume">继续游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-restart-pause" data-i18n="restart">重新开始</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-pause" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-gameover" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" id="go-result" data-i18n="gameOver">游戏结束</h2>
+            <p class="result-line"><span data-i18n="score">比分</span> <b id="go-score">0 : 0</b></p>
+            <p class="result-line"><span data-i18n="longestRally">最长对拉</span> <b id="go-rally">0</b></p>
+            <p class="best-line"><span data-i18n="best">最高连胜</span> <b id="go-best">0</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-go" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-go" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="pg-muted controls-hint" data-i18n="controls"></p>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="../../platform/cheat-kit.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

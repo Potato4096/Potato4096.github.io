@@ -1,0 +1,26 @@
+{
+  "id": "fishing",
+  "title": {
+    "zh": "钓鱼",
+    "en": "Fishing"
+  },
+  "description": {
+    "zh": "抛竿蓄力决定落点，远处的深水藏着大鱼。看准浮漂下沉的瞬间提竿，再在拉杆对抗中控制张力——太紧断线、太松脱钩。钓获四档稀有度的鱼卖钱换金币，升级鱼竿、鱼线与鱼饵，挑战传说之鱼！",
+    "en": "Charge your cast to reach the deep water where the big fish lurk. Strike the moment the bobber dips, then manage the tension bar while reeling in — too tight and the line snaps, too slack and the fish escapes. Catch four rarity tiers of fish for coins, upgrade your rod, line and bait, and land the legendary ones!"
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🎣",
+  "tags": ["casual", "simulation", "singleplayer"],
+  "category": "casual",
+  "players": 1,
+  "controls": {
+    "zh": "按住蓄力抛竿，咬钩时点击 / 空格提竿，拉杆时按住收线、松开放线，Esc / P 暂停",
+    "en": "Hold to charge your cast, click / Space to hook on a bite, hold to reel and release to give line, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-13",
+  "updated": "2026-11-13"
+}

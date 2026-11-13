@@ -12,11 +12,27 @@
   "author": "Potato4096",
   "entry": "index.html",
   "emoji": "⚡",
-  "tags": ["reflex", "singleplayer", "demo"],
+  "tags": [
+    "reflex",
+    "singleplayer",
+    "demo"
+  ],
   "category": "casual",
   "players": 1,
-  "api": ["settings", "storage", "i18n", "theme", "sound", "toast", "reduceMotion"],
+  "api": [
+    "settings",
+    "storage",
+    "i18n",
+    "theme",
+    "sound",
+    "toast",
+    "reduceMotion"
+  ],
   "published": true,
   "created": "2026-11-01",
-  "updated": "2026-11-01"
+  "updated": "2026-11-01",
+  "controls": {
+    "zh": "等待变绿后立即点击；点击「清除记录」重置成绩",
+    "en": "Click as soon as it turns green; Clear Records resets stats"
+  }
 }

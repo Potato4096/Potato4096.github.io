@@ -1,0 +1,26 @@
+{
+  "id": "penalty-shootout",
+  "title": {
+    "zh": "足球射门",
+    "en": "Penalty Shootout"
+  },
+  "description": {
+    "zh": "点球大战一触即发！瞄准球门落点、蓄力射门，与守门员展开五轮对决。射偏或力量不当会被扑出，总分战平则进入突然死亡轮，快来刷新最高进球纪录！",
+    "en": "Step up for a penalty shootout! Aim at the goal, charge your shot and beat the keeper over five rounds. Mind your power — a tie sends you to sudden death, so chase your best record!"
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "⚽",
+  "tags": ["sports", "arcade", "singleplayer"],
+  "category": "sports",
+  "players": 1,
+  "controls": {
+    "zh": "点击 / 拖动球门区域瞄准，按住蓄力、松开射门，Esc / P 暂停",
+    "en": "Click / drag in the goal area to aim, hold to charge and release to shoot, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-13",
+  "updated": "2026-11-13"
+}

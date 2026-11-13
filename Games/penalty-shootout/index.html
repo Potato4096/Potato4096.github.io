@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>足球射门 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="../../platform/cheat-kit.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-home" data-i18n="home">返回主页</button>
+      <div class="hud">
+        <span class="hud-item"><span class="hud-label" data-i18n="round">轮次</span><b id="hud-round">1/5</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="goals">进球</span><b id="hud-goals">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="oppScore">对手分</span><b id="hud-opp">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="accuracy">命中率</span><b id="hud-acc">0%</b></span>
+      </div>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-pause" data-i18n="pauseBtn">暂停</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-fullscreen" data-i18n="fullscreen">全屏</button>
+      </div>
+    </div>
+
+    <div class="game-wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="640" height="480"></canvas>
+
+        <div class="overlay" id="ov-menu">
+          <div class="panel pg-card">
+            <h1 class="game-title" data-i18n="title">足球射门</h1>
+            <p class="tagline" data-i18n="tagline"></p>
+            <p class="best-line"><span data-i18n="bestGoals">最高进球</span> <b id="menu-best-goals">0</b> · <span data-i18n="bestTotal">最高总比分</span> <b id="menu-best-total">0</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-start" data-i18n="start">开始游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-clear" data-i18n="clearRecords">清除记录</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-pause" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="paused">已暂停</h2>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-resume" data-i18n="resume">继续游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-restart-pause" data-i18n="restart">重新开始</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-pause" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-gameover" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" id="go-title" data-i18n="gameOver">比赛结束</h2>
+            <p class="result-line"><span data-i18n="goals">进球</span> <b id="go-goals">0</b> · <span data-i18n="oppScore">对手分</span> <b id="go-opp">0</b></p>
+            <p class="result-line"><span data-i18n="accuracy">命中率</span> <b id="go-acc">0%</b></p>
+            <p class="best-line"><span data-i18n="bestGoals">最高进球</span> <b id="go-best-goals">0</b> · <span data-i18n="bestTotal">最高总比分</span> <b id="go-best-total">0</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-go" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-go" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="pg-muted controls-hint" data-i18n="controls"></p>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="../../platform/cheat-kit.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

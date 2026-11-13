@@ -1,4 +1,4 @@
-# 游戏开发规范 (Game Dev Spec) v1.0
+# 游戏开发规范 (Game Dev Spec) v1.1
 
 本规范定义了 Potato4096 Arcade 平台下游戏的目录结构、配置格式、运行约定与 API 使用边界。**任何进入 `Games/` 目录的游戏都必须遵守本规范**。
 
@@ -19,16 +19,44 @@
 Games/<game-id>/
 ├── game.json        # 必填。游戏配置文件
 ├── index.html       # 必填。游戏入口（文件名由 game.json 的 entry 指定）
-├── assets/          # 推荐。图片、音频、字体等资源
-├── css/             # 可选。游戏私有样式
-└── js/              # 可选。游戏私有脚本
+├── css/             # 推荐。游戏私有样式
+│   └── style.css
+├── js/              # 推荐。游戏私有脚本
+│   ├── audio.js     #   WebAudio 合成音效（不引用任何外部音频文件）
+│   └── game.js      #   游戏逻辑（IIFE，挂到 window.<NS>）
+└── assets/          # 可选。图片、字体等资源
 ```
+
+实际游戏统一采用 `css/style.css` + `js/audio.js` + `js/game.js` 三件套：样式与逻辑分离、音效合成与玩法分离，便于维护与复用写法。DOM 类游戏（如猜数字、2048）可以省略 canvas，但脚本划分保持一致。
 
 **命名规则（game-id / 目录名）**：
 
-- 只使用小写字母、数字和连字符：`[a-z0-9-]+`
+- 只使用小写字母、数字和连字符：`[a-z0-9-]+`（数字开头合法，如 `2048`）
 - 长度 2 ~ 40，如 `number-guess`、`snake-deluxe`
 - 目录名必须与 `game.json` 的 `id` 字段一致
+
+### 画布游戏的清晰渲染（必做）
+
+canvas 不要把固定缓冲区交给 CSS 拉伸 —— 例如缓冲区按 640×480 分配、CSS `width:100%` 把显示拉到 800px，等于整块画面放大 1.25 倍，线条与文字都会发虚、边缘出现锯齿。
+
+正确做法是**每帧让缓冲区跟随实际显示尺寸**：
+
+```js
+function fit(canvas, ctx, w, h) {          // w/h = 逻辑绘制尺寸，如 640/480
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  var bw = Math.max(1, Math.round((rect.width || w) * dpr));
+  var bh = Math.max(1, Math.round((h * bw) / w));
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width = bw;
+    canvas.height = bh;
+  }
+  ctx.setTransform(bw / w, 0, 0, bh / h, 0, 0);   // 之后仍用 640×480 坐标系绘制
+  return ctx;
+}
+```
+
+在 `render()` 开头调用 `ctx = fit(canvas, ctx, 640, 480)` 即可：窗口缩放、系统 DPI 变化都会自动适配，绘制代码不必改动。参考实现见 `Games/board-games/js/core/canvas.js`。
 
 ---
 
@@ -228,11 +256,14 @@ Games/<game-id>/
 - [ ] 有"返回主页"按钮
 - [ ] 控制台无报错
 - [ ] `api` 字段声明完整
+- [ ] canvas 游戏：缓冲区按 **实际显示尺寸 × devicePixelRatio** 分配（见 §2 画布游戏的清晰渲染），缩放窗口后线条/文字不发虚、无锯齿
+- [ ] 触屏可用：主要操作不依赖 hover 或右键，canvas 设置 `touch-action: none`（拖动类）或 `manipulation`（点击类）
 - [ ] （建议）接入 `CheatKit`：键入 `potato4096` 能开出本作的修改器，面板内数值与实际局势一致；棋类在上帝模式下能直接点**原棋盘**摆子 / 拿子；SPA 类游戏在 `unmount` 里调 `CheatKit.detach()`
 
 ---
 
 ## 10. 版本演进
 
-- 本规范当前版本 **v1.0**，与 `platform/game-api.js` 的 `GamePlatform.version` 同步演进
+- 本规范当前版本 **v1.1**，与 `platform/game-api.js` 的 `GamePlatform.version` 同步演进
 - 新增 API 一律向后兼容；破坏性变更会提升主版本号并在此文档标注迁移说明
+- v1.1（2026-11-13）：补充推荐目录三件套（`css/style.css` + `js/audio.js` + `js/game.js`）、画布清晰渲染要求（DPR fit）、触屏检查项；`CheatKit` 取子栏（palette）取代面板内棋盘

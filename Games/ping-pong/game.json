@@ -1,0 +1,26 @@
+{
+  "id": "ping-pong",
+  "title": {
+    "zh": "乒乓球",
+    "en": "Ping Pong"
+  },
+  "description": {
+    "zh": "经典乒乓球对战 AI。用鼠标、触屏或键盘上下移动球拍，回球角度随接触点变化，打在拍边缘会拉出刁钻斜线。每 2 分换发球，对拉越久球速越快，先得 7 分者胜，简单 / 普通 / 困难三档难度任你挑战！",
+    "en": "Classic Pong against the AI. Move your paddle with mouse, touch or keyboard — the return angle follows the contact point, so edge hits pull sharp diagonals. Serve switches every two points and the ball speeds up the longer the rally lasts; the first to 7 points wins, with Easy / Normal / Hard to choose from!"
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🏓",
+  "tags": ["sports", "arcade", "singleplayer"],
+  "category": "sports",
+  "players": 1,
+  "controls": {
+    "zh": "鼠标 / 触摸上下拖动，或 W/S、↑/↓ 移动球拍，Esc / P 暂停",
+    "en": "Drag up/down with mouse / touch or use W/S, ↑/↓ to move the paddle, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-13",
+  "updated": "2026-11-13"
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>钓鱼 · Potato4096 Arcade</title>
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="../../platform/cheat-kit.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-home" data-i18n="home">返回主页</button>
+      <div class="hud">
+        <span class="hud-item"><span class="hud-label" data-i18n="coins">金币</span><b id="hud-coins">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="bestWeight">最大鱼</span><b id="hud-best">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="caught">已钓数</span><b id="hud-count">0</b></span>
+        <span class="hud-item"><span class="hud-label" data-i18n="status">当前状态</span><b id="hud-state">-</b></span>
+      </div>
+      <div class="top-actions">
+        <button class="pg-btn pg-btn--ghost" id="btn-pause" data-i18n="pauseBtn">暂停</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-fullscreen" data-i18n="fullscreen">全屏</button>
+      </div>
+    </div>
+
+    <div class="game-wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="640" height="480"></canvas>
+
+        <div class="overlay" id="ov-menu">
+          <div class="panel pg-card">
+            <h1 class="game-title" data-i18n="title">钓鱼</h1>
+            <p class="tagline" data-i18n="tagline"></p>
+            <div class="records">
+              <p class="best-line"><span data-i18n="recWeight">最大单尾</span> <b id="menu-best-weight">0 kg</b></p>
+              <p class="best-line"><span data-i18n="recCoins">累计最高金币</span> <b id="menu-best-coins">0</b></p>
+              <p class="best-line"><span data-i18n="recLegend">传说鱼数量</span> <b id="menu-best-legend">0</b></p>
+            </div>
+            <div class="shop" id="shop">
+              <h2 class="shop-title" data-i18n="shop">渔具升级</h2>
+              <div class="shop-row" data-gear="rod">
+                <div class="shop-info">
+                  <span class="shop-name"><span data-i18n="gearRod">鱼竿</span> <em class="shop-lv" id="lv-rod">Lv.0</em></span>
+                  <span class="shop-desc" data-i18n="gearRodDesc">提升拉杆力量</span>
+                </div>
+                <button class="pg-btn shop-buy" id="buy-rod" data-i18n="buy">购买</button>
+              </div>
+              <div class="shop-row" data-gear="line">
+                <div class="shop-info">
+                  <span class="shop-name"><span data-i18n="gearLine">鱼线</span> <em class="shop-lv" id="lv-line">Lv.0</em></span>
+                  <span class="shop-desc" data-i18n="gearLineDesc">提升断线上限</span>
+                </div>
+                <button class="pg-btn shop-buy" id="buy-line" data-i18n="buy">购买</button>
+              </div>
+              <div class="shop-row" data-gear="bait">
+                <div class="shop-info">
+                  <span class="shop-name"><span data-i18n="gearBait">鱼饵</span> <em class="shop-lv" id="lv-bait">Lv.0</em></span>
+                  <span class="shop-desc" data-i18n="gearBaitDesc">加快咬钩、提高大鱼概率</span>
+                </div>
+                <button class="pg-btn shop-buy" id="buy-bait" data-i18n="buy">购买</button>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-start" data-i18n="start">开始游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-clear" data-i18n="clearRecords">清除记录</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-pause" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="paused">已暂停</h2>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-resume" data-i18n="resume">继续游戏</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-restart-pause" data-i18n="restart">重新开始</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-endrun" data-i18n="endRun">结束本局</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-pause" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="ov-gameover" hidden>
+          <div class="panel pg-card">
+            <h2 class="game-title" data-i18n="gameOver">本局结束</h2>
+            <p class="result-line"><span data-i18n="runCaught">本局钓获</span> <b id="go-count">0</b></p>
+            <p class="result-line"><span data-i18n="runBest">本局最大</span> <b id="go-best">0 kg</b></p>
+            <p class="result-line"><span data-i18n="runCoins">本局金币</span> <b id="go-coins">0</b></p>
+            <p class="best-line"><span data-i18n="recWeight">最大单尾</span> <b id="go-best-weight">0 kg</b></p>
+            <div class="btn-row">
+              <button class="pg-btn" id="btn-again-go" data-i18n="again">再玩一次</button>
+              <button class="pg-btn pg-btn--ghost" id="btn-home-go" data-i18n="home">返回主页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="pg-muted controls-hint" data-i18n="controls"></p>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="../../platform/cheat-kit.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

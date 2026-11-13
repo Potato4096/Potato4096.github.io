@@ -1,0 +1,26 @@
+{
+  "id": "sliding-puzzle",
+  "title": {
+    "zh": "数字华容道",
+    "en": "Sliding Puzzle"
+  },
+  "description": {
+    "zh": "经典数字华容道滑块拼图。点击与空格相邻的方块（或用方向键）滑动，把数字 1 到 N²-1 按顺序排好、右下角留空即可过关。提供 3×3、4×4、5×5 三档阶数，自动记录每档的最佳步数与最佳用时，计步计时挑战自我。",
+    "en": "Classic sliding number puzzle. Tap a tile next to the blank (or use the arrow keys) to slide it, and arrange 1 through N²-1 in order with the blank at the bottom right to win. Play 3×3, 4×4 or 5×5 boards with move counting, a timer, and separate best-move / best-time records for each size."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🧩",
+  "tags": ["puzzle", "singleplayer"],
+  "category": "puzzle",
+  "players": 1,
+  "controls": {
+    "zh": "点击与空格相邻的方块滑动，方向键也可移动，Esc / P 暂停",
+    "en": "Tap a tile next to the blank to slide it, arrow keys also work, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-13",
+  "updated": "2026-11-13"
+}

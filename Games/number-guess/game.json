@@ -12,11 +12,25 @@
   "author": "Potato4096",
   "entry": "index.html",
   "emoji": "🔢",
-  "tags": ["puzzle", "singleplayer", "demo"],
+  "tags": [
+    "puzzle",
+    "singleplayer",
+    "demo"
+  ],
   "category": "casual",
   "players": 1,
-  "api": ["settings", "storage", "i18n", "theme", "toast"],
+  "api": [
+    "settings",
+    "storage",
+    "i18n",
+    "theme",
+    "toast"
+  ],
   "published": true,
   "created": "2026-11-01",
-  "updated": "2026-11-01"
+  "updated": "2026-11-01",
+  "controls": {
+    "zh": "输入数字后点「猜！」或回车提交，系统给出冷热提示",
+    "en": "Type a number, press Guess or Enter; the game replies hot/cold"
+  }
 }

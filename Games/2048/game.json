@@ -1,0 +1,26 @@
+{
+  "id": "2048",
+  "title": {
+    "zh": "2048",
+    "en": "2048"
+  },
+  "description": {
+    "zh": "经典数字合成游戏。滑动方块让相同数字相撞合并，一路向 2048 进发。支持撤销一步、最高分存档，还能继续挑战更大的方块。",
+    "en": "The classic number-merging game. Slide tiles, merge equal numbers and climb toward 2048. Undo a move, keep your best score, and keep going for tiles beyond 2048."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "🔢",
+  "tags": ["puzzle", "singleplayer"],
+  "category": "puzzle",
+  "players": 1,
+  "controls": {
+    "zh": "方向键 / WASD / 触屏滑动移动方块，U 或按钮撤销一步，Esc / P 暂停",
+    "en": "Arrow keys / WASD / swipe to move tiles, U or the button to undo, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-13",
+  "updated": "2026-11-13"
+}

@@ -1,7 +1,11 @@
 {
-  "generatedAt": "2026-11-12T12:43:27.447Z",
-  "count": 9,
+  "generatedAt": "2026-11-13T00:59:27.275Z",
+  "count": 14,
   "games": [
+    {
+      "id": "2048",
+      "dir": "Games/2048"
+    },
     {
       "id": "arena-survivor",
       "dir": "Games/arena-survivor"
@@ -19,6 +23,10 @@
       "dir": "Games/doudizhu"
     },
     {
+      "id": "fishing",
+      "dir": "Games/fishing"
+    },
+    {
       "id": "island-commander",
       "dir": "Games/island-commander"
     },
@@ -31,8 +39,20 @@
       "dir": "Games/number-guess"
     },
     {
+      "id": "penalty-shootout",
+      "dir": "Games/penalty-shootout"
+    },
+    {
+      "id": "ping-pong",
+      "dir": "Games/ping-pong"
+    },
+    {
       "id": "reaction-test",
       "dir": "Games/reaction-test"
+    },
+    {
+      "id": "sliding-puzzle",
+      "dir": "Games/sliding-puzzle"
     },
     {
       "id": "super-jump",
