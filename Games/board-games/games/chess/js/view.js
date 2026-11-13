@@ -119,6 +119,7 @@
   var mode = 'pvp';
   var difficulty = 'medium';
   var aiColor = 'b';
+  var boardFlip = false;   // AI 执白时翻转棋盘，使电脑棋子始终在上方
 
   var aiThinking = false;
   var aiTimer = null;
@@ -144,7 +145,8 @@
   }
 
   function cellPx(x, y) {
-    return { px: PAD + x * CELL + CELL / 2, py: PAD + y * CELL + CELL / 2 };
+    var ry = boardFlip ? (7 - y) : y;
+    return { px: PAD + x * CELL + CELL / 2, py: PAD + ry * CELL + CELL / 2 };
   }
 
   function pointToCell(clientX, clientY) {
@@ -154,7 +156,8 @@
     var lx = (clientX - rect.left) * (W / rect.width);
     var ly = (clientY - rect.top) * (W / rect.height);
     var x = Math.floor((lx - PAD) / CELL);
-    var y = Math.floor((ly - PAD) / CELL);
+    var displayY = Math.floor((ly - PAD) / CELL);
+    var y = boardFlip ? (7 - displayY) : displayY;
     if (!X.inBoard(x, y)) return null;
     return { x: x, y: y };
   }
@@ -291,8 +294,9 @@
     for (var i = 0; i < 8; i++) {
       ctx.fillText('abcdefgh'[i], PAD + i * CELL + CELL / 2, PAD - 17);
       ctx.fillText('abcdefgh'[i], PAD + i * CELL + CELL / 2, PAD + 8 * CELL + 17);
-      ctx.fillText(String(8 - i), PAD - 17, PAD + i * CELL + CELL / 2);
-      ctx.fillText(String(8 - i), PAD + 8 * CELL + 17, PAD + i * CELL + CELL / 2);
+      var rank = boardFlip ? (i + 1) : (8 - i);
+      ctx.fillText(String(rank), PAD - 17, PAD + i * CELL + CELL / 2);
+      ctx.fillText(String(rank), PAD + 8 * CELL + 17, PAD + i * CELL + CELL / 2);
     }
     ctx.textAlign = 'start';
     ctx.textBaseline = 'alphabetic';
@@ -776,6 +780,12 @@
     cancelAnim();
     BG.store.remove(GAME_ID, KEYS.session);
 
+    // AI 模式下随机分配电脑执白或执黑；先手固定为白
+    if (mode === 'ai') {
+      aiColor = Math.random() < 0.5 ? 'w' : 'b';
+      boardFlip = (aiColor === 'w');   // 电脑执白时翻转，使电脑棋子在上方
+    }
+
     state = X.initialState();
     repKeys = [X.positionKey(state)];
     history = [];
@@ -792,6 +802,9 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
+    if (mode === 'ai') ui.toast(state.turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'));
+    else ui.toast(i18n.t('whiteFirst'));
   }
 
   /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
@@ -805,7 +818,9 @@
       history: history,
       repKeys: repKeys,
       lastMove: lastMove,
-      recorded: recorded
+      recorded: recorded,
+      aiColor: aiColor,
+      boardFlip: boardFlip
     });
   }
 
@@ -821,6 +836,8 @@
       repKeys = d.repKeys && d.repKeys.length ? d.repKeys : [X.positionKey(state)];
       lastMove = d.lastMove || null;
       recorded = !!d.recorded;
+      aiColor = d.aiColor === 'w' ? 'w' : 'b';
+      boardFlip = !!d.boardFlip;
       selected = null;
       legalTargets = [];
       pendingPromo = null;

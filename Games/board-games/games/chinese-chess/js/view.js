@@ -107,6 +107,7 @@
   var mode = 'pvp';
   var difficulty = 'medium';
   var aiColor = 'b';
+  var boardFlip = false;   // AI 执红时翻转棋盘，使电脑棋子始终在上方
 
   var aiThinking = false;
   var aiTimer = null;
@@ -132,7 +133,8 @@
   }
 
   function cellPx(x, y) {
-    return { px: PAD + x * CELL, py: PAD + y * CELL };
+    var ry = boardFlip ? (X.ROWS - 1 - y) : y;
+    return { px: PAD + x * CELL, py: PAD + ry * CELL };
   }
 
   function pointToCell(clientX, clientY) {
@@ -142,7 +144,8 @@
     var lx = (clientX - rect.left) * (W / rect.width);
     var ly = (clientY - rect.top) * (H / rect.height);
     var x = Math.round((lx - PAD) / CELL);
-    var y = Math.round((ly - PAD) / CELL);
+    var displayY = Math.round((ly - PAD) / CELL);
+    var y = boardFlip ? (X.ROWS - 1 - displayY) : displayY;
     if (!X.inBoard(x, y)) return null;
     // 允许落在交叉点附近（半个格子内）
     var c = cellPx(x, y);
@@ -326,14 +329,15 @@
     ctx.strokeStyle = c.mark;
     ctx.lineWidth = 1.4;
     points.forEach(function (pt) {
-      var p = cellPx(pt[0], pt[1]);
+      var px = PAD + pt[0] * CELL;
+      var py = PAD + pt[1] * CELL;
       var gap = 5, arm = 8;
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) {
         if ((pt[0] === 0 && q[0] === -1) || (pt[0] === 8 && q[0] === 1)) return; // 贴边不画
         ctx.beginPath();
-        ctx.moveTo(p.px + q[0] * gap, p.py + q[1] * (gap + arm));
-        ctx.lineTo(p.px + q[0] * gap, p.py + q[1] * gap);
-        ctx.lineTo(p.px + q[0] * (gap + arm), p.py + q[1] * gap);
+        ctx.moveTo(px + q[0] * gap, py + q[1] * (gap + arm));
+        ctx.lineTo(px + q[0] * gap, py + q[1] * gap);
+        ctx.lineTo(px + q[0] * (gap + arm), py + q[1] * gap);
         ctx.stroke();
       });
     });
@@ -594,6 +598,12 @@
     cancelAnim();
     BG.store.remove(GAME_ID, KEYS.session);
 
+    // AI 模式下随机分配电脑执红或执黑；先手固定为红
+    if (mode === 'ai') {
+      aiColor = Math.random() < 0.5 ? 'r' : 'b';
+      boardFlip = (aiColor === 'r');   // 电脑执红时翻转，使电脑棋子在上方
+    }
+
     board = X.initialBoard();
     turn = 'r';
     selected = null;
@@ -607,6 +617,9 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
+    if (mode === 'ai') ui.toast(turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'));
+    else ui.toast(i18n.t('redFirst'));
   }
 
   /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
@@ -620,7 +633,9 @@
       turn: turn,
       history: history,
       lastMove: lastMove,
-      recorded: recorded
+      recorded: recorded,
+      aiColor: aiColor,
+      boardFlip: boardFlip
     });
   }
 
@@ -635,6 +650,8 @@
       history = d.history;
       lastMove = d.lastMove || null;
       recorded = !!d.recorded;
+      aiColor = d.aiColor === 'r' ? 'r' : 'b';
+      boardFlip = !!d.boardFlip;
       selected = null;
       legalTargets = [];
       status = X.statusAfter(board, turn);

@@ -543,6 +543,11 @@
     aiThinking = false;
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
 
+    // AI 模式下随机分配电脑执黑或执白；先手固定为黑
+    if (mode === 'ai') {
+      aiColor = Math.random() < 0.5 ? R.BLACK : R.WHITE;
+    }
+
     board = R.create(size);
     turn = R.BLACK;
     captures = [0, 0, 0];
@@ -561,6 +566,9 @@
     closeResult();
     BG.store.remove(GAME_ID, KEYS.session);   // 开新局 = 丢掉续盘存档
     refresh();
+    saveGame();
+    if (mode === 'ai') ui.toast(turn === aiColor ? i18n.t('aiFirst') : i18n.t('youFirst'));
+    else ui.toast(i18n.t('blackFirst'));
   }
 
   /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
@@ -596,7 +604,8 @@
       over: over,
       winner: winner,
       resultInfo: resultInfo,
-      recordedWinner: recordedWinner
+      recordedWinner: recordedWinner,
+      aiColor: aiColor
     });
   }
 
@@ -628,6 +637,7 @@
       winner = d.winner || R.EMPTY;
       resultInfo = d.resultInfo || null;
       recordedWinner = d.recordedWinner || 0;
+      aiColor = (d.aiColor === R.BLACK || d.aiColor === R.WHITE) ? d.aiColor : R.WHITE;
 
       syncSizeButtons();
       refresh();
