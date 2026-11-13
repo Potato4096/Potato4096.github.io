@@ -1,7 +1,7 @@
 /* penalty-shootout - game styles (theme-aware via --pg-* variables) */
 
 .game-wrap {
-  max-width: 780px;
+  max-width: 560px;
   margin: 0 auto;
 }
 
@@ -12,7 +12,6 @@
   overflow: hidden;
   background: var(--pg-surface-2);
   box-shadow: var(--pg-shadow);
-  line-height: 0;
 }
 
 #game {
@@ -20,7 +19,11 @@
   width: 100%;
   height: auto;
   touch-action: none;
-  cursor: crosshair;
+  cursor: grab;
+}
+
+#game.is-dragging {
+  cursor: grabbing;
 }
 
 .hud {
@@ -60,7 +63,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(10, 14, 22, 0.52);
+  background: color-mix(in srgb, var(--pg-bg) 55%, transparent);
   line-height: 1.5;
   z-index: 5;
 }
@@ -70,7 +73,7 @@
 }
 
 .overlay .panel {
-  width: min(440px, 100%);
+  width: min(420px, 100%);
   text-align: center;
 }
 
@@ -78,26 +81,26 @@
   margin: 0 0 6px;
   font-size: 28px;
   font-weight: 600;
-  color: var(--pg-text);
 }
 
-.overlay .tagline {
+.tagline {
   margin: 0 0 12px;
   color: var(--pg-text-muted);
   font-size: 14px;
 }
 
-.best-line,
-.result-line {
-  margin: 0 0 14px;
+.result-line,
+.best-line {
+  margin: 6px 0;
   font-size: 15px;
-  color: var(--pg-text);
+  color: var(--pg-text-muted);
 }
 
-.best-line b,
-.result-line b {
-  color: var(--pg-accent);
+.result-line b,
+.best-line b {
+  color: var(--pg-text);
   font-size: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
 .btn-row {
@@ -105,10 +108,15 @@
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  margin-top: 16px;
 }
 
 .controls-hint {
-  margin: 14px 2px 0;
+  margin: 12px 0 0;
   font-size: 13px;
-  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .game-title { font-size: 24px; }
 }

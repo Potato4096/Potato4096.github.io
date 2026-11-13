@@ -38,40 +38,32 @@
   }
 
   var SFX = {
-    kick: function () {
-      tone({ type: 'triangle', from: 180, to: 60, dur: 0.12, vol: 0.07 });
-      tone({ type: 'square', from: 420, to: 200, dur: 0.06, vol: 0.04 });
-    },
-    goal: function () {
-      var notes = [523, 659, 784, 1047];
-      for (var i = 0; i < notes.length; i++) {
-        tone({ type: 'square', from: notes[i], dur: 0.14, vol: 0.05, delay: i * 0.1 });
-      }
-    },
-    save: function () {
-      tone({ type: 'sawtooth', from: 320, to: 140, dur: 0.18, vol: 0.055 });
-    },
-    post: function () {
-      tone({ type: 'square', from: 900, to: 500, dur: 0.08, vol: 0.06 });
-      tone({ type: 'triangle', from: 1200, to: 700, dur: 0.12, vol: 0.045, delay: 0.02 });
-    },
-    whistle: function () {
-      tone({ type: 'sine', from: 1500, to: 1800, dur: 0.16, vol: 0.05 });
-      tone({ type: 'sine', from: 1800, to: 1500, dur: 0.16, vol: 0.05, delay: 0.16 });
-    },
-    win: function () {
-      var notes = [523, 659, 784, 1047, 1319, 1568];
-      for (var i = 0; i < notes.length; i++) {
-        tone({ type: 'square', from: notes[i], dur: 0.15, vol: 0.05, delay: i * 0.12 });
-      }
-    },
-    lose: function () {
-      tone({ type: 'sawtooth', from: 392, to: 98, dur: 0.55, vol: 0.055 });
-      tone({ type: 'sawtooth', from: 294, to: 73, dur: 0.55, vol: 0.045, delay: 0.18 });
-    },
     start: function () {
       tone({ type: 'square', from: 392, dur: 0.09, vol: 0.04 });
       tone({ type: 'square', from: 523, dur: 0.12, vol: 0.04, delay: 0.09 });
+    },
+    kick: function () {
+      tone({ type: 'triangle', from: 180, to: 90, dur: 0.1, vol: 0.06 });
+      tone({ type: 'square', from: 420, to: 560, dur: 0.06, vol: 0.04 });
+    },
+    bounce: function () { tone({ type: 'triangle', from: 260, to: 210, dur: 0.06, vol: 0.04 }); },
+    goal: function () {
+      var notes = [523, 659, 784, 1047];
+      for (var i = 0; i < notes.length; i++) {
+        tone({ type: 'square', from: notes[i], dur: 0.14, vol: 0.045, delay: i * 0.1 });
+      }
+    },
+    miss: function () {
+      tone({ type: 'sawtooth', from: 300, to: 150, dur: 0.28, vol: 0.05 });
+    },
+    win: function () {
+      var notes = [523, 659, 784, 1047, 1319];
+      for (var i = 0; i < notes.length; i++) {
+        tone({ type: 'square', from: notes[i], dur: 0.16, vol: 0.045, delay: i * 0.13 });
+      }
+    },
+    lose: function () {
+      tone({ type: 'sawtooth', from: 330, to: 92, dur: 0.55, vol: 0.05 });
     }
   };
 

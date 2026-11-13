@@ -2,13 +2,13 @@
   "id": "penalty-shootout",
   "title": {
     "zh": "足球射门",
-    "en": "Penalty Shootout"
+    "en": "Soccer Shootout"
   },
   "description": {
-    "zh": "点球大战一触即发！瞄准球门落点、蓄力射门，与守门员展开五轮对决。射偏或力量不当会被扑出，总分战平则进入突然死亡轮，快来刷新最高进球纪录！",
-    "en": "Step up for a penalty shootout! Aim at the goal, charge your shot and beat the keeper over five rounds. Mind your power — a tie sends you to sudden death, so chase your best record!"
+    "zh": "俯视视角的平面足球场。球摆在下方中央，按住球拖向球门方向、松手射门，拖得越远力量越大。球门每一脚都换到随机位置，五脚定胜负，看看你能进几个！",
+    "en": "A top-down 2D pitch. The ball sits at the bottom centre — drag it toward the goal and release to shoot; the longer the drag, the harder the strike. The goal moves to a random spot every shot. Five attempts per round — how many can you score?"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Potato4096",
   "entry": "index.html",
   "emoji": "⚽",
@@ -16,8 +16,8 @@
   "category": "sports",
   "players": 1,
   "controls": {
-    "zh": "点击 / 拖动球门区域瞄准，按住蓄力、松开射门，Esc / P 暂停",
-    "en": "Click / drag in the goal area to aim, hold to charge and release to shoot, Esc / P to pause"
+    "zh": "按住球拖向球门方向瞄准，松手射门（拖得越远力量越大），Esc / P 暂停",
+    "en": "Drag the ball toward the goal and release to shoot (longer drag = more power), Esc / P to pause"
   },
   "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
   "published": true,
