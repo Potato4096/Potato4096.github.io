@@ -1080,28 +1080,6 @@
     cheatRefreshStatus();
   }
 
-  function cheatGiveQueen() {
-    if (!state) return;
-    // 放在己方底线第一个空位，避免覆盖现有棋子
-    for (var x = 0; x < 8; x++) {
-      if (!state.board[7][x]) { state.board[7][x] = { t: 'Q', s: 'w' }; break; }
-    }
-    cheatRefreshStatus();
-  }
-
-  function cheatCrushEnemy() {
-    if (!state) return;
-    for (var y = 0; y < 8; y++) {
-      for (var x = 0; x < 8; x++) {
-        var p = state.board[y][x];
-        if (p && p.s === 'b' && p.t !== 'K') state.board[y][x] = null;
-      }
-    }
-    if (!state.board[0][4] || state.board[0][4].s !== 'b') state.board[0][4] = { t: 'K', s: 'b' };
-    if (!state.board[7][4] || state.board[7][4].s !== 'w') state.board[7][4] = { t: 'K', s: 'w' };
-    cheatRefreshStatus();
-  }
-
   /* 上帝模式 = 整局冻结：走子/AI/悔棋全停；解除后继续 */
   function freezeGame() {
     gameToken++;
@@ -1153,10 +1131,6 @@
             if (cheatGod) freezeGame();
             else resumeGame();
           } }
-      ],
-      actions: [
-        { label: { zh: '我方加后', en: 'Add a queen' }, run: cheatGiveQueen, toast: { zh: '已在我方底线加后', en: 'Queen added' } },
-        { label: { zh: '对面只剩王', en: 'Leave king only' }, run: cheatCrushEnemy, tone: 'danger', toast: { zh: '对面已被清空', en: 'Enemy wiped' } }
       ],
       board: {
         title: { zh: '取子：选一个子，然后点原棋盘落子', en: 'Pick a piece, then tap the real board' },

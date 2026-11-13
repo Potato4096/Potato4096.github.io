@@ -821,27 +821,6 @@
     cheatRefresh();
   }
 
-  function cheatAddRook() {
-    if (!board) return;
-    for (var x = 0; x < 9; x++) {
-      if (!board[9][x]) { board[9][x] = { t: 'R', s: 'r' }; break; }
-    }
-    cheatRefresh();
-  }
-
-  function cheatCrush() {
-    if (!board) return;
-    for (var y = 0; y < 10; y++) {
-      for (var x = 0; x < 9; x++) {
-        var p = board[y][x];
-        if (p && p.s === 'b' && p.t !== 'K') board[y][x] = null;
-      }
-    }
-    if (!board[0][4] || board[0][4].s !== 'b') board[0][4] = { t: 'K', s: 'b' };
-    if (!board[9][4] || board[9][4].s !== 'r') board[9][4] = { t: 'K', s: 'r' };
-    cheatRefresh();
-  }
-
   function countSide(side) {
     if (!board) return 0;
     var n = 0;
@@ -915,10 +894,6 @@
             if (cheatGod) freezeGame();
             else resumeGame();
           } }
-      ],
-      actions: [
-        { label: { zh: '红方加车', en: 'Add a chariot' }, run: cheatAddRook, toast: { zh: '红方底线已加车', en: 'Chariot added' } },
-        { label: { zh: '黑方只剩将', en: 'Leave general only' }, run: cheatCrush, tone: 'danger', toast: { zh: '黑方已被清空', en: 'Black wiped' } }
       ],
       board: {
         title: { zh: '取子：选一个子，然后点原棋盘交叉点落子', en: 'Pick a piece, then tap the real board' },
