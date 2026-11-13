@@ -367,6 +367,7 @@
 
   /* ---------------- 流程 ---------------- */
   function canHumanPlay() {
+    if (cheatGod) return false;
     if (!mode || over || aiThinking) return false;
     if (mode === 'ai' && turn === aiColor) return false;
     return true;
@@ -401,6 +402,7 @@
   }
 
   function tryPlace(x, y, byAi) {
+    if (cheatGod) return false;   // 上帝模式：整局冻结，不落子
     if (over) return false;
     var res = R.play(board, size, x, y, turn, ko);
     if (!res.ok) {
@@ -438,6 +440,7 @@
   }
 
   function doPass(color, byAi) {
+    if (cheatGod) return;   // 上帝模式：整局冻结
     if (over) return;
     snapshots.push(snapshot());
     history.push({ pass: true, color: color });
@@ -461,6 +464,10 @@
   }
 
   function resign() {
+    if (cheatGod) {
+      ui.toast(i18n.t('frozen'));
+      return;
+    }
     if (!mode || over) return;
     gameToken++;
     aiThinking = false;
@@ -494,6 +501,10 @@
   }
 
   function undo() {
+    if (cheatGod) {
+      ui.toast(i18n.t('frozen'));
+      return;
+    }
     gameToken++;
     aiThinking = false;
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
@@ -650,7 +661,7 @@
 
   function scheduleAi() {
     if (mode !== 'ai' || over) return;
-    if (cheatFreeze || cheatGod) return;
+    if (cheatGod) return;
     if (turn !== aiColor) return;
     aiThinking = true;
     updateStatus();
@@ -725,6 +736,7 @@
   function statusText() {
     if (!mode) return i18n.t('modePvp');
     if (over) return resultLine() || i18n.t('resultTitle');
+    if (cheatGod) return i18n.t('frozen');
     if (mode === 'ai' && (aiThinking || turn === aiColor)) return i18n.t('thinking');
     if (mode === 'ai') return i18n.t('yourTurn');
     return i18n.fmt('turn', { side: sideName(turn) });
@@ -743,9 +755,9 @@
   function syncButtons() {
     if (!root) return;
     var passBtn = root.querySelector('[data-act="pass"]');
-    if (passBtn) passBtn.disabled = over || (mode === 'ai' && turn === aiColor);
+    if (passBtn) passBtn.disabled = cheatGod || over || (mode === 'ai' && turn === aiColor);
     var resignBtn = root.querySelector('[data-act="resign"]');
-    if (resignBtn) resignBtn.disabled = over;
+    if (resignBtn) resignBtn.disabled = cheatGod || over;
   }
 
   function renderCaptures() {
@@ -893,8 +905,7 @@
   /* 修改器：暗号 potato4096 唤出（platform/cheat-kit.js）          */
   /* ------------------------------------------------------------ */
 
-  var cheatGod = false;
-  var cheatFreeze = false;
+  var cheatGod = false;      // 上帝模式：允许任意摆子 + 冻结整局（落子/AI/虚手/悔棋全停）
 
   function cheatPalette() {
     return [
@@ -949,6 +960,21 @@
     return n;
   }
 
+  /* 上帝模式 = 整局冻结：落子/AI/虚手/悔棋/认输全停；解除后继续 */
+  function freezeGame() {
+    gameToken++;
+    aiThinking = false;
+    if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    hover = null;
+    render();
+    updateStatus();
+  }
+
+  function resumeGame() {
+    updateStatus();
+    if (mode === 'ai' && !over && turn === aiColor) scheduleAi();
+  }
+
   function setupCheat() {
     if (!global.CheatKit) return;
     CheatKit.init({
@@ -956,8 +982,8 @@
       dock: root,
       title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
       hint: {
-        zh: '打开上帝模式后，下面选黑/白，直接点原棋盘交叉点就能摆/拿子；AI 同时冻结',
-        en: 'Turn on God Mode, pick black or white below, then tap the real board. AI freezes too.'
+        zh: '打开上帝模式后，下面选黑/白，直接点原棋盘交叉点就能摆/拿子；棋局整体冻结，关闭后继续',
+        en: 'Turn on God Mode, pick black or white below, then tap the real board. The game freezes; turn it off to continue.'
       },
       stats: [
         { label: { zh: '手数', en: 'Moves' }, get: function () { return history.length; } },
@@ -976,14 +1002,10 @@
           get: function () { return cheatGod; },
           set: function (v) {
             cheatGod = !!v;
-            if (cheatGod) cheatFreeze = true;
             if (canvas) canvas.classList.toggle('is-god', cheatGod);
-          } },
-        { label: { zh: '冻结 AI', en: 'Freeze AI' },
-          on: { zh: 'AI：已冻结', en: 'AI: frozen' },
-          off: { zh: 'AI：正常', en: 'AI: live' },
-          get: function () { return cheatFreeze; },
-          set: function (v) { cheatFreeze = !!v; } }
+            if (cheatGod) freezeGame();
+            else resumeGame();
+          } }
       ],
       actions: [
         { label: { zh: '我方占四角', en: 'Claim four corners' }, run: cheatCorners }

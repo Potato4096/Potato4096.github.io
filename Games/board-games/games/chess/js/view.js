@@ -568,6 +568,7 @@
 
   /* ---------------- 流程 ---------------- */
   function canHumanPlay() {
+    if (cheatGod) return false;
     if (!state || !status) return false;
     if (status.over || aiThinking || anim || pendingPromo) return false;
     if (mode === 'ai' && state.turn === aiColor) return false;
@@ -583,6 +584,7 @@
       }
       return i18n.t('drawText');
     }
+    if (cheatGod) return i18n.t('frozen');
     if (status.check) {
       if (mode === 'ai') return state.turn === aiColor ? i18n.t('aiCheck') : i18n.t('youCheck');
       return i18n.fmt('check', { side: sideName(state.turn) });
@@ -650,6 +652,7 @@
   }
 
   function doMove(from, to, promo, byAi) {
+    if (cheatGod) return;   // 上帝模式：整局冻结，不走子
     if (!state || !status || status.over) return;
     var piece = state.board[from.y][from.x];
     if (!piece) return;
@@ -728,6 +731,10 @@
   }
 
   function undo() {
+    if (cheatGod) {
+      ui.toast(i18n.t('frozen'));
+      return;
+    }
     if (aiThinking) {
       gameToken++;
       aiThinking = false;
@@ -833,7 +840,7 @@
 
   function scheduleAi() {
     if (mode !== 'ai' || !state || !status || status.over) return;
-    if (cheatFreeze || cheatGod) return;
+    if (cheatGod) return;
     if (state.turn !== aiColor || aiThinking) return;
 
     aiThinking = true;
@@ -980,8 +987,7 @@
   /* 修改器：暗号 potato4096 唤出（platform/cheat-kit.js）          */
   /* ------------------------------------------------------------ */
 
-  var cheatGod = false;      // 上帝模式：允许任意摆子 + 冻结 AI
-  var cheatFreeze = false;   // 单独冻结 AI
+  var cheatGod = false;      // 上帝模式：允许任意摆子 + 冻结整局（走子/AI/悔棋全停）
 
   var CHEAT_GLYPH = {
     'w:K': '♔', 'w:Q': '♕', 'w:R': '♖', 'w:B': '♗', 'w:N': '♘', 'w:P': '♙',
@@ -1072,6 +1078,24 @@
     cheatRefreshStatus();
   }
 
+  /* 上帝模式 = 整局冻结：走子/AI/悔棋全停；解除后继续 */
+  function freezeGame() {
+    gameToken++;
+    aiThinking = false;
+    if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    selected = null;
+    legalTargets = [];
+    pendingPromo = null;
+    hidePromo();
+    render();
+    updateStatus();
+  }
+
+  function resumeGame() {
+    updateStatus();
+    if (mode === 'ai' && state && status && !status.over && state.turn === aiColor) scheduleAi();
+  }
+
   function setupCheat() {
     if (!global.CheatKit) return;
     CheatKit.init({
@@ -1079,8 +1103,8 @@
       dock: root,
       title: { zh: '🔧 修改器 · 上帝模式', en: '🔧 Modifier · God Mode' },
       hint: {
-        zh: '打开上帝模式后，下面选一个子，直接点原棋盘就能摆/拿；AI 同时冻结',
-        en: 'Turn on God Mode, pick a piece below, then tap the real board to place or clear. AI freezes too.'
+        zh: '打开上帝模式后，下面选一个子，直接点原棋盘就能摆/拿；棋局整体冻结，关闭后继续',
+        en: 'Turn on God Mode, pick a piece below, then tap the real board to place or clear. The game freezes; turn it off to continue.'
       },
       stats: [
         { label: { zh: '手数', en: 'Plies' }, get: function () { return history.length; } },
@@ -1101,14 +1125,10 @@
           get: function () { return cheatGod; },
           set: function (v) {
             cheatGod = !!v;
-            if (cheatGod) cheatFreeze = true;
             if (canvas) canvas.classList.toggle('is-god', cheatGod);
-          } },
-        { label: { zh: '冻结 AI', en: 'Freeze AI' },
-          on: { zh: 'AI：已冻结', en: 'AI: frozen' },
-          off: { zh: 'AI：正常', en: 'AI: live' },
-          get: function () { return cheatFreeze; },
-          set: function (v) { cheatFreeze = !!v; } }
+            if (cheatGod) freezeGame();
+            else resumeGame();
+          } }
       ],
       actions: [
         { label: { zh: '我方加后', en: 'Add a queen' }, run: cheatGiveQueen, toast: { zh: '已在我方底线加后', en: 'Queen added' } },
@@ -1120,8 +1140,8 @@
         // 取子栏只在上帝模式开启后显示
         visible: function () { return cheatGod; },
         tip: {
-          zh: '选「空」后点格子 = 清空该格。摆完直接接着下，AI 已冻结。',
-          en: 'Pick "Empty" and tap to clear a square. AI stays frozen while God Mode is on.'
+          zh: '选「空」后点格子 = 清空该格。关闭上帝模式后继续对局。',
+          en: 'Pick "Empty" and tap to clear a square. Turn God Mode off to resume play.'
         },
         actions: [
           { label: { zh: '清空棋盘（留双王）', en: 'Clear (keep kings)' }, run: function () { cheatWipe(true); } },
