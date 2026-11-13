@@ -5,8 +5,8 @@
     "en": "Soccer Shootout"
   },
   "description": {
-    "zh": "类似手环弹射的平面足球场。按住球向后拉、松手弹射，球速恒定永不减速，撞到边缘就反弹。球门开在左右两侧并且每脚随机换位置，进球后回中重来，五脚定胜负！",
-    "en": "A slingshot pitch like the band classic. Pull the ball back and release — it flies at a constant speed and never slows down, bouncing off every edge. The goals sit on the left and right walls and move every shot. Score, reset, five shots per round!"
+    "zh": "类似手环弹射的平面足球场。按住球向后拉、松手弹射，球速恒定永不减速，撞到边缘就反弹。场上只有一个球门，左右侧与高度每脚随机换位置，进球后回中重来，五脚定胜负！",
+    "en": "A slingshot pitch like the band classic. Pull the ball back and release — it flies at a constant speed and never slows down, bouncing off every edge. There is a single goal that switches side and height every shot. Score, reset, five shots per round!"
   },
   "version": "1.2.0",
   "author": "Potato4096",
