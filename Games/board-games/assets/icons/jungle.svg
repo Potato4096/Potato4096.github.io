@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Jungle">
+  <defs>
+    <linearGradient id="jw" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edcf9a"/>
+      <stop offset="1" stop-color="#d9ad6f"/>
+    </linearGradient>
+    <linearGradient id="jwater" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fc4e4"/>
+      <stop offset="1" stop-color="#5a9cc4"/>
+    </linearGradient>
+    <radialGradient id="jred" cx="35%" cy="32%" r="72%">
+      <stop offset="0" stop-color="#ff9d7e"/>
+      <stop offset="0.55" stop-color="#d6482e"/>
+      <stop offset="1" stop-color="#9c2c1c"/>
+    </radialGradient>
+    <radialGradient id="jblk" cx="35%" cy="32%" r="72%">
+      <stop offset="0" stop-color="#8b939f"/>
+      <stop offset="0.55" stop-color="#3a424e"/>
+      <stop offset="1" stop-color="#1b2029"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="4" y="4" width="120" height="120" rx="20" fill="url(#jw)"/>
+  <rect x="4" y="4" width="120" height="120" rx="20" fill="none" stroke="#b98e55" stroke-width="2"/>
+
+  <!-- 河 -->
+  <rect x="34" y="46" width="24" height="36" rx="4" fill="url(#jwater)"/>
+  <rect x="70" y="46" width="24" height="36" rx="4" fill="url(#jwater)"/>
+  <path d="M36 56 q6 -4 12 0 M36 66 q6 -4 12 0 M36 76 q6 -4 12 0" stroke="#dff0fa" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M72 56 q6 -4 12 0 M72 66 q6 -4 12 0 M72 76 q6 -4 12 0" stroke="#dff0fa" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- 兽穴 -->
+  <circle cx="64" cy="18" r="9" fill="#3a2c1c"/>
+  <circle cx="64" cy="110" r="9" fill="#3a2c1c"/>
+  <circle cx="64" cy="18" r="11.5" fill="none" stroke="#2b2018" stroke-width="2"/>
+  <circle cx="64" cy="110" r="11.5" fill="none" stroke="#2b2018" stroke-width="2"/>
+
+  <!-- 两枚兽棋 -->
+  <circle cx="30" cy="24" r="13" fill="url(#jblk)" stroke="rgba(0,0,0,0.35)" stroke-width="1.4"/>
+  <text x="30" y="30" font-size="15" text-anchor="middle" fill="#fff">🐘</text>
+  <circle cx="98" cy="104" r="13" fill="url(#jred)" stroke="rgba(120,30,15,0.5)" stroke-width="1.4"/>
+  <text x="98" y="110" font-size="15" text-anchor="middle" fill="#fff">🐀</text>
+</svg>

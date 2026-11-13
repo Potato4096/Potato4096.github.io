@@ -1,8 +1,8 @@
 /**
- * catalog.js - 四个棋种的元数据
+ * catalog.js - 棋种元数据
  *
  * 大厅卡片、路由白名单、页面标题都读这里，新增棋种只需在此追加一项
- * 并在 js/games/<id>/ 提供 view.js。
+ * 并在 games/<id>/ 提供 view.js。
  */
 (function (global) {
   'use strict';
@@ -69,6 +69,36 @@
         { zh: '数子法', en: 'Area scoring' }
       ],
       aiSide: { zh: '你执黑先行，电脑执白', en: 'You play Black and move first' }
+    },
+    {
+      id: 'jungle',
+      title: { zh: '斗兽棋', en: 'Jungle' },
+      desc: {
+        zh: '鼠吃象、虎狮跳河、陷阱兽穴，八种动物的等级大战',
+        en: 'Rats beat elephants, tigers leap the river — an eight-beast battle'
+      },
+      icon: 'assets/icons/jungle.svg',
+      spec: { zh: '7×9', en: '7×9' },
+      tags: [
+        { zh: '策略', en: 'Strategy' },
+        { zh: '三档 AI', en: '3 AI levels' }
+      ],
+      aiSide: { zh: '电脑随机执红或执黑，红方先手', en: 'AI plays Red or Black at random; Red moves first' }
+    },
+    {
+      id: 'ludo',
+      title: { zh: '飞行棋', en: 'Ludo' },
+      desc: {
+        zh: '四色飞机掷骰竞速，起飞、连跳、撞机，四架先到者胜',
+        en: 'Four colours race their planes home — take off, jump and bump'
+      },
+      icon: 'assets/icons/ludo.svg',
+      spec: { zh: '4 人', en: '4 players' },
+      tags: [
+        { zh: '运气', en: 'Dice' },
+        { zh: '三档 AI', en: '3 AI levels' }
+      ],
+      aiSide: { zh: '你执红先行，其余三家是电脑', en: 'You play Red and move first; the other three are AI' }
     }
   ];
 

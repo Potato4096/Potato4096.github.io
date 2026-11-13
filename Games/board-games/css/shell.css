@@ -246,6 +246,9 @@
 .bg-dot.white { background: #f7f8fa; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22); }
 .bg-dot.draw { background: var(--pg-text-muted); }
 .bg-dot.red { background: var(--pg-danger); }
+.bg-dot.yellow { background: #e8b12c; }
+.bg-dot.blue { background: #2f7de0; }
+.bg-dot.green { background: #2fae5e; }
 
 .bg-actions {
   display: flex;
