@@ -162,7 +162,7 @@
   var resultNoteEl = null;
 
   var GAME_ID = 'go';
-  var KEYS = { stats: 'stats' };
+  var KEYS = { stats: 'stats', session: 'session' };
 
   /* ---------------- 工具 ---------------- */
   function reduceMotion() {
@@ -432,6 +432,7 @@
     }
 
     refresh();
+    saveGame();
     scheduleAi();
     return true;
   }
@@ -448,6 +449,7 @@
     BG.sfx.tone(380, 0.07, 'sine', 0.05);
 
     refresh();
+    saveGame();
 
     if (passes >= 2) {
       ui.toast(i18n.t('passBoth'));
@@ -471,6 +473,7 @@
     recordResult(winner);
     BG.sfx.lose();
     refresh();
+    saveGame();
     openResult();
     ui.toast(i18n.fmt('resignResult', {
       loser: sideName(turn),
@@ -486,6 +489,7 @@
     recordResult(winner);
     BG.sfx.win();
     refresh();
+    saveGame();
     openResult();
   }
 
@@ -520,6 +524,7 @@
 
     BG.sfx.undo();
     refresh();
+    saveGame();
   }
 
   function resetGame() {
@@ -543,7 +548,85 @@
     hover = null;
 
     closeResult();
+    BG.store.remove(GAME_ID, KEYS.session);   // 开新局 = 丢掉续盘存档
     refresh();
+  }
+
+  /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
+  function toArray(b) {
+    var a = [];
+    for (var i = 0; i < b.length; i++) a.push(b[i]);
+    return a;
+  }
+
+  function saveGame() {
+    if (!board) return;
+    BG.store.set(GAME_ID, KEYS.session, {
+      v: 1,
+      mode: mode,
+      difficulty: difficulty,
+      size: size,
+      board: toArray(board),
+      captures: captures.slice(),
+      ko: ko,
+      passes: passes,
+      history: history,
+      snapshots: snapshots.map(function (s) {
+        return {
+          board: toArray(s.board),
+          captures: s.captures,
+          ko: s.ko,
+          turn: s.turn,
+          passes: s.passes,
+          lastMove: s.lastMove
+        };
+      }),
+      lastMove: lastMove,
+      over: over,
+      winner: winner,
+      resultInfo: resultInfo,
+      recordedWinner: recordedWinner
+    });
+  }
+
+  function loadGame() {
+    var d = BG.store.get(GAME_ID, KEYS.session, null);
+    if (!d || d.v !== 1) return false;
+    if (d.mode !== mode || d.difficulty !== difficulty) return false;
+    if (d.size !== 9 && d.size !== 13 && d.size !== 19) return false;
+    if (!d.board || !d.history) return false;
+    try {
+      size = d.size;
+      board = new Int8Array(d.board);
+      captures = d.captures && d.captures.length === 3 ? d.captures.slice() : [0, 0, 0];
+      ko = typeof d.ko === 'number' ? d.ko : -1;
+      passes = d.passes || 0;
+      history = d.history;
+      snapshots = (d.snapshots || []).map(function (s) {
+        return {
+          board: new Int8Array(s.board),
+          captures: s.captures,
+          ko: s.ko,
+          turn: s.turn,
+          passes: s.passes,
+          lastMove: s.lastMove
+        };
+      });
+      lastMove = d.lastMove || null;
+      over = !!d.over;
+      winner = d.winner || R.EMPTY;
+      resultInfo = d.resultInfo || null;
+      recordedWinner = d.recordedWinner || 0;
+
+      syncSizeButtons();
+      refresh();
+      if (over && resultInfo) openResult();
+      return true;
+    } catch (e) {
+      console.warn('[go] 续盘失败，开新局', e);
+      BG.store.remove(GAME_ID, KEYS.session);
+      return false;
+    }
   }
 
   function setSize(n) {
@@ -827,6 +910,7 @@
     ko = -1;          // 摆子后劫争状态失效
     lastMove = null;  // 避免最后一手标记指向被改动的点
     render();
+    saveGame();
   }
 
   function cheatWipe() {
@@ -843,6 +927,7 @@
     render();
     renderMoves();
     updateStatus();
+    saveGame();
   }
 
   function cheatCorners() {
@@ -853,6 +938,7 @@
       board[R.idx(size, pts[i][0], pts[i][1])] = R.BLACK;
     }
     render();
+    saveGame();
     ui.toast(i18n.lang() === 'en' ? 'Four corners claimed' : '四角已占');
   }
 
@@ -990,10 +1076,11 @@
     global.addEventListener('resize', onResize);
 
     syncSizeButtons();
-    resetGame();
+    if (loadGame()) ui.toast(i18n.t('restored'));
+    else resetGame();
     setupCheat();
 
-    if (mode === 'ai' && turn === aiColor) scheduleAi();
+    if (mode === 'ai' && !over && turn === aiColor) scheduleAi();
   }
 
   function unmount() {

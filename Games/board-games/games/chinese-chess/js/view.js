@@ -114,7 +114,7 @@
   var recorded = false;
 
   var GAME_ID = 'chinese-chess';
-  var KEYS = { stats: 'stats' };
+  var KEYS = { stats: 'stats', session: 'session' };
 
   /* ---------------- 工具 ---------------- */
   function reduceMotion() {
@@ -529,6 +529,7 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
 
     if (mode === 'ai' && !status.over && turn === aiColor) scheduleAi();
   }
@@ -574,6 +575,7 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
 
     if (mode === 'ai' && !status.over && turn === aiColor) scheduleAi();
   }
@@ -583,6 +585,7 @@
     aiThinking = false;
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
     cancelAnim();
+    BG.store.remove(GAME_ID, KEYS.session);
 
     board = X.initialBoard();
     turn = 'r';
@@ -597,6 +600,48 @@
     renderMoves();
     renderStats();
     updateStatus();
+  }
+
+  /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
+  function saveGame() {
+    if (!board) return;
+    BG.store.set(GAME_ID, KEYS.session, {
+      v: 1,
+      mode: mode,
+      difficulty: difficulty,
+      board: board,
+      turn: turn,
+      history: history,
+      lastMove: lastMove,
+      recorded: recorded
+    });
+  }
+
+  function loadGame() {
+    var d = BG.store.get(GAME_ID, KEYS.session, null);
+    if (!d || d.v !== 1) return false;
+    if (d.mode !== mode || d.difficulty !== difficulty) return false;
+    if (!d.board || !d.history) return false;
+    try {
+      board = d.board;
+      turn = d.turn === 'b' ? 'b' : 'r';
+      history = d.history;
+      lastMove = d.lastMove || null;
+      recorded = !!d.recorded;
+      selected = null;
+      legalTargets = [];
+      status = X.statusAfter(board, turn);
+
+      render();
+      renderMoves();
+      renderStats();
+      updateStatus();
+      return true;
+    } catch (e) {
+      console.warn('[chinese-chess] 续盘失败，开新局', e);
+      BG.store.remove(GAME_ID, KEYS.session);
+      return false;
+    }
   }
 
   function scheduleAi() {
@@ -725,6 +770,7 @@
     status = X.statusAfter(board, turn);
     render();
     updateStatus();
+    saveGame();
   }
 
   function cheatSetPiece(r, c, v) {
@@ -876,6 +922,7 @@
           ui.toast(i18n.t('restarted'));
         } else if (act === 'clear') {
           BG.store.clear(GAME_ID);
+          saveGame();          // 只清战绩，当前这盘继续留着
           renderStats();
           ui.toast(i18n.t('cleared'));
         }
@@ -901,10 +948,11 @@
     global.addEventListener('resize', onResize);
 
     refreshHint();
-    newGame();
+    if (loadGame()) ui.toast(i18n.t('restored'));
+    else newGame();
     setupCheat();
 
-    if (mode === 'ai' && turn === aiColor) scheduleAi();
+    if (mode === 'ai' && !status.over && turn === aiColor) scheduleAi();
   }
 
   function unmount() {

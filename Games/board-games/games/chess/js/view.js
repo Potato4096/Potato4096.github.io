@@ -126,7 +126,7 @@
   var recorded = false;
 
   var GAME_ID = 'chess';
-  var KEYS = { stats: 'stats' };
+  var KEYS = { stats: 'stats', session: 'session' };
 
   /* ---------------- 工具 ---------------- */
   function reduceMotion() {
@@ -710,6 +710,7 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
 
     if (mode === 'ai' && !status.over && state.turn === aiColor) scheduleAi();
   }
@@ -756,6 +757,7 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
 
     if (mode === 'ai' && !status.over && state.turn === aiColor) scheduleAi();
   }
@@ -765,6 +767,7 @@
     aiThinking = false;
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
     cancelAnim();
+    BG.store.remove(GAME_ID, KEYS.session);
 
     state = X.initialState();
     repKeys = [X.positionKey(state)];
@@ -782,6 +785,50 @@
     renderMoves();
     renderStats();
     updateStatus();
+  }
+
+  /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
+  function saveGame() {
+    if (!state) return;
+    BG.store.set(GAME_ID, KEYS.session, {
+      v: 1,
+      mode: mode,
+      difficulty: difficulty,
+      state: state,
+      history: history,
+      repKeys: repKeys,
+      lastMove: lastMove,
+      recorded: recorded
+    });
+  }
+
+  function loadGame() {
+    var d = BG.store.get(GAME_ID, KEYS.session, null);
+    if (!d || d.v !== 1) return false;
+    // 只在同一模式/难度下续盘，换模式就开新局
+    if (d.mode !== mode || d.difficulty !== difficulty) return false;
+    if (!d.state || !d.state.board || !d.history) return false;
+    try {
+      state = d.state;
+      history = d.history;
+      repKeys = d.repKeys && d.repKeys.length ? d.repKeys : [X.positionKey(state)];
+      lastMove = d.lastMove || null;
+      recorded = !!d.recorded;
+      selected = null;
+      legalTargets = [];
+      pendingPromo = null;
+      status = X.statusAfter(state, repKeys);
+
+      render();
+      renderMoves();
+      renderStats();
+      updateStatus();
+      return true;
+    } catch (e) {
+      console.warn('[chess] 续盘失败，开新局', e);
+      BG.store.remove(GAME_ID, KEYS.session);
+      return false;
+    }
   }
 
   function scheduleAi() {
@@ -966,6 +1013,7 @@
     status = X.statusAfter(state, repKeys);
     render();
     updateStatus();
+    saveGame();
   }
 
   function cheatSetPiece(r, c, v) {
@@ -1139,6 +1187,7 @@
           ui.toast(i18n.t('restarted'));
         } else if (act === 'clear') {
           BG.store.clear(GAME_ID);
+          saveGame();          // 只清战绩，当前这盘继续留着
           renderStats();
           ui.toast(i18n.t('cleared'));
         }
@@ -1171,10 +1220,11 @@
     canvas.addEventListener('click', onClick);
     global.addEventListener('resize', onResize);
 
-    newGame();
+    if (loadGame()) ui.toast(i18n.t('restored'));
+    else newGame();
     setupCheat();
 
-    if (mode === 'ai' && state.turn === aiColor) scheduleAi();
+    if (mode === 'ai' && !status.over && state.turn === aiColor) scheduleAi();
   }
 
   function unmount() {

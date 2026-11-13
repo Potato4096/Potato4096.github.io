@@ -90,7 +90,7 @@
   var alive = false;
 
   var GAME_ID = 'gomoku';
-  var KEYS = { stats: 'stats' };
+  var KEYS = { stats: 'stats', session: 'session' };
 
   /* ---------------- 工具 ---------------- */
   function reduceMotion() {
@@ -408,6 +408,7 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
 
     if (mode === 'ai' && !over && turn === aiColor) scheduleAi();
     return true;
@@ -453,6 +454,7 @@
     renderMoves();
     renderStats();
     updateStatus();
+    saveGame();
 
     // 撤回后若又轮到电脑（玩家撤了自己的最后一手），让电脑补上
     if (mode === 'ai' && !over && turn === aiColor) scheduleAi();
@@ -462,6 +464,7 @@
     gameToken++;
     aiThinking = false;
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    BG.store.remove(GAME_ID, KEYS.session);
 
     board = g.create();
     turn = g.BLACK;
@@ -478,6 +481,57 @@
     renderMoves();
     renderStats();
     updateStatus();
+  }
+
+  /* ---------------- 续盘存档：刷新后保留棋盘 ---------------- */
+  function boardToArray() {
+    var a = [];
+    for (var i = 0; i < board.length; i++) a.push(board[i]);
+    return a;
+  }
+
+  function saveGame() {
+    if (!board) return;
+    BG.store.set(GAME_ID, KEYS.session, {
+      v: 1,
+      mode: mode,
+      difficulty: difficulty,
+      board: boardToArray(),
+      turn: turn,
+      history: history,
+      lastMove: lastMove,
+      winCells: winCells,
+      over: over,
+      winner: winner,
+      recorded: recorded
+    });
+  }
+
+  function loadGame() {
+    var d = BG.store.get(GAME_ID, KEYS.session, null);
+    if (!d || d.v !== 1) return false;
+    if (d.mode !== mode || d.difficulty !== difficulty) return false;
+    if (!d.board || d.board.length !== g.SIZE * g.SIZE || !d.history) return false;
+    try {
+      board = new Int8Array(d.board);
+      turn = d.turn === g.WHITE ? g.WHITE : g.BLACK;
+      history = d.history;
+      lastMove = d.lastMove || null;
+      winCells = d.winCells || null;
+      over = !!d.over;
+      winner = d.winner || g.EMPTY;
+      recorded = !!d.recorded;
+
+      render();
+      renderMoves();
+      renderStats();
+      updateStatus();
+      return true;
+    } catch (e) {
+      console.warn('[gomoku] 续盘失败，开新局', e);
+      BG.store.remove(GAME_ID, KEYS.session);
+      return false;
+    }
   }
 
   function scheduleAi() {
@@ -575,6 +629,7 @@
     if (!cheatGod || !board) return;
     board[g.idx(c, r)] = v === '' || v == null ? g.EMPTY : Number(v);
     render();
+    saveGame();
   }
 
   function cheatWipe() {
@@ -586,6 +641,7 @@
     render();
     renderMoves();
     updateStatus();
+    saveGame();
   }
 
   function cheatFour() {
@@ -593,6 +649,7 @@
     // 在中间偏下摆一条四连，留出两端让玩家补第五子
     for (var i = 0; i < 4; i++) board[g.idx(5 + i, 9)] = g.BLACK;
     render();
+    saveGame();
     ui.toast(i18n.lang() === 'en' ? 'Four in a row placed — add the fifth' : '已摆好四连，补第五子即可获胜');
   }
 
@@ -687,6 +744,7 @@
         else if (act === 'restart') { newGame(); ui.toast(i18n.t('restarted')); }
         else if (act === 'clear') {
           BG.store.clear(GAME_ID);
+          saveGame();          // 只清战绩，当前这盘继续留着
           renderStats();
           ui.toast(i18n.t('cleared'));
         }
@@ -709,10 +767,11 @@
     canvas.addEventListener('mouseleave', onLeave);
     global.addEventListener('resize', onResize);
 
-    newGame();
+    if (loadGame()) ui.toast(i18n.t('restored'));
+    else newGame();
     setupCheat();
 
-    if (mode === 'ai' && turn === aiColor) scheduleAi();
+    if (mode === 'ai' && !over && turn === aiColor) scheduleAi();
   }
 
   function unmount() {

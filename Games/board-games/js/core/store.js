@@ -49,7 +49,7 @@
       return;
     }
     // 平台未提供键枚举时，逐个删除已知键
-    ['stats', 'lastResult', 'prefs'].forEach(function (k) { remove(gameId, k); });
+    ['stats', 'lastResult', 'prefs', 'session'].forEach(function (k) { remove(gameId, k); });
   }
 
   /** 战绩自增：bump('gomoku', 'stats', 'black') */
