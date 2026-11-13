@@ -418,6 +418,14 @@
       });
     }
 
+    /* 取子栏可见性：board.visible() 为真才显示（如上帝模式开启后才出棋子） */
+    if (spec.board) {
+      var bar = el.querySelector('.cheat-board');
+      if (bar && typeof spec.board.visible === 'function') {
+        bar.hidden = !spec.board.visible();
+      }
+    }
+
     /* 动作按钮文案 */
     if (spec.actions) {
       var acts = el.querySelectorAll('.cheat-action');

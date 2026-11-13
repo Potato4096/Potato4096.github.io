@@ -646,6 +646,8 @@
       board: {
         title: { zh: '取子：选黑/白，然后点原棋盘落子', en: 'Pick a stone, then tap the real board' },
         palette: cheatPalette(),
+        // 取子栏只在上帝模式开启后显示
+        visible: function () { return cheatGod; },
         tip: {
           zh: '选「空」后点交叉点 = 拿走该子。可以直接摆出五连。',
           en: 'Pick "Empty" and tap to remove a stone. You can even build five in a row.'

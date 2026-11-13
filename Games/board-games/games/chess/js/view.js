@@ -1069,6 +1069,8 @@
       board: {
         title: { zh: '取子：选一个子，然后点原棋盘落子', en: 'Pick a piece, then tap the real board' },
         palette: cheatPalette(),
+        // 取子栏只在上帝模式开启后显示
+        visible: function () { return cheatGod; },
         tip: {
           zh: '选「空」后点格子 = 清空该格。摆完直接接着下，AI 已冻结。',
           en: 'Pick "Empty" and tap to clear a square. AI stays frozen while God Mode is on.'

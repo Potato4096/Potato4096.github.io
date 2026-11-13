@@ -404,6 +404,8 @@ CheatKit.init({
 board: {
   title: { zh: '取子：选一个子，然后点原棋盘落子', en: 'Pick a piece, then tap the real board' },
   tip: { zh: '选「空」后点格子 = 清空该格。', en: 'Pick "Empty" and tap to clear a square.' },
+  // 可选：返回真才显示取子栏。典型用法是「上帝模式开启后才显示棋子」
+  visible: function () { return cheatGod; },
   // 色板。value 会原样交给 CheatKit.active()，''/null 表示清空
   palette: [
     { value: '',    label: { zh: '空', en: 'Empty' },  swatch: '#0000' },
@@ -429,6 +431,7 @@ function onClick(e) {
 ```
 
 - `active()` 返回色板选中项的 `value`；首个色板项默认选中，面板重建时尽量保留上次选择
+- `visible()` 决定取子栏显隐，每次 `refresh()` 都会重算（开关点击后立即生效）。棋类统一用它做到「上帝模式开启后才显示棋子」，关闭后整栏（含清空/恢复按钮）一起收起
 - 上位摆子会留下非法局面，所以棋类在 `cheatSetPiece` 里顺手清掉 `castling` / `ep` / `ko` 这类历史缓存，并在 `scheduleAi()` 里用 `cheatGod` 短路 AI
 - 建议同时给原棋盘加视觉提示（本仓库用 `.bg-board.is-god`：虚线描边 + `cursor: crosshair`），玩家才知道"现在可以直接点"
 
