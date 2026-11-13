@@ -1,0 +1,26 @@
+{
+  "id": "gold-miner",
+  "title": {
+    "zh": "黄金矿工",
+    "en": "Gold Miner"
+  },
+  "description": {
+    "zh": "经典黄金矿工。矿工的钩爪左右摆动，看准时机出钩，把地下的金块、钻石、石头抓回来。金子重拉得慢、钻石轻拉得快，要在限时内凑够过关金额，一关比一关深、一关比一关值钱！",
+    "en": "Classic gold miner. The claw swings back and forth — drop it at the right moment to haul in gold nuggets, diamonds and stones. Heavy gold retracts slowly, light diamonds snap back fast. Hit the target before the timer runs out; each level goes deeper and richer!"
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "emoji": "⛏️",
+  "tags": ["arcade", "action", "singleplayer"],
+  "category": "arcade",
+  "players": 1,
+  "controls": {
+    "zh": "点击 / 触摸 / 空格 / ↓ 出钩，Esc / P 暂停",
+    "en": "Click / tap / Space / ↓ to drop the claw, Esc / P to pause"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-13",
+  "updated": "2026-11-13"
+}

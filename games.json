@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-13T00:59:27.275Z",
-  "count": 14,
+  "generatedAt": "2026-11-13T09:26:41.245Z",
+  "count": 15,
   "games": [
     {
       "id": "2048",
@@ -25,6 +25,10 @@
     {
       "id": "fishing",
       "dir": "Games/fishing"
+    },
+    {
+      "id": "gold-miner",
+      "dir": "Games/gold-miner"
     },
     {
       "id": "island-commander",
