@@ -1,7 +1,7 @@
 /* penalty-shootout - game styles (theme-aware via --pg-* variables) */
 
 .game-wrap {
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
 }
 

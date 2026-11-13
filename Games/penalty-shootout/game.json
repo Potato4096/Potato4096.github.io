@@ -5,10 +5,10 @@
     "en": "Soccer Shootout"
   },
   "description": {
-    "zh": "俯视视角的平面足球场。球摆在下方中央，按住球拖向球门方向、松手射门，拖得越远力量越大。球门每一脚都换到随机位置，五脚定胜负，看看你能进几个！",
-    "en": "A top-down 2D pitch. The ball sits at the bottom centre — drag it toward the goal and release to shoot; the longer the drag, the harder the strike. The goal moves to a random spot every shot. Five attempts per round — how many can you score?"
+    "zh": "类似手环弹射的平面足球场。按住球向后拉、松手弹射，球速恒定永不减速，撞到边缘就反弹。球门开在左右两侧并且每脚随机换位置，进球后回中重来，五脚定胜负！",
+    "en": "A slingshot pitch like the band classic. Pull the ball back and release — it flies at a constant speed and never slows down, bouncing off every edge. The goals sit on the left and right walls and move every shot. Score, reset, five shots per round!"
   },
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "Potato4096",
   "entry": "index.html",
   "emoji": "⚽",
@@ -16,8 +16,8 @@
   "category": "sports",
   "players": 1,
   "controls": {
-    "zh": "按住球拖向球门方向瞄准，松手射门（拖得越远力量越大），Esc / P 暂停",
-    "en": "Drag the ball toward the goal and release to shoot (longer drag = more power), Esc / P to pause"
+    "zh": "按住球向后拉（反方向），松手弹射；球速恒定，撞边缘反弹；Esc / P 暂停",
+    "en": "Pull the ball backward and release to slingshot it; constant speed, bounces off edges; Esc / P to pause"
   },
   "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
   "published": true,

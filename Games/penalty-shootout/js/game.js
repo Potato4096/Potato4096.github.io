@@ -1,28 +1,25 @@
-/* penalty-shootout - top-down pitch, drag the ball toward the random goal and release */
+/* penalty-shootout - slingshot pitch: pull the ball backward, it flies at constant
+   speed forever, bounces off the edges, goals are gaps in the left/right walls */
 (function () {
   'use strict';
 
   var PS = window.PS = window.PS || {};
 
   // ---------- constants ----------
-  var W = 560, H = 760;
-  var MARGIN = 26;                 // 边线
-  var GOAL_LINE_Y = 34;            // 球门线（上方）
-  var GOAL_DEPTH = 26;             // 球门纵深（画在门线之上）
-  var BALL_R = 13;
-  var BALL_X = W / 2, BALL_Y = H - 118;
+  var W = 640, H = 400;
+  var MARGIN = 26;                 // 边墙
+  var BALL_R = 12;
+  var SPEED = 420;                 // 恒定球速（无力度概念）
+  var MIN_DRAG = 24;               // 拉得太短则取消
   var SHOTS = 5;
-  var MAX_DRAG = 260;              // 拖拽距离 → 满力
-  var MAX_SPEED = 1250;
-  var STOP_SPEED = 22;
   var BEST_KEY = 'best:penalty-shootout:goals';
 
   // ---------- i18n ----------
   var STR = {
     title: { zh: '足球射门', en: 'Soccer Shootout' },
     tagline: {
-      zh: '俯视足球场，球在下方中央。按住球拖向球门方向，松手射门——球门每一脚都在随机换位置。',
-      en: 'A top-down pitch with the ball at the bottom centre. Drag it toward the goal and release — the goal jumps to a random spot every shot.'
+      zh: '按住球向后拉，松手弹射。球速恒定永不减速，撞边就弹，球门在左右两侧且每脚随机换位置。',
+      en: 'Pull the ball backward and release to slingshot it. Constant speed, bounces off every edge — the goals on the left and right walls move every shot.'
     },
     shot: { zh: '射门', en: 'Shots' },
     goals: { zh: '进球', en: 'Goals' },
@@ -45,8 +42,8 @@
     fullscreen: { zh: '全屏', en: 'Fullscreen' },
     pauseBtn: { zh: '暂停', en: 'Pause' },
     controls: {
-      zh: '操作：按住球拖向球门方向瞄准，松手射门，拖得越远力量越大。球门每脚随机换位置，共 5 脚。Esc / P 暂停。',
-      en: 'Controls: drag the ball toward the goal and release to shoot — the longer the drag, the harder the strike. The goal moves every shot, 5 shots per round. Esc / P to pause.'
+      zh: '操作：按住球向后拉（往目标的反方向），松手弹射。球速恒定、永不减速，撞到边缘反弹；球门在左右两侧，每脚随机换位置。共 5 脚，Esc / P 暂停。',
+      en: 'Controls: pull the ball backward (away from the target) and release to slingshot it. Constant speed, never slows, bounces off edges. Goals are on the left/right walls and move every shot. 5 shots per round, Esc / P to pause.'
     }
   };
   function t(k) { return GamePlatform.i18n.t(STR[k] || { zh: k, en: k }); }
@@ -68,22 +65,21 @@
   // ---------- palettes ----------
   var WORLD = {
     light: {
-      sky: '#e8f0e2', grassA: '#79c267', grassB: '#6cb55c', line: '#f4f8f2',
+      grassA: '#79c267', grassB: '#6cb55c', line: '#f4f8f2',
       net: '#dfe8da', netLine: '#b9c9b2', post: '#f7faf6', postEdge: '#8aa07f',
+      gap: '#1d3323',
       ball: '#ffffff', ballEdge: '#6c7a68', seam: '#9aa894',
-      aim: '#1f6fd0', aimSoft: '#1f6fd055', powerBg: '#00000022', powerFg: '#ffb703',
-      banner: '#12321c', shadow: '#1c332233'
+      aim: '#1f6fd0', aimSoft: '#1f6fd055', pull: '#ff6b6b99', banner: '#12321c', shadow: '#1c332233'
     },
     dark: {
-      sky: '#16221a', grassA: '#2f7a45', grassB: '#2a6d3e', line: '#dcecd7',
+      grassA: '#2f7a45', grassB: '#2a6d3e', line: '#dcecd7',
       net: '#24402c', netLine: '#3c6347', post: '#e6f0e2', postEdge: '#4a6b52',
+      gap: '#0c1a11',
       ball: '#f2f7ef', ballEdge: '#8fa38c', seam: '#a9baa4',
-      aim: '#7fb2ff', aimSoft: '#7fb2ff55', powerBg: '#ffffff22', powerFg: '#ffd166',
-      banner: '#e9f5e6', shadow: '#00000044'
+      aim: '#7fb2ff', aimSoft: '#7fb2ff55', pull: '#ff9b9b99', banner: '#e9f5e6', shadow: '#00000044'
     }
   };
   var pal = WORLD.light;
-
   function rebuildPal() {
     pal = GamePlatform.theme.get() === 'dark' ? WORLD.dark : WORLD.light;
   }
@@ -91,41 +87,42 @@
   // ---------- state ----------
   var state = 'menu';        // menu | aim | flying | result | paused | over
   var beforePause = 'aim';
-  var ball = { x: BALL_X, y: BALL_Y, vx: 0, vy: 0 };
-  var goal = { x: 0, w: 180 };
+  var ball = { x: W / 2, y: H / 2, vx: 0, vy: 0 };
+  var goalL = { y: H / 2 - 70, h: 140 };   // 左门洞
+  var goalR = { y: H / 2 - 70, h: 140 };   // 右门洞
   var dragging = false;
-  var pointer = { x: BALL_X, y: BALL_Y - 120 };
+  var pointer = { x: W / 2, y: H / 2 + 80 };
   var shotsUsed = 0;
   var goals = 0;
   var streak = 0;
   var bestStreak = 0;
   var best = 0;
-  var banner = '';           // 进球/射偏提示
+  var banner = '';
   var bannerT = 0;
-  var resultT = 0;           // 结果停留计时
-  var cheatPower = 1;
-  var cheatGoalW = 0;        // 0 = 自动随机
-  var cheatGoal = false;
-  var cheatNoFriction = false;
+  var resultT = 0;
+  var cheatSpeed = 1;
+  var cheatGoalH = 0;        // 0 = 自动随机
+  var cheatGoal = false;     // 必进球
+  var cheatAim = false;      // 自动瞄准
 
-  // ---------- goal / ball ----------
-  function randomGoal() {
-    var w = cheatGoalW > 0 ? cheatGoalW : (190 - goals * 10 + Math.random() * 40);
-    w = Math.max(90, Math.min(280, w));
-    var pad = MARGIN + 26;
-    var x = pad + Math.random() * (W - pad * 2 - w);
-    goal.x = x;
-    goal.w = w;
+  // ---------- goals / ball ----------
+  function randomGoals() {
+    var h = cheatGoalH > 0 ? cheatGoalH : (150 - goals * 8 + Math.random() * 30);
+    h = Math.max(80, Math.min(230, h));
+    goalL.h = h;
+    goalR.h = h;
+    goalL.y = 56 + Math.random() * (H - 112 - h);
+    goalR.y = 56 + Math.random() * (H - 112 - h);
   }
 
   function resetBall() {
-    ball.x = BALL_X;
-    ball.y = BALL_Y;
+    ball.x = W / 2;
+    ball.y = H / 2;
     ball.vx = 0;
     ball.vy = 0;
     dragging = false;
     canvas.classList.remove('is-dragging');
-    randomGoal();
+    randomGoals();
     state = 'aim';
   }
 
@@ -150,14 +147,16 @@
 
   function nearBall(pt) {
     var dx = pt.x - ball.x, dy = pt.y - ball.y;
-    return dx * dx + dy * dy <= 84 * 84;
+    return dx * dx + dy * dy <= 80 * 80;
   }
 
   function onDown(e) {
-    if (state !== 'aim') return;
+    if (state !== 'aim' && state !== 'flying') return;
     var pt = toLogical(e);
     if (!nearBall(pt)) return;
     dragging = true;
+    if (state === 'flying') { ball.vx = 0; ball.vy = 0; }   // 飞行中抓住球 = 停下重新瞄准
+    state = 'aim';
     pointer = pt;
     canvas.classList.add('is-dragging');
     e.preventDefault();
@@ -184,67 +183,72 @@
       var r2 = canvas.getBoundingClientRect();
       pointer = { x: (e.clientX - r2.left) * (W / r2.width), y: (e.clientY - r2.top) * (H / r2.height) };
     }
-    shoot();
+    launch();
   }
 
-  function dragPower() {
-    var dx = pointer.x - ball.x, dy = pointer.y - ball.y;
+  /** 向后拉：发射方向 = 球 - 指针（与拖拽方向相反） */
+  function launch() {
+    var dx = ball.x - pointer.x;
+    var dy = ball.y - pointer.y;
     var dist = Math.sqrt(dx * dx + dy * dy);
-    return { dx: dx, dy: dy, dist: dist, power: Math.min(1, dist / MAX_DRAG) };
-  }
+    if (dist < MIN_DRAG) return;
 
-  function shoot() {
-    var d = dragPower();
-    if (d.dist < 14 || d.dy > -6) { return; }   // 太短或没朝上，取消
-    var speed = MAX_SPEED * d.power * cheatPower;
-    var len = d.dist || 1;
-    ball.vx = (d.dx / len) * speed;
-    ball.vy = (d.dy / len) * speed;
+    var nx = dx / dist, ny = dy / dist;
+    if (cheatAim) {
+      // 自动瞄准最近的门洞中心
+      var targetL = MARGIN, targetR = W - MARGIN;
+      var cyL = goalL.y + goalL.h / 2, cyR = goalR.y + goalR.h / 2;
+      var dL = (ball.x - targetL) * (ball.x - targetL) + (ball.y - cyL) * (ball.y - cyL);
+      var dR = (ball.x - targetR) * (ball.x - targetR) + (ball.y - cyR) * (ball.y - cyR);
+      var tx = dL < dR ? targetL : targetR;
+      var ty = dL < dR ? cyL : cyR;
+      var adx = tx - ball.x, ady = ty - ball.y;
+      var al = Math.sqrt(adx * adx + ady * ady) || 1;
+      nx = adx / al;
+      ny = ady / al;
+    }
+
+    var sp = SPEED * cheatSpeed;
+    ball.vx = nx * sp;
+    ball.vy = ny * sp;
     shotsUsed++;
     state = 'flying';
     PS.audio.play('kick');
     updateHUD();
   }
 
-  // ---------- physics ----------
+  // ---------- physics：恒定速度，无减速 ----------
   function step(dt) {
     if (state !== 'flying') return;
 
-    var friction = cheatNoFriction ? 0 : 1.15;
-    if (friction > 0) {
-      var k = Math.exp(-friction * dt);
-      ball.vx *= k;
-      ball.vy *= k;
-    }
     ball.x += ball.vx * dt;
     ball.y += ball.vy * dt;
 
-    var left = MARGIN + BALL_R, right = W - MARGIN - BALL_R;
-    if (ball.x < left) { ball.x = left; ball.vx = Math.abs(ball.vx) * 0.72; PS.audio.play('bounce'); }
-    if (ball.x > right) { ball.x = right; ball.vx = -Math.abs(ball.vx) * 0.72; PS.audio.play('bounce'); }
-    if (ball.y > H - MARGIN - BALL_R) { ball.y = H - MARGIN - BALL_R; ball.vy = -Math.abs(ball.vy) * 0.72; PS.audio.play('bounce'); }
+    // 上下墙
+    if (ball.y < MARGIN + BALL_R) { ball.y = MARGIN + BALL_R; ball.vy = Math.abs(ball.vy); PS.audio.play('bounce'); }
+    if (ball.y > H - MARGIN - BALL_R) { ball.y = H - MARGIN - BALL_R; ball.vy = -Math.abs(ball.vy); PS.audio.play('bounce'); }
 
-    // 门线判定
-    var top = GOAL_LINE_Y + BALL_R;
-    if (ball.y <= top && ball.vy < 0) {
-      var inGoal = ball.x > goal.x + BALL_R * 0.35 && ball.x < goal.x + goal.w - BALL_R * 0.35;
-      if (inGoal || cheatGoal) {
-        resolveShot(true);
-      } else {
-        ball.y = top;
-        ball.vy = Math.abs(ball.vy) * 0.72;
-        PS.audio.play('bounce');
-      }
+    // 左右墙 + 门洞
+    if (ball.x < MARGIN + BALL_R) {
+      var inL = ball.y > goalL.y && ball.y < goalL.y + goalL.h;
+      if (inL || cheatGoal) { resolveShot(true); return; }
+      ball.x = MARGIN + BALL_R;
+      ball.vx = Math.abs(ball.vx);
+      PS.audio.play('bounce');
     }
-
-    var sp = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-    if (sp < STOP_SPEED) resolveShot(false);
+    if (ball.x > W - MARGIN - BALL_R) {
+      var inR = ball.y > goalR.y && ball.y < goalR.y + goalR.h;
+      if (inR || cheatGoal) { resolveShot(true); return; }
+      ball.x = W - MARGIN - BALL_R;
+      ball.vx = -Math.abs(ball.vx);
+      PS.audio.play('bounce');
+    }
   }
 
   function resolveShot(scored) {
     if (state !== 'flying') return;
     state = 'result';
-    resultT = 1.05;
+    resultT = 0.95;
     if (scored) {
       goals++;
       streak++;
@@ -260,7 +264,7 @@
       banner = t('missBanner');
       PS.audio.play('miss');
     }
-    bannerT = 1.05;
+    bannerT = 0.95;
     updateHUD();
   }
 
@@ -334,82 +338,86 @@
       beforePause = state;
       state = 'paused';
       dragging = false;
+      canvas.classList.remove('is-dragging');
       showOverlay('ov-pause');
     }
   }
 
   // ---------- rendering ----------
+  function drawNet(x, y, w, h) {
+    ctx.fillStyle = pal.net;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = pal.netLine;
+    ctx.lineWidth = 1;
+    for (var i = 1; i < 6; i++) {
+      var gx = x + (w / 6) * i;
+      ctx.beginPath();
+      ctx.moveTo(gx, y);
+      ctx.lineTo(gx, y + h);
+      ctx.stroke();
+    }
+    for (var j = 1; j < 5; j++) {
+      var gy = y + (h / 5) * j;
+      ctx.beginPath();
+      ctx.moveTo(x, gy);
+      ctx.lineTo(x + w, gy);
+      ctx.stroke();
+    }
+  }
+
   function drawPitch() {
-    // 草地
-    var g = ctx.createLinearGradient(0, 0, 0, H);
+    var g = ctx.createLinearGradient(0, 0, W, 0);
     g.addColorStop(0, pal.grassA);
     g.addColorStop(1, pal.grassB);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // 条纹
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     for (var i = 0; i < 8; i++) {
       if (i % 2 === 0) continue;
-      ctx.fillRect(0, (H / 8) * i, W, H / 8);
+      ctx.fillRect((W / 8) * i, 0, W / 8, H);
     }
 
-    // 边线
+    // 边墙
     ctx.strokeStyle = pal.line;
     ctx.lineWidth = 3;
     ctx.strokeRect(MARGIN, MARGIN, W - MARGIN * 2, H - MARGIN * 2);
 
     // 中线 + 中圈
     ctx.beginPath();
-    ctx.moveTo(MARGIN, H / 2);
-    ctx.lineTo(W - MARGIN, H / 2);
+    ctx.moveTo(W / 2, MARGIN);
+    ctx.lineTo(W / 2, H - MARGIN);
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(W / 2, H / 2, 78, 0, Math.PI * 2);
+    ctx.arc(W / 2, H / 2, 58, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 禁区（围绕球门）
-    ctx.strokeRect(goal.x - 70, GOAL_LINE_Y, goal.w + 140, 128);
-    ctx.strokeRect(goal.x - 18, GOAL_LINE_Y, goal.w + 36, 58);
+    // 门洞（暗色开口）
+    ctx.fillStyle = pal.gap;
+    ctx.fillRect(MARGIN - 2, goalL.y, 6, goalL.h);
+    ctx.fillRect(W - MARGIN - 4, goalR.y, 6, goalR.h);
 
-    drawGoal();
-  }
+    // 左右球网（伸出场外）
+    drawNet(MARGIN - 34, goalL.y, 32, goalL.h);
+    drawNet(W - MARGIN + 2, goalR.y, 32, goalR.h);
 
-  function drawGoal() {
-    var x = goal.x, w = goal.w, y = GOAL_LINE_Y - GOAL_DEPTH;
-    // 网
-    ctx.fillStyle = pal.net;
-    ctx.fillRect(x, y, w, GOAL_DEPTH);
-    ctx.strokeStyle = pal.netLine;
-    ctx.lineWidth = 1;
-    for (var i = 1; i < 8; i++) {
-      ctx.beginPath();
-      ctx.moveTo(x + (w / 8) * i, y);
-      ctx.lineTo(x + (w / 8) * i, y + GOAL_DEPTH);
-      ctx.stroke();
-    }
-    for (var j = 1; j < 4; j++) {
-      ctx.beginPath();
-      ctx.moveTo(x, y + (GOAL_DEPTH / 4) * j);
-      ctx.lineTo(x + w, y + (GOAL_DEPTH / 4) * j);
-      ctx.stroke();
-    }
     // 门柱
     ctx.fillStyle = pal.post;
-    ctx.fillRect(x - 5, y, 5, GOAL_DEPTH);
-    ctx.fillRect(x + w, y, 5, GOAL_DEPTH);
-    ctx.fillRect(x - 5, y, w + 10, 4);
+    ctx.fillRect(MARGIN - 6, goalL.y - 5, 10, 5);
+    ctx.fillRect(MARGIN - 6, goalL.y + goalL.h, 10, 5);
+    ctx.fillRect(W - MARGIN - 4, goalR.y - 5, 10, 5);
+    ctx.fillRect(W - MARGIN - 4, goalR.y + goalR.h, 10, 5);
     ctx.strokeStyle = pal.postEdge;
     ctx.lineWidth = 1;
-    ctx.strokeRect(x - 5, y, w + 10, GOAL_DEPTH + 4);
+    ctx.strokeRect(MARGIN - 6, goalL.y - 5, 10, goalL.h + 10);
+    ctx.strokeRect(W - MARGIN - 4, goalR.y - 5, 10, goalR.h + 10);
   }
 
   function drawBall() {
     ctx.save();
-    // 影子
     ctx.fillStyle = pal.shadow;
     ctx.beginPath();
-    ctx.ellipse(ball.x + 3, ball.y + 5, BALL_R * 1.05, BALL_R * 0.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(ball.x + 3, ball.y + 4, BALL_R * 1.05, BALL_R * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
 
     var g = ctx.createRadialGradient(ball.x - 4, ball.y - 5, 2, ball.x, ball.y, BALL_R);
@@ -423,7 +431,6 @@
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // 简单缝线
     ctx.strokeStyle = pal.seam;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
@@ -432,40 +439,50 @@
     ctx.restore();
   }
 
+  /** 瞄准：拉力线（红）+ 发射方向箭头（蓝）+ 虚线弹道 */
   function drawAim() {
     if (state !== 'aim') return;
-    var d = dragPower();
-    if (!dragging || d.dist < 8) {
-      // 待机提示：轻闪瞄准光圈
+    var dx = ball.x - pointer.x, dy = ball.y - pointer.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (!dragging || dist < 8) {
       if (!GamePlatform.ui.shouldReduceMotion()) {
         ctx.strokeStyle = pal.aimSoft;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(ball.x, ball.y, BALL_R + 12, 0, Math.PI * 2);
+        ctx.arc(ball.x, ball.y, BALL_R + 10, 0, Math.PI * 2);
         ctx.stroke();
       }
       return;
     }
 
-    var len = d.dist || 1;
-    var nx = d.dx / len, ny = d.dy / len;
-    var power = d.power;
+    var nx = dx / dist, ny = dy / dist;
 
-    // 虚线弹道
+    // 拉力线：球 → 指针（向后拉的那一端）
+    ctx.save();
+    ctx.strokeStyle = pal.pull;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(ball.x, ball.y);
+    ctx.lineTo(pointer.x, pointer.y);
+    ctx.stroke();
+    ctx.restore();
+
+    // 发射方向：与拉力相反
+    var tipX = ball.x + nx * 130;
+    var tipY = ball.y + ny * 130;
     ctx.save();
     ctx.strokeStyle = pal.aim;
     ctx.lineWidth = 3;
     ctx.setLineDash([10, 8]);
-    ctx.globalAlpha = 0.45 + 0.45 * power;
+    ctx.globalAlpha = 0.5;
     ctx.beginPath();
     ctx.moveTo(ball.x + nx * (BALL_R + 6), ball.y + ny * (BALL_R + 6));
-    ctx.lineTo(ball.x + nx * (BALL_R + 6 + 260 * power + 90), ball.y + ny * (BALL_R + 6 + 260 * power + 90));
+    ctx.lineTo(ball.x + nx * 300, ball.y + ny * 300);
     ctx.stroke();
     ctx.restore();
 
-    // 箭头
-    var tipX = ball.x + nx * (BALL_R + 26 + 90 * power);
-    var tipY = ball.y + ny * (BALL_R + 26 + 90 * power);
     ctx.strokeStyle = pal.aim;
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -475,21 +492,10 @@
     var ang = Math.atan2(ny, nx);
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
-    ctx.lineTo(tipX - 14 * Math.cos(ang - 0.45), tipY - 14 * Math.sin(ang - 0.45));
+    ctx.lineTo(tipX - 13 * Math.cos(ang - 0.45), tipY - 13 * Math.sin(ang - 0.45));
     ctx.moveTo(tipX, tipY);
-    ctx.lineTo(tipX - 14 * Math.cos(ang + 0.45), tipY - 14 * Math.sin(ang + 0.45));
+    ctx.lineTo(tipX - 13 * Math.cos(ang + 0.45), tipY - 13 * Math.sin(ang + 0.45));
     ctx.stroke();
-
-    // 力量条
-    var bw = 120, bh = 10;
-    var bx = ball.x - bw / 2, by = ball.y + BALL_R + 26;
-    ctx.fillStyle = pal.powerBg;
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.fillStyle = pal.powerFg;
-    ctx.fillRect(bx, by, bw * power, bh);
-    ctx.strokeStyle = pal.line;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(bx, by, bw, bh);
   }
 
   function drawBanner() {
@@ -497,11 +503,11 @@
     var alpha = Math.min(1, bannerT * 2);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = '700 46px system-ui, sans-serif';
+    ctx.font = '700 44px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = pal.banner;
-    ctx.fillText(banner, W / 2, H / 2 - 60);
+    ctx.fillText(banner, W / 2, H / 2 - 70);
     ctx.restore();
   }
 
@@ -585,7 +591,7 @@
     loadBest();
     applyLang();
     bind();
-    randomGoal();
+    randomGoals();
     updateHUD();
     showOverlay('ov-menu');
 
@@ -611,22 +617,34 @@
         { label: { zh: '球速', en: 'Ball speed' }, get: function () {
           return Math.round(Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy));
         } },
-        { label: { zh: '球门位置', en: 'Goal at' }, get: function () {
-          return Math.round(goal.x) + ' +' + Math.round(goal.w);
+        { label: { zh: '左门洞', en: 'Left gap' }, get: function () {
+          return Math.round(goalL.y) + ' + ' + Math.round(goalL.h);
+        } },
+        { label: { zh: '右门洞', en: 'Right gap' }, get: function () {
+          return Math.round(goalR.y) + ' + ' + Math.round(goalR.h);
         } },
         { label: { zh: '状态', en: 'State' }, get: function () {
           return { menu: 'menu', aim: 'aim', flying: 'flying', result: 'result', paused: 'paused', over: 'over' }[state] || state;
         } }
       ],
       params: [
-        { key: 'power', label: { zh: '力量倍率', en: 'Power ×' }, min: 0.2, max: 3, step: 0.1,
-          get: function () { return cheatPower; },
-          set: function (v) { cheatPower = Math.max(0.2, Math.min(3, v)); } },
-        { key: 'goalw', label: { zh: '球门宽度(0=随机)', en: 'Goal width (0=auto)' }, min: 0, max: 280, step: 10,
-          get: function () { return cheatGoalW; },
+        { key: 'speed', label: { zh: '球速倍率', en: 'Speed ×' }, min: 0.3, max: 3, step: 0.1,
+          get: function () { return cheatSpeed; },
           set: function (v) {
-            cheatGoalW = Math.max(0, Math.min(280, Math.round(v)));
-            if (state === 'aim') randomGoal();
+            cheatSpeed = Math.max(0.3, Math.min(3, v));
+            // 恒定速度：飞行中立即按新倍率重标定
+            var sp = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+            if (sp > 1 && state === 'flying') {
+              var target = SPEED * cheatSpeed;
+              ball.vx = ball.vx / sp * target;
+              ball.vy = ball.vy / sp * target;
+            }
+          } },
+        { key: 'goalh', label: { zh: '门洞高度(0=随机)', en: 'Gap height (0=auto)' }, min: 0, max: 230, step: 10,
+          get: function () { return cheatGoalH; },
+          set: function (v) {
+            cheatGoalH = Math.max(0, Math.min(230, Math.round(v)));
+            if (state === 'aim') randomGoals();
           } }
       ],
       toggles: [
@@ -635,25 +653,24 @@
           off: { zh: '必进球：关', en: 'Auto goal: OFF' },
           get: function () { return cheatGoal; },
           set: function (v) { cheatGoal = !!v; } },
-        { label: { zh: '无摩擦', en: 'No friction' },
-          on: { zh: '无摩擦：开', en: 'No friction: ON' },
-          off: { zh: '无摩擦：关', en: 'No friction: OFF' },
-          get: function () { return cheatNoFriction; },
-          set: function (v) { cheatNoFriction = !!v; } }
+        { label: { zh: '自动瞄准', en: 'Auto aim' },
+          on: { zh: '自动瞄准：开', en: 'Auto aim: ON' },
+          off: { zh: '自动瞄准：关', en: 'Auto aim: OFF' },
+          get: function () { return cheatAim; },
+          set: function (v) { cheatAim = !!v; } }
       ],
       actions: [
         { label: { zh: '直接判进球 +1', en: 'Force goal +1' }, tone: 'danger', run: function () {
-          if (state === 'flying' || state === 'result') return;
-          if (state !== 'aim') return;
+          if (state === 'result') return;
           shotsUsed++;
-          state = 'flying';        // 让 resolveShot 通过状态守卫
+          state = 'flying';
           resolveShot(true);
         }, toast: { zh: '已判进球', en: 'Goal awarded' } },
-        { label: { zh: '换一个球门', en: 'Move goal' }, run: function () { randomGoal(); },
-          toast: { zh: '球门已换位置', en: 'Goal moved' } },
-        { label: { zh: '下一球（不计射门）', en: 'Reset ball' }, run: function () {
-          if (state === 'aim') resetBall();
-          else { state = 'aim'; banner = ''; bannerT = 0; resetBall(); }
+        { label: { zh: '换个门洞位置', en: 'Move gaps' }, run: function () { randomGoals(); },
+          toast: { zh: '门洞已换位置', en: 'Gaps moved' } },
+        { label: { zh: '球回中心（不计射门）', en: 'Reset ball' }, run: function () {
+          banner = ''; bannerT = 0;
+          resetBall();
         } },
         { label: { zh: '重开本局', en: 'Restart round' }, run: function () {
           hideOverlays();
