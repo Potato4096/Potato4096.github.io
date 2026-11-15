@@ -8,7 +8,7 @@
 
 ## 玩家
 
-直接访问 [https://potato4096.github.io/](https://potato4096.github.io/) 即可，无需注册或安装任何东西。点击游戏卡片开始游玩，右上角可切换语言 / 深浅主题。
+直接访问 [https://potato4096.github.io/](https://potato4096.github.io/) 即可，无需注册或安装任何东西。点击游戏卡片开始游玩，右上角可切换语言与主题（🎨 打开主题面板：纯色 / 线条 / 赛博朋克 / 液态玻璃，每类多套配色 × 黑白双模）。
 
 ## 游戏库
 
@@ -216,11 +216,24 @@ canvas 不能把固定缓冲区交给 CSS 拉伸。早先棋盘按 576×576 分�
 |--------|------|--------|--------------|
 | 语言 | `zh` / `en` | `p4096:settings.lang` | `GamePlatform.i18n` / `settings.onChange` |
 | 深浅色 | `light` / `dark` / `system` | `p4096:settings.theme` | `<html data-theme>` + `GamePlatform.theme.onChange` |
-| 主题 | 外观包 id（`default`/`ocean`/`forest`/`sunset`/`candy`/`glass`/`mono`…） | `p4096:settings.skin` | `--pg-*` CSS 变量 + `GamePlatform.themePacks` |
+| 主题 | 配色包 id（4 大风格 × 15 套配色，见下表） | `p4096:settings.skin` | `--pg-*` CSS 变量 + `GamePlatform.themePacks` |
 | 减少动画 | `true` / `false` | `p4096:settings.reduceMotion` | `<html data-reduce-motion>` + `GamePlatform.ui.shouldReduceMotion()` |
 | 音效 | `true` / `false` | `p4096:settings.sound` | `GamePlatform.ui.isSoundEnabled()` |
 
-主题与深浅色是**两个正交维度**：每个主题包内含 light/dark 两套配色与纹理（背景色/纹理、强调色/纹理、面板色、状态色等），平台解析后写入 `--pg-*` CSS 变量，游戏用 CSS 变量或 `GamePlatform.themePacks.colors()` 取用即可自动跟随。详见 [docs/API.md](docs/API.md)。
+主题与深浅色是**两个正交维度**：每个配色包内含 light/dark 两套（即「黑白两种方案」），平台解析后写入 `--pg-*` CSS 变量，游戏用 CSS 变量或 `GamePlatform.themePacks.colors()` 取用即可自动跟随。详见 [docs/API.md](docs/API.md)。
+
+### 主题风格分类
+
+主页右上角 🎨 图标打开主题面板（二级菜单）：先选**风格**，再挑**配色**，最后定**黑白**。
+
+| 风格 | 视觉特征 | 配色 |
+|------|----------|------|
+| 纯色 Solid | 纯色底 + 单一强调色，卡片实心 | 曜石蓝 / 深海青 / 林间绿 / 落日橙 / 糖果粉 / 极简黑白 |
+| 线条 Outline | 无填充、2px 强描边，蓝图配色带网格底纹 | 墨线 / 工程蓝图 / 紫墨线 |
+| 赛博朋克 Cyberpunk | 暗底霓虹、辉光投影与扫描线 | 霓虹青 / 霓虹紫红 / 荧光绿 |
+| 液态玻璃 Liquid Glass | 半透明磨砂面板 + 背景彩色光晕 | 蓝玻璃 / 玫瑰玻璃 / 薄荷玻璃 |
+
+风格差异由 `<html data-skin>` 前缀驱动：`line-*` 走描边样式、`cyber-*` 加辉光与扫描线、`glass*` 加内高光与磨砂。强调色上的文字颜色由平台按亮度自动计算（`--pg-on-accent`），保证霓虹亮色按钮仍可读。
 
 设置持久化于 `localStorage`，主页设置面板可随时修改，所有已打开的游戏页面会实时响应。
 

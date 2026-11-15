@@ -274,7 +274,7 @@ main {
   border: none;
   background-color: var(--pg-accent);
   background-image: var(--pg-accent-image);
-  color: #fff;
+  color: var(--pg-on-accent);
   border-radius: 10px;
   padding: 8px 16px;
   font-size: 14px;
@@ -487,4 +487,249 @@ main {
 @media (max-width: 560px) {
   .site-header { padding: 14px 16px; }
   main { padding: 0 16px 36px; }
+}
+
+/* ============================================================
+   主题面板（二级菜单）：风格分类 → 配色 → 黑白方案
+   ============================================================ */
+
+.theme-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.48);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  z-index: 60;
+}
+.theme-backdrop.open { opacity: 1; }
+
+.theme-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(700px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: translate(-50%, -46%);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 70;
+  /* 底色垫在面板色之下：线条主题的 surface 是 transparent，
+     单用 surface 会让面板透出背后的卡片，无法阅读 */
+  background-color: var(--pg-bg);
+  background-image: linear-gradient(var(--pg-surface), var(--pg-surface));
+  border: 1px solid var(--pg-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  padding: 22px 22px 18px;
+  -webkit-backdrop-filter: var(--pg-backdrop-filter);
+  backdrop-filter: var(--pg-backdrop-filter);
+}
+.theme-modal.open { transform: translate(-50%, -50%); opacity: 1; }
+
+.theme-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.theme-modal-head h3 {
+  margin: 0 0 2px;
+  font-size: 20px;
+}
+
+.theme-modal-sub {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--pg-text-muted);
+}
+
+.theme-scheme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 4px;
+  flex-wrap: wrap;
+}
+
+.theme-scheme-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.theme-scheme .segmented { flex-wrap: wrap; }
+
+.theme-cats {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 8px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.theme-cats::-webkit-scrollbar { display: none; }
+
+.theme-cat {
+  appearance: none;
+  border: 1px solid var(--pg-border);
+  background: transparent;
+  color: var(--pg-text-muted);
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.theme-cat:hover { background: var(--pg-surface-2); color: var(--pg-text); }
+.theme-cat.active {
+  background: var(--pg-accent);
+  border-color: var(--pg-accent);
+  color: var(--pg-on-accent);
+}
+
+.theme-cat-desc {
+  margin: 2px 0 14px;
+  font-size: 12.5px;
+  color: var(--pg-text-muted);
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  gap: 10px;
+}
+
+.theme-card {
+  position: relative;
+  appearance: none;
+  border: 2px solid var(--pg-border);
+  background: transparent;
+  border-radius: 14px;
+  padding: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.12s ease;
+}
+.theme-card:hover { transform: translateY(-2px); }
+.theme-card.active {
+  border-color: var(--pg-accent);
+  box-shadow: 0 0 0 3px var(--pg-accent-soft);
+}
+
+.theme-preview {
+  display: block;
+  position: relative;
+  height: 62px;
+  border-radius: 9px;
+  overflow: hidden;
+  background-size: cover;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tp-surface {
+  position: absolute;
+  left: 9px;
+  bottom: 9px;
+  width: 46%;
+  height: 14px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+}
+
+.tp-accent {
+  position: absolute;
+  right: 9px;
+  top: 9px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.theme-card-name {
+  display: block;
+  margin: 7px 4px 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--pg-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theme-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--pg-accent);
+  color: var(--pg-on-accent);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.theme-card.active .theme-check { opacity: 1; transform: scale(1); }
+
+.theme-modal-foot {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pg-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 设置面板里的主题入口按钮 */
+.skin-open-btn {
+  width: 100%;
+  justify-content: space-between;
+}
+.skin-open-current {
+  font-size: 12px;
+  color: var(--pg-text-muted);
+}
+
+/* ---------- 风格分类对主页卡片的差异化 ---------- */
+
+html[data-skin^="line-"] .game-card,
+html[data-skin^="line-"] .loading-card,
+html[data-skin^="line-"] .empty-card {
+  background: transparent;
+  box-shadow: none;
+  border-width: 2px;
+}
+
+html[data-skin^="line-"] .play-btn {
+  background: transparent;
+  background-image: none;
+  color: var(--pg-accent);
+  border: 2px solid var(--pg-accent);
+}
+html[data-skin^="line-"] .play-btn:hover { background: var(--pg-accent-soft); }
+
+html[data-skin^="line-"] .icon-btn,
+html[data-skin^="line-"] .ghost-btn {
+  background: transparent;
+}
+
+html[data-skin^="cyber-"] .game-card {
+  border-color: color-mix(in srgb, var(--pg-accent) 45%, transparent);
+  box-shadow: inset 0 0 0 1px var(--pg-accent-soft), var(--pg-shadow);
+}
+
+html[data-skin^="glass"] .game-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), var(--pg-shadow);
+}
+html[data-theme="dark"][data-skin^="glass"] .game-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), var(--pg-shadow);
 }

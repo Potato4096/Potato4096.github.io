@@ -34,12 +34,29 @@
     document.getElementById('label-sound-hint').textContent = t('label.sound.hint');
     document.getElementById('btn-reset-settings').textContent = t('panel.reset');
 
+    // 主题面板文案
+    document.getElementById('theme-modal-title').textContent = t('theme.title');
+    document.getElementById('theme-modal-sub').textContent = t('theme.sub');
+    document.getElementById('label-scheme').textContent = t('theme.scheme');
+    document.getElementById('lbl-scheme-light').textContent = t('theme.light');
+    document.getElementById('lbl-scheme-dark').textContent = t('theme.dark');
+    document.getElementById('lbl-scheme-system').textContent = t('theme.system');
+    document.getElementById('skin-open-label').textContent = t('theme.open');
+    document.getElementById('btn-theme-reset').textContent = t('theme.reset');
+
     // 主题按钮图标
     var pref = GP.settings.get('theme');
-    document.getElementById('btn-theme').textContent =
-      pref === 'dark' ? '🌙' : pref === 'light' ? '☀️' : '🖥️';
+    var themeBtn = document.getElementById('btn-theme');
+    themeBtn.textContent = pref === 'dark' ? '🌙' : pref === 'light' ? '☀️' : '🎨';
+    themeBtn.title = t('theme.title');
 
     renderSegmented();
+    renderThemeCurrent();
+    renderScheme();
+    if (!themeModal.hidden) {
+      renderThemeCats();
+      renderThemeGrid();
+    }
   }
 
   /* ========== 游戏发现 ========== */
@@ -164,6 +181,102 @@
     });
   }
 
+  /* ========== 主题面板（二级菜单） ========== */
+
+  var themeModal = document.getElementById('theme-modal');
+  var themeBackdrop = document.getElementById('theme-backdrop');
+  var activeCat = null;
+
+  function openThemeModal() {
+    if (!activeCat) activeCat = GP.themePacks.categoryOf(GP.settings.get('skin'));
+    closePanel();
+    renderThemeCats();
+    renderThemeGrid();
+    renderScheme();
+    themeModal.hidden = false;
+    themeBackdrop.hidden = false;
+    requestAnimationFrame(function () {
+      themeModal.classList.add('open');
+      themeBackdrop.classList.add('open');
+    });
+  }
+
+  function closeThemeModal() {
+    themeModal.classList.remove('open');
+    themeBackdrop.classList.remove('open');
+    setTimeout(function () {
+      themeModal.hidden = true;
+      themeBackdrop.hidden = true;
+    }, 180);
+  }
+
+  /** 风格分类标签 */
+  function renderThemeCats() {
+    var wrap = document.getElementById('theme-cats');
+    var cats = GP.themePacks.categories();
+    wrap.innerHTML = '';
+    var current = null;
+    cats.forEach(function (cat) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'theme-cat' + (cat.id === activeCat ? ' active' : '');
+      btn.dataset.cat = cat.id;
+      btn.setAttribute('role', 'tab');
+      btn.textContent = GP.i18n.t(cat.name);
+      btn.addEventListener('click', function () {
+        activeCat = cat.id;
+        renderThemeCats();
+        renderThemeGrid();
+      });
+      wrap.appendChild(btn);
+      if (cat.id === activeCat) current = cat;
+    });
+    document.getElementById('theme-cat-desc').textContent = current ? GP.i18n.t(current.desc) : '';
+  }
+
+  /** 当前分类下的配色卡片 */
+  function renderThemeGrid() {
+    var grid = document.getElementById('theme-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var mode = GP.theme.get();
+    var active = GP.settings.get('skin');
+
+    GP.themePacks.byCategory(activeCat).forEach(function (id) {
+      var pack = GP.themePacks.get(id);
+      var d = pack[mode] || pack.light;
+      var name = GP.i18n.t(pack.name || { zh: id, en: id });
+      var chip = (d.surface && d.surface !== 'transparent') ? d.surface : d.text;
+      var texture = (d.bgTexture && d.bgTexture !== 'none') ? d.bgTexture : 'none';
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'theme-card' + (id === active ? ' active' : '');
+      btn.title = name;
+      btn.dataset.skin = id;
+      btn.innerHTML =
+        '<span class="theme-preview" style="background-color:' + d.bg +
+          ';background-image:' + texture + '">' +
+          '<i class="tp-surface" style="background:' + chip + ';border-color:' + d.border + '"></i>' +
+          '<i class="tp-accent" style="background:' + d.accent + '"></i>' +
+        '</span>' +
+        '<span class="theme-card-name">' + escapeHtml(name) + '</span>' +
+        '<span class="theme-check" aria-hidden="true">✓</span>';
+      btn.addEventListener('click', function () {
+        GP.settings.set('skin', id);
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  /** 黑白方案（浅色 / 深色 / 跟随系统） */
+  function renderScheme() {
+    var pref = GP.settings.get('theme');
+    Array.prototype.forEach.call(document.querySelectorAll('#seg-scheme button'), function (btn) {
+      btn.classList.toggle('active', btn.dataset.value === pref);
+    });
+  }
+
   /* ========== 设置面板 ========== */
 
   var panel = document.getElementById('settings-panel');
@@ -198,33 +311,20 @@
     });
     document.getElementById('toggle-motion').checked = !!GP.settings.get('reduceMotion');
     document.getElementById('toggle-sound').checked = !!GP.settings.get('sound');
-    renderSkinGrid();
+    renderThemeCurrent();
   }
 
-  /** 主题外观包选择器 */
-  function renderSkinGrid() {
-    var grid = document.getElementById('skin-grid');
-    if (!grid) return;
-    var active = GP.settings.get('skin');
-    grid.innerHTML = '';
-
-    GP.themePacks.list().forEach(function (id) {
-      var pack = GP.themePacks.get(id);
-      var name = GP.i18n.t(pack.name || { zh: id, en: id });
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'skin-swatch' + (id === active ? ' active' : '');
-      btn.dataset.skin = id;
-      btn.title = name;
-      btn.innerHTML =
-        '<span class="skin-dot" style="background: linear-gradient(135deg, ' +
-          pack.light.accent + ' 0 50%, ' + pack.dark.accent + ' 50% 100%)"></span>' +
-        '<span class="skin-name">' + escapeHtml(name) + '</span>';
-      btn.addEventListener('click', function () {
-        GP.settings.set('skin', id);
-      });
-      grid.appendChild(btn);
-    });
+  /** 设置面板里显示当前主题名 */
+  function renderThemeCurrent() {
+    var el = document.getElementById('skin-open-current');
+    if (!el) return;
+    var pack = GP.themePacks.get(GP.settings.get('skin'));
+    var cats = GP.themePacks.categories();
+    var catName = '';
+    for (var i = 0; i < cats.length; i++) {
+      if (cats[i].id === (pack.cat || 'solid')) catName = GP.i18n.t(cats[i].name);
+    }
+    el.textContent = catName + ' · ' + GP.i18n.t(pack.name || { zh: pack.id, en: pack.id });
   }
 
   function bindSettingsUI() {
@@ -233,6 +333,7 @@
     backdrop.addEventListener('click', closePanel);
     document.addEventListener('keydown', function (ev) {
       if (ev.key === 'Escape' && !panel.hidden) closePanel();
+      if (ev.key === 'Escape' && !themeModal.hidden) closeThemeModal();
     });
 
     // 快捷切换语言
@@ -241,12 +342,26 @@
       GP.settings.set('lang', next);
     });
 
-    // 快捷切换主题: system -> light -> dark -> system
-    document.getElementById('btn-theme').addEventListener('click', function () {
-      var order = ['system', 'light', 'dark'];
-      var cur = GP.settings.get('theme');
-      var next = order[(order.indexOf(cur) + 1) % order.length];
-      GP.settings.set('theme', next);
+    // 主题入口：右上角图标 + 设置面板按钮，都打开主题二级菜单
+    document.getElementById('btn-theme').addEventListener('click', openThemeModal);
+    document.getElementById('btn-open-theme').addEventListener('click', openThemeModal);
+    document.getElementById('btn-close-theme').addEventListener('click', closeThemeModal);
+    themeBackdrop.addEventListener('click', closeThemeModal);
+
+    // 黑白方案
+    document.getElementById('seg-scheme').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button');
+      if (btn) GP.settings.set('theme', btn.dataset.value);
+    });
+
+    // 恢复默认主题（只重置风格与黑白，不动语言等）
+    document.getElementById('btn-theme-reset').addEventListener('click', function () {
+      GP.settings.set({
+        theme: GP.settings.defaults.theme,
+        skin: GP.settings.defaults.skin
+      });
+      activeCat = 'solid';
+      GP.ui.toast(t('theme.resetToast'));
     });
 
     document.getElementById('seg-lang').addEventListener('click', function (ev) {

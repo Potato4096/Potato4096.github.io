@@ -188,11 +188,16 @@ body      { background-color: var(--pg-bg); background-image: var(--pg-bg-image)
 | 方法 | 说明 |
 |------|------|
 | `list()` | 所有外观包 id 数组 |
+| `categories()` | 风格分类数组：`[{ id, name:{zh,en}, desc:{zh,en} }]`（`solid` / `line` / `cyber` / `glass`） |
+| `byCategory(catId)` | 某分类下的包 id 列表 |
+| `categoryOf(id)` | 某个包所属分类 id |
 | `get(id?)` | 包定义；不传 id 返回当前激活包 |
-| `getActive()` | `{ id, name, mode, colors, bgTexture, accentTexture, backdropFilter, font }`（已按当前深浅模式解析） |
+| `getActive()` | `{ id, name, category, mode, colors, bgTexture, accentTexture, backdropFilter, font }`（已按当前深浅模式解析） |
 | `colors()` | 仅取当前已解析颜色表（canvas 取色常用） |
 | `onChange(fn)` | 订阅主题包变化，`fn(activeInfo)`；返回取消订阅函数 |
-| `register(pack)` | 运行时注册自定义主题包（需 `id` / `name` / `light` / `dark`） |
+| `register(pack)` | 运行时注册自定义主题包（需 `id` / `name` / `light` / `dark`，可带 `cat`） |
+
+内置 4 大风格、15 套配色：纯色（`default` 曜石蓝 / `ocean` 深海青 / `forest` 林间绿 / `sunset` 落日橙 / `candy` 糖果粉 / `mono` 极简黑白）、线条（`line-ink` 墨线 / `line-blueprint` 工程蓝图 / `line-violet` 紫墨线）、赛博朋克（`cyber-cyan` / `cyber-magenta` / `cyber-lime`）、液态玻璃（`glass` 蓝 / `glass-rose` 玫瑰 / `glass-mint` 薄荷）。风格差异由 `<html data-skin>` 前缀驱动（`line-*` 走描边、`cyber-*` 加辉光与扫描线、`glass*` 加磨砂与内高光），并额外提供 `--pg-on-accent`（强调色上的前景色，按亮度自动计算）。
 
 ```js
 // canvas 场景：取强调色绘制，并跟随主题包/深浅色变化重绘
