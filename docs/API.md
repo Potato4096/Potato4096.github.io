@@ -166,6 +166,7 @@ GamePlatform.theme.onChange(repaint);
 | `--pg-surface` / `--pg-surface-2` | 面板色 / 次级面板色 |
 | `--pg-text` / `--pg-text-muted` / `--pg-border` | 文字 / 弱化文字 / 边框 |
 | `--pg-accent` / `--pg-accent-hover` / `--pg-accent-soft` | 强调色 / 悬停 / 弱化底色 |
+| `--pg-bloom` | 辉光色（赛博朋克的多层发光用它，其他方案也有默认值） |
 | `--pg-accent-image` / `--pg-on-accent` | 强调色纹理 / 强调色上的前景色（按亮度自动选黑或白） |
 | `--pg-success` / `--pg-warning` / `--pg-danger` | 状态色 |
 | `--pg-font` / `--pg-radius` / `--pg-shadow` / `--pg-shadow-hover` | 字体 / 圆角 / 阴影 / 悬停阴影 |

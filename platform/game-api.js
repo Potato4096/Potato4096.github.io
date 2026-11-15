@@ -325,6 +325,7 @@
       shadow: dark ? '0 10px 30px rgba(0, 0, 0, 0.36)' : '0 10px 30px rgba(15, 23, 42, 0.10)',
       shadowHover: dark ? '0 18px 44px rgba(0, 0, 0, 0.50)' : '0 16px 40px rgba(15, 23, 42, 0.16)',
       backdropFilter: 'none',
+      bloom: fade(n.accent, dark ? 0.24 : 0.16),
       borderWidth: '1px'
     };
 
@@ -347,24 +348,32 @@
     } else if (styleId === 'cyber') {
       /* 赛博朋克：线条骨架 + 霓虹描边 + 整体辉光，高对比 */
       var cyberAccent = dark ? pal.neon : mix(pal.accent, '#000000', 0.06);
-      var glow = dark ? 0.26 : 0.18;
-      t.bg = dark ? mix('#04070c', pal.neon, 0.06) : mix('#ffffff', pal.neon, 0.05);
+      var glow = dark ? 0.38 : 0.24;
+      /* 三层光斑（主霓虹 / 副色 / 底部地平线光）+ 淡网格，营造霓虹街景感 */
+      var gridC = fade(pal.neon, dark ? 0.13 : 0.075);
+      t.bg = dark ? mix('#03060b', pal.neon, 0.05) : mix('#ffffff', pal.neon, 0.04);
       t.bgTexture =
-        'radial-gradient(1200px 720px at 8% -12%, ' + fade(pal.neon, dark ? 0.24 : 0.20) + ' 0%, transparent 58%), ' +
-        'radial-gradient(900px 620px at 108% 6%, ' + fade(pal.accent2, dark ? 0.20 : 0.14) + ' 0%, transparent 62%)';
-      t.surface = dark ? fade(mix('#0a121b', pal.neon, 0.10), 0.88) : 'rgba(255, 255, 255, 0.84)';
-      t.surface2 = fade(pal.neon, dark ? 0.10 : 0.09);
+        'radial-gradient(1250px 820px at 5% -16%, ' + fade(pal.neon, dark ? 0.44 : 0.26) + ' 0%, transparent 56%), ' +
+        'radial-gradient(1060px 760px at 105% 0%, ' + fade(pal.accent2, dark ? 0.38 : 0.20) + ' 0%, transparent 60%), ' +
+        'radial-gradient(1100px 780px at 50% 124%, ' + fade(pal.neon, dark ? 0.30 : 0.16) + ' 0%, transparent 64%), ' +
+        'linear-gradient(' + gridC + ' 1px, transparent 1px) 0 0 / 34px 34px, ' +
+        'linear-gradient(90deg, ' + gridC + ' 1px, transparent 1px) 0 0 / 34px 34px';
+      t.surface = dark ? fade(mix('#0a121b', pal.neon, 0.12), 0.86) : 'rgba(255, 255, 255, 0.82)';
+      t.surface2 = fade(pal.neon, dark ? 0.12 : 0.10);
       t.text = dark ? mix('#ffffff', pal.neon, 0.10) : mix('#05080e', pal.neon, 0.10);
-      t.textMuted = dark ? fade(pal.neon, 0.66) : mix('#49525f', pal.accent, 0.16);
-      t.border = fade(pal.neon, dark ? 0.48 : 0.58);
+      t.textMuted = dark ? fade(pal.neon, 0.70) : mix('#49525f', pal.accent, 0.16);
+      t.border = fade(pal.neon, dark ? 0.52 : 0.58);
       t.accent = cyberAccent;
       t.accentHover = dark ? mix(pal.neon, '#ffffff', 0.20) : mix(pal.accent, '#000000', 0.20);
-      t.accentSoft = fade(cyberAccent, dark ? 0.20 : 0.14);
+      t.accentSoft = fade(cyberAccent, dark ? 0.26 : 0.18);
       t.accentTexture = 'linear-gradient(135deg, ' + cyberAccent + ' 0%, ' + pal.neon + ' 100%)';
-      t.shadow = '0 0 0 1px ' + fade(pal.neon, 0.40) + ', 0 0 22px ' + fade(pal.neon, glow) +
-                 ', 0 12px 30px rgba(0, 0, 0, ' + (dark ? 0.36 : 0.14) + ')';
-      t.shadowHover = '0 0 0 1px ' + fade(pal.neon, 0.62) + ', 0 0 34px ' + fade(pal.neon, glow + 0.10) +
-                      ', 0 18px 42px rgba(0, 0, 0, ' + (dark ? 0.46 : 0.18) + ')';
+      t.shadow = '0 0 0 1px ' + fade(pal.neon, 0.48) + ', 0 0 10px ' + fade(pal.neon, 0.30) +
+                 ', 0 0 30px ' + fade(pal.neon, glow) +
+                 ', 0 12px 30px rgba(0, 0, 0, ' + (dark ? 0.38 : 0.14) + ')';
+      t.shadowHover = '0 0 0 1px ' + fade(pal.neon, 0.68) + ', 0 0 16px ' + fade(pal.neon, 0.46) +
+                      ', 0 0 50px ' + fade(pal.neon, glow + 0.16) +
+                      ', 0 18px 42px rgba(0, 0, 0, ' + (dark ? 0.48 : 0.18) + ')';
+      t.bloom = fade(pal.neon, dark ? 0.42 : 0.30);
       t.borderWidth = '1px';
     } else if (styleId === 'glass') {
       /* 液态玻璃：彩色光晕 + 半透明磨砂 */
@@ -402,6 +411,7 @@
     accent: '--pg-accent',
     accentHover: '--pg-accent-hover',
     accentSoft: '--pg-accent-soft',
+    bloom: '--pg-bloom',
     success: '--pg-success',
     warning: '--pg-warning',
     danger: '--pg-danger',

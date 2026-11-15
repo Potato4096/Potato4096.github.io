@@ -243,7 +243,9 @@
     var c = d.colors;
     var wrapStyle = 'background-color:' + c.bg + ';background-image:' + d.bgTexture + ';';
     if (styleId === 'cyber') {
-      wrapStyle += 'box-shadow:inset 0 0 0 1px ' + c.border + ',inset 0 0 26px ' + c.accentSoft + ';';
+      /* 预览也要看得出在发光：内描边用亮色，再压两层内部辉光 */
+      wrapStyle += 'box-shadow:inset 0 0 0 1px ' + c.accent + ',inset 0 0 18px ' + c.accentSoft +
+        ',inset 0 0 40px ' + c.accentSoft + ';';
     } else if (styleId === 'glass') {
       wrapStyle += 'box-shadow:inset 0 1px 0 rgba(255,255,255,0.45);';
     }

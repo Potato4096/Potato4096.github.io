@@ -12,6 +12,7 @@
   --pg-accent: #4f6df5;
   --pg-accent-hover: #3d59e0;
   --pg-accent-soft: rgba(79, 109, 245, 0.12);
+  --pg-bloom: rgba(79, 109, 245, 0.24);
   --pg-success: #22a06b;
   --pg-warning: #e2a03f;
   --pg-danger: #e5484d;
@@ -34,6 +35,7 @@ html[data-theme="dark"] {
   --pg-accent: #7c93ff;
   --pg-accent-hover: #93a6ff;
   --pg-accent-soft: rgba(124, 147, 255, 0.16);
+  --pg-bloom: rgba(124, 147, 255, 0.32);
   --pg-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --pg-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
@@ -843,43 +845,188 @@ html[data-skin="line"] .icon-btn:hover,
 html[data-skin="line"] .ghost-btn:hover { background: var(--pg-surface-2); }
 html[data-skin="line"] .section-head h2 { letter-spacing: 0.02em; }
 
-/* ---------- 赛博朋克：处处发光，高对比 ---------- */
+/* ---------- 赛博朋克：霓虹灯管 + 全屏辉光 + 反光 ---------- */
+
+/* CRT 扫描线 */
 html[data-skin="cyber"] body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 9998;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px);
   mix-blend-mode: multiply;
 }
 html[data-theme="dark"][data-skin="cyber"] body::after {
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.26) 0 1px, transparent 1px 3px);
   mix-blend-mode: normal;
 }
-html[data-skin="cyber"] .game-card {
-  border-color: var(--pg-border);
-  box-shadow: inset 0 0 0 1px var(--pg-accent-soft), var(--pg-shadow);
+
+/* 缓慢下滑的屏幕反光带 */
+html[data-skin="cyber"] body::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 52vh;
+  z-index: 9996;
+  pointer-events: none;
+  opacity: 0.45;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.10) 42%,
+      rgba(255, 255, 255, 0.02) 60%, transparent 78%),
+    linear-gradient(180deg, transparent 4%, var(--pg-bloom) 52%, transparent 86%);
+  animation: cyber-sweep 8.5s linear infinite;
 }
+@keyframes cyber-sweep {
+  0%   { transform: translateY(-52vh); }
+  100% { transform: translateY(118vh); }
+}
+
+/* 顶栏：底部一条霓虹灯管 */
+html[data-skin="cyber"] .site-header {
+  position: relative;
+  border-bottom-color: transparent;
+  box-shadow:
+    0 1px 0 0 var(--pg-accent-soft),
+    0 6px 26px -12px var(--pg-bloom),
+    inset 0 -14px 24px -22px var(--pg-accent);
+}
+html[data-skin="cyber"] .site-header::after {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--pg-accent) 22%, var(--pg-accent) 78%, transparent);
+  box-shadow: 0 0 10px var(--pg-accent), 0 0 26px var(--pg-bloom), 0 0 54px var(--pg-accent-soft);
+  opacity: 0.95;
+}
+
+/* 品牌霓虹 */
+html[data-skin="cyber"] .brand-name em {
+  text-shadow: 0 0 8px var(--pg-accent-soft), 0 0 20px var(--pg-bloom);
+}
+html[data-skin="cyber"] .brand-logo {
+  filter: drop-shadow(0 0 8px var(--pg-bloom)) drop-shadow(0 0 18px var(--pg-accent-soft));
+}
+
+/* 区块标题：霓虹下划线 */
+html[data-skin="cyber"] .section-head h2 {
+  text-shadow: 0 0 10px var(--pg-accent-soft), 0 0 26px var(--pg-bloom);
+}
+
+/* 游戏卡片：多层 bloom + 底部反射 + 斜向反光 */
+html[data-skin="cyber"] .game-card,
+html[data-skin="cyber"] .loading-card,
+html[data-skin="cyber"] .empty-card {
+  position: relative;
+  border-color: var(--pg-border);
+  background-image:
+    linear-gradient(158deg, var(--pg-accent-soft) 0%, transparent 38%),
+    radial-gradient(120% 90% at 100% 0%, var(--pg-accent-soft) 0%, transparent 58%);
+  box-shadow:
+    inset 0 0 0 1px var(--pg-accent-soft),
+    inset 0 -2px 0 -1px var(--pg-accent-soft),
+    inset 0 -26px 34px -28px var(--pg-accent),
+    inset 0 0 44px -18px var(--pg-accent),
+    0 0 0 1px var(--pg-accent-soft),
+    0 0 22px -4px var(--pg-accent-soft),
+    0 0 70px -10px var(--pg-bloom),
+    0 0 130px -30px var(--pg-bloom),
+    var(--pg-shadow);
+}
+/* 浅色模式下卡片保持白底，只留霓虹描边与外部光，避免内部粉雾压住文字 */
+html[data-theme="light"][data-skin="cyber"] .game-card,
+html[data-theme="light"][data-skin="cyber"] .loading-card,
+html[data-theme="light"][data-skin="cyber"] .empty-card {
+  background-image: none;
+}
+/* 地面反射：卡片下方的一团光 */
+html[data-skin="cyber"] .game-card::before,
+html[data-skin="cyber"] .loading-card::before,
+html[data-skin="cyber"] .empty-card::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -20px;
+  height: 22px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(60% 100% at 50% 0%, var(--pg-bloom) 0%, transparent 72%);
+  filter: blur(6px);
+  opacity: 0.55;
+}
+html[data-skin="cyber"] .game-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: linear-gradient(112deg, transparent 40%, rgba(255, 255, 255, 0.15) 47%,
+    var(--pg-accent-soft) 50%, transparent 60%);
+  background-repeat: no-repeat;
+  background-size: 280% 100%;
+  background-position: 190% 0;
+  transition: background-position 0.9s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+html[data-skin="cyber"] .game-card:hover::after { background-position: -90% 0; }
 html[data-skin="cyber"] .game-card:hover {
   border-color: var(--pg-accent);
-  box-shadow: inset 0 0 0 1px var(--pg-accent-soft), var(--pg-shadow-hover);
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 1px var(--pg-accent-soft),
+    inset 0 -20px 30px -24px var(--pg-accent),
+    inset 0 0 40px -16px var(--pg-accent),
+    0 0 0 1px var(--pg-accent),
+    0 0 26px -4px var(--pg-accent-soft),
+    0 0 86px -12px var(--pg-bloom),
+    var(--pg-shadow-hover);
 }
+
+/* 按钮：霓虹描边 + 呼吸光 */
 html[data-skin="cyber"] .play-btn,
 html[data-skin="cyber"] .icon-btn,
 html[data-skin="cyber"] .ghost-btn {
-  box-shadow: 0 0 14px var(--pg-accent-soft);
+  position: relative;
+  border-color: var(--pg-accent-soft);
+  box-shadow:
+    0 0 0 1px var(--pg-accent-soft),
+    0 0 14px -3px var(--pg-accent-soft),
+    0 0 34px -10px var(--pg-bloom);
+}
+html[data-skin="cyber"] .play-btn::after,
+html[data-skin="cyber"] .icon-btn::after,
+html[data-skin="cyber"] .ghost-btn::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 20px var(--pg-bloom), 0 0 40px var(--pg-accent-soft);
+  opacity: 0.4;
+  animation: cyber-pulse 3.6s ease-in-out infinite;
+}
+@keyframes cyber-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.9; }
 }
 html[data-skin="cyber"] .play-btn {
   text-shadow: 0 0 8px var(--pg-accent-soft);
-}
-html[data-skin="cyber"] .brand-name em {
-  text-shadow: 0 0 14px var(--pg-accent-soft);
 }
 html[data-skin="cyber"] .icon-btn {
   border-color: var(--pg-border);
   background: var(--pg-surface);
 }
+
+/* 顶栏图标按钮顺序错开呼吸节奏，避免整屏同步闪 */
+html[data-skin="cyber"] .icon-btn:nth-child(2)::after { animation-delay: -0.9s; }
+html[data-skin="cyber"] .icon-btn:nth-child(3)::after { animation-delay: -1.8s; }
+html[data-skin="cyber"] .icon-btn:nth-child(4)::after { animation-delay: -2.7s; }
 
 /* ---------- 液态玻璃：磨砂 + 内高光 ---------- */
 html[data-skin="glass"] .game-card {
