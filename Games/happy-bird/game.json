@@ -1,0 +1,27 @@
+{
+  "id": "happy-bird",
+  "title": {
+    "zh": "快乐小鸟",
+    "en": "Happy Bird"
+  },
+  "description": {
+    "zh": "经典拍翅飞行：一下一下点出节奏，从水管缝里挤过去。越飞越快、缝隙越来越窄，看看你能撑到第几根管子。",
+    "en": "The classic one-tap flyer. Flap through the pipe gaps — it gets faster and tighter the further you go. How many pipes can you clear?"
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "🐤",
+  "tags": ["arcade", "endless", "reflex", "singleplayer"],
+  "category": "arcade",
+  "players": 1,
+  "controls": {
+    "zh": "点击 / 空格 / ↑ 拍翅，Esc / P 暂停；触屏点屏幕或按「拍翅」按钮",
+    "en": "Click / Space / Up to flap, Esc / P to pause; tap the screen or the Flap button on touch devices"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-15",
+  "updated": "2026-11-15"
+}

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-13T09:26:41.245Z",
-  "count": 15,
+  "generatedAt": "2026-11-15T07:42:31.703Z",
+  "count": 17,
   "games": [
     {
       "id": "2048",
@@ -19,6 +19,10 @@
       "dir": "Games/brick-breaker"
     },
     {
+      "id": "dino-run",
+      "dir": "Games/dino-run"
+    },
+    {
       "id": "doudizhu",
       "dir": "Games/doudizhu"
     },
@@ -29,6 +33,10 @@
     {
       "id": "gold-miner",
       "dir": "Games/gold-miner"
+    },
+    {
+      "id": "happy-bird",
+      "dir": "Games/happy-bird"
     },
     {
       "id": "island-commander",

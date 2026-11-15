@@ -1,0 +1,27 @@
+{
+  "id": "dino-run",
+  "title": {
+    "zh": "断网恐龙",
+    "en": "Dino Run"
+  },
+  "description": {
+    "zh": "致敬 Chrome 断网页的无限跑酷：跳过仙人掌、低头躲翼龙，速度越跑越快，昼夜还会交替。没有网也能玩。",
+    "en": "A tribute to the Chrome offline runner: leap cacti, duck under pterodactyls, speed up endlessly and watch day turn to night."
+  },
+  "version": "1.0.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "🦖",
+  "tags": ["arcade", "endless", "runner", "singleplayer"],
+  "category": "arcade",
+  "players": 1,
+  "controls": {
+    "zh": "空格 / ↑ / 点击跳跃（长按跳更高），↓ 下蹲，Esc / P 暂停；触屏用「跳」「蹲」按钮",
+    "en": "Space / Up / tap to jump (hold for height), Down to duck, Esc / P to pause; on-screen Jump / Duck buttons on touch devices"
+  },
+  "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
+  "published": true,
+  "created": "2026-11-15",
+  "updated": "2026-11-15"
+}

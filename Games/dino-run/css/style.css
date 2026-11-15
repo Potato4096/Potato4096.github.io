@@ -1,0 +1,161 @@
+/* dino-run - game styles (theme-aware via --pg-* variables) */
+
+.game-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.stage {
+  position: relative;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius);
+  overflow: hidden;
+  background: var(--pg-surface-2);
+  box-shadow: var(--pg-shadow);
+  line-height: 0;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.hud-label {
+  color: var(--pg-text-muted);
+  font-size: 12px;
+}
+
+.hud-item b {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 14, 22, 0.46);
+  backdrop-filter: blur(2px);
+  line-height: 1.5;
+  z-index: 5;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay .panel {
+  width: min(420px, 100%);
+  text-align: center;
+}
+
+.game-title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.overlay .tagline {
+  margin: 0 0 14px;
+  color: var(--pg-text-muted);
+  font-size: 14px;
+}
+
+.best-line,
+.result-line {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--pg-text);
+}
+
+.best-line b,
+.result-line b {
+  color: var(--pg-accent);
+  font-size: 18px;
+}
+
+.record-line {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pg-warning);
+}
+
+.record-line[hidden] {
+  display: none;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.controls-hint {
+  margin: 14px 2px 0;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 触屏 ---------------------------------------------------- */
+
+.touch-controls {
+  display: none;
+  gap: 10px;
+  padding: 8px 2px 0;
+}
+
+.touch-btn {
+  flex: 1;
+  height: 58px;
+  border-radius: 16px;
+  border: 1px solid var(--pg-border);
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  opacity: 0.9;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.touch-btn:active {
+  background: var(--pg-accent-soft);
+}
+
+@media (pointer: coarse) {
+  .touch-controls {
+    display: flex;
+  }
+}
