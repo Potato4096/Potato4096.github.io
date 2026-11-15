@@ -508,11 +508,28 @@
     return (mediaQuery && mediaQuery.matches) ? 'dark' : 'light';
   }
 
+  /* 黑白切换过渡：只在切换的那一下挂到 <html> 上，避免影响平时的 hover / 动效 */
+  var lastResolvedTheme = null;
+  var themeAnimTimer = null;
+
+  function startThemeTransition(root) {
+    root.classList.add('pg-theme-anim');
+    void root.offsetHeight; // 先让带 transition 的样式落地，再改颜色变量才会真的过渡
+    if (themeAnimTimer) global.clearTimeout(themeAnimTimer);
+    themeAnimTimer = global.setTimeout(function () {
+      root.classList.remove('pg-theme-anim');
+      themeAnimTimer = null;
+    }, 520);
+  }
+
   function applyDocumentMeta() {
     if (!global.document) return;
     var s = readSettings();
     var resolved = resolveTheme(s.theme);
     var root = document.documentElement;
+    var switched = lastResolvedTheme !== null && lastResolvedTheme !== resolved;
+    if (switched && !s.reduceMotion) startThemeTransition(root);
+    lastResolvedTheme = resolved;
     root.setAttribute('data-theme', resolved);
     root.setAttribute('data-theme-pref', s.theme);
     root.setAttribute('data-lang', s.lang);

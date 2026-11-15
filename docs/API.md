@@ -114,7 +114,9 @@ GamePlatform.storage.set('records', [120, 98, 105]);
 | `onChange(fn)` | 订阅主题变化，`fn(resolvedTheme, pref)`；返回取消订阅函数 |
 | `apply()` | 手动重新应用主题到 `<html>`（一般不需要） |
 
-平台自动维护 `<html data-theme="light|dark">`、`data-theme-pref`、`data-reduce-motion`。
+平台自动维护 `<html data-theme="light|dark">`、`data-theme-pref`（`light` / `dark` / `system`）、`data-reduce-motion`。
+
+明暗真正变化时，平台会给 `<html>` 临时加 `.pg-theme-anim`（约 520ms 后移除），`game-base.css` 里该 class 会强制颜色属性走 460ms 过渡，所以黑白切换是平滑渐变的；开启「减少动画」时不会加这个 class。
 CSS 使用 `game-base.css` 的变量即可自动跟随主题：
 
 ```css

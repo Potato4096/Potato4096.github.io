@@ -47,11 +47,14 @@
     themeBtn.setAttribute('aria-label', t('theme.title'));
 
     var schemeBtn = document.getElementById('btn-scheme');
+    var pref = GP.settings.get('theme');              // light / dark / system
     var isDark = GP.theme.get() === 'dark';
-    schemeBtn.textContent = isDark ? '🌙' : '☀️';
+    schemeBtn.textContent = pref === 'system' ? '🖥️' : (isDark ? '🌙' : '☀️');
     schemeBtn.title = t('theme.toggleScheme');
     schemeBtn.setAttribute('aria-label', t('theme.toggleScheme'));
-    schemeBtn.classList.toggle('is-dark', isDark);
+    schemeBtn.dataset.pref = pref;
+    schemeBtn.classList.toggle('is-dark', pref === 'dark');
+    schemeBtn.classList.toggle('is-system', pref === 'system');
 
     renderSegmented();
     renderThemeCurrent();
@@ -205,22 +208,23 @@
     }, 180);
   }
 
-  /** #rrggbb -> rgba(r, g, b, a) */
-  function hexA(hex, a) {
-    var h = String(hex || '').replace('#', '');
-    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    if (!/^[0-9a-fA-F]{6}$/.test(h)) return 'rgba(136, 136, 136, ' + a + ')';
-    return 'rgba(' + parseInt(h.slice(0, 2), 16) + ', ' + parseInt(h.slice(2, 4), 16) + ', ' +
-      parseInt(h.slice(4, 6), 16) + ', ' + a + ')';
-  }
-
   /** 预览窗口里的常见控件：标题栏 + 标题 + 两行正文 + 按钮（带"文字"） */
-  function uiKit(c, styleId) {
+  function uiKit(c, styleId, dark) {
     var btnBg = styleId === 'line' ? 'transparent' : c.accent;
     var btnBorder = styleId === 'line' ? '2px solid ' + c.accent : '1px solid ' + c.accent;
     var btnShadow = styleId === 'cyber' ? 'box-shadow:0 0 12px ' + c.accentSoft + ';' : '';
     var label = styleId === 'line' ? c.accent : c.bg;
-    return '<i class="ui-tbar" style="background:' + c.surface2 + ';border-color:' + c.border + '"></i>' +
+    /* 底是主题背景色，标题栏叠一层微亮/微暗，避免和底色糊成一片 */
+    var lift = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)';
+    var tbar = 'background:' + c.surface2 + ';background-image:linear-gradient(' + lift + ',' + lift + ');' +
+      'border-color:' + c.border + ';';
+    /* 右侧强调色块：线条方案走描边，其余实心，赛博朋克带辉光 */
+    var heroStyle = styleId === 'line'
+      ? 'background:transparent;border:2px solid ' + c.accent + ';'
+      : 'background:' + c.accent + ';background-image:linear-gradient(135deg, ' + c.accent + ' 0%, ' +
+        c.accentHover + ' 100%);border:1px solid ' + c.accent + ';' +
+        (styleId === 'cyber' ? 'box-shadow:0 0 14px ' + c.accentSoft + ';' : '');
+    return '<i class="ui-tbar" style="' + tbar + '"></i>' +
       '<i class="ui-dots" style="background:' + c.textMuted +
         ';box-shadow:5px 0 0 ' + c.textMuted + ',10px 0 0 ' + c.textMuted + '"></i>' +
       '<i class="ui-h1" style="background:' + c.text + '"></i>' +
@@ -228,7 +232,10 @@
       '<i class="ui-p2" style="background:' + c.textMuted + '"></i>' +
       '<i class="ui-btn" style="background:' + btnBg + ';border:' + btnBorder + ';' + btnShadow + '">' +
         '<i class="ui-btn-label" style="background:' + label + '"></i>' +
-      '</i>';
+      '</i>' +
+      /* 右侧强调色块：落在对角线的黑色一半里，让黑半也有内容 */
+      '<i class="ui-hero" style="' + heroStyle + '"></i>' +
+      '<i class="ui-hero-line" style="background:' + c.textMuted + '"></i>';
   }
 
   /** 迷你窗口预览：底色 + 窗口（按方案呈现填充 / 描边 / 辉光 / 磨砂） */
@@ -243,7 +250,7 @@
     var winStyle = 'background:' + c.surface + ';border:' +
       (styleId === 'line' ? '2px solid ' + c.accent : '1px solid ' + c.border) + ';';
     return '<span class="mini mini--' + styleId + '" style="' + wrapStyle + '">' +
-      '<i class="mini-win" style="' + winStyle + '">' + uiKit(c, styleId) + '</i>' +
+      '<i class="mini-win" style="' + winStyle + '">' + uiKit(c, styleId, d.mode === 'dark') + '</i>' +
       (styleId === 'cyber' ? '<i class="mini-scan"></i>' : '') +
       '</span>';
   }
@@ -300,15 +307,17 @@
       function half(kind, d) {
         var c = d.colors;
         var white = kind === 'light';
-        // 黑白两半用纯白 / 纯黑打底，只叠一层淡强调色光晕，保证一眼分清清白
-        var bg = 'background-color:' + (white ? '#ffffff' : '#000000') + ';' +
-          'background-image:radial-gradient(130% 95% at 12% 0%, ' +
-          hexA(c.accent, white ? 0.20 : 0.30) + ' 0%, rgba(0, 0, 0, 0) 62%);';
-        var win = 'background:' + c.surface + ';border:' +
-          (styleId === 'line' ? '2px solid ' + c.accent : '1px solid ' + c.border) + ';' +
-          (styleId === 'cyber' ? 'box-shadow:inset 0 0 14px ' + c.accentSoft + ';' : '');
+        // 底色用该模式的主题背景色：浅色接近纯白、深色接近纯黑，但仍是配色本身
+        var bg = 'background-color:' + c.bg + ';';
+        var winBorder = styleId === 'line'
+          ? '2px solid ' + c.accent
+          : '1px solid ' + (c.border || (white ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'));
+        var win = 'background:' + c.bg + ';border:' + winBorder + ';' +
+          (styleId === 'cyber' ? 'box-shadow:inset 0 0 16px ' + c.accentSoft + ';' : '') +
+          (styleId === 'glass' ? 'box-shadow:inset 0 1px 0 ' +
+            (white ? 'rgba(255,255,255,0.70)' : 'rgba(255,255,255,0.20)') + ';' : '');
         return '<span class="pal-half pal-half--' + kind + '" style="' + bg + '">' +
-          '<i class="pal-win" style="' + win + '">' + uiKit(c, styleId) + '</i>' +
+          '<i class="pal-win" style="' + win + '">' + uiKit(c, styleId, !white) + '</i>' +
         '</span>';
       }
 
@@ -371,7 +380,9 @@
     if (!el) return;
     var st = GP.themePacks.style(GP.settings.get('style'));
     var pal = GP.themePacks.palette(GP.settings.get('palette'));
-    var scheme = GP.theme.get() === 'dark' ? t('theme.dark') : t('theme.light');
+    var pref = GP.settings.get('theme');
+    var modeName = GP.theme.get() === 'dark' ? t('theme.dark') : t('theme.light');
+    var scheme = pref === 'system' ? t('theme.system') + ' ' + modeName : modeName;
     el.textContent = GP.i18n.t(st.name) + ' · ' + GP.i18n.t(pal.name) + ' · ' + scheme;
   }
 
@@ -396,11 +407,15 @@
     document.getElementById('btn-close-theme').addEventListener('click', closeThemeModal);
     themeBackdrop.addEventListener('click', closeThemeModal);
 
-    // 黑白是独立按钮：直接在白 / 黑之间切换
+    // 黑白是独立按钮：白 → 黑 → 跟随系统 三态循环
     document.getElementById('btn-scheme').addEventListener('click', function () {
-      var next = GP.theme.get() === 'dark' ? 'light' : 'dark';
+      var pref = GP.settings.get('theme');
+      var next = pref === 'light' ? 'dark' : (pref === 'dark' ? 'system' : 'light');
       GP.settings.set('theme', next);
-      GP.ui.toast(next === 'dark' ? t('theme.nowDark') : t('theme.nowLight'));
+      GP.ui.toast(
+        next === 'dark' ? t('theme.nowDark') :
+        next === 'system' ? t('theme.nowSystem') : t('theme.nowLight')
+      );
     });
 
     // 恢复默认主题（方案 + 配色 + 黑白，不动语言等）

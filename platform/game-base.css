@@ -239,3 +239,19 @@ html[data-skin="glass"] .pg-btn {
 html[data-skin="glass"] .pg-tag {
   border: 1px solid var(--pg-border);
 }
+
+/* ============================================================
+   黑白切换过渡
+   applyDocumentMeta 在明暗真正变化时给 <html> 临时挂 .pg-theme-anim，
+   520ms 后移除；只在切换瞬间生效，不影响常驻的 hover / 游戏动效。
+   ============================================================ */
+html.pg-theme-anim,
+html.pg-theme-anim body,
+html.pg-theme-anim *,
+html.pg-theme-anim *::before,
+html.pg-theme-anim *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, text-shadow !important;
+  transition-duration: 460ms !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-delay: 0s !important;
+}
