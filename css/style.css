@@ -401,54 +401,6 @@ main {
   font-weight: 600;
 }
 
-/* theme pack swatches */
-.skin-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.skin-swatch {
-  appearance: none;
-  border: 1px solid var(--pg-border);
-  background: var(--pg-surface-2);
-  border-radius: 12px;
-  padding: 8px 4px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  font-family: inherit;
-  transition: border-color 0.15s ease, transform 0.1s ease;
-}
-
-.skin-swatch:hover { transform: translateY(-2px); }
-
-.skin-swatch.active {
-  border-color: var(--pg-accent);
-  box-shadow: 0 0 0 2px var(--pg-accent-soft);
-}
-
-.skin-dot {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid var(--pg-border);
-  display: block;
-}
-
-.skin-name {
-  font-size: 11px;
-  color: var(--pg-text-muted);
-  line-height: 1.2;
-}
-
-.skin-swatch.active .skin-name {
-  color: var(--pg-text);
-  font-weight: 600;
-}
-
 /* switch */
 .switch { position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
@@ -490,7 +442,7 @@ main {
 }
 
 /* ============================================================
-   主题面板（二级菜单）：风格分类 → 配色 → 黑白方案
+   主题面板：上半「方案」 / 下半「配色」
    ============================================================ */
 
 .theme-backdrop {
@@ -507,21 +459,20 @@ main {
   position: fixed;
   left: 50%;
   top: 50%;
-  width: min(700px, 94vw);
-  max-height: 88vh;
+  width: min(720px, 94vw);
+  max-height: 90vh;
   overflow-y: auto;
   transform: translate(-50%, -46%);
   opacity: 0;
   transition: transform 0.2s ease, opacity 0.2s ease;
   z-index: 70;
-  /* 底色垫在面板色之下：线条主题的 surface 是 transparent，
-     单用 surface 会让面板透出背后的卡片，无法阅读 */
+  /* 底色垫在面板色之下：线条方案的面板色接近透明，单用会透出背后的卡片 */
   background-color: var(--pg-bg);
   background-image: linear-gradient(var(--pg-surface), var(--pg-surface));
   border: 1px solid var(--pg-border);
   border-radius: 18px;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
-  padding: 22px 22px 18px;
+  padding: 22px 22px 16px;
   -webkit-backdrop-filter: var(--pg-backdrop-filter);
   backdrop-filter: var(--pg-backdrop-filter);
 }
@@ -529,140 +480,266 @@ main {
 
 .theme-modal-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.theme-modal-head h3 {
-  margin: 0 0 2px;
-  font-size: 20px;
-}
-
-.theme-modal-sub {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--pg-text-muted);
-}
-
-.theme-scheme {
-  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 18px 0 4px;
-  flex-wrap: wrap;
+}
+.theme-modal-head h3 {
+  margin: 0;
+  font-size: 19px;
 }
 
-.theme-scheme-label {
-  font-size: 14px;
-  font-weight: 600;
+/* ---- 上下两个固定区块 ---- */
+
+.theme-block { margin-top: 14px; }
+.theme-block + .theme-block {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px dashed var(--pg-border);
 }
 
-.theme-scheme .segmented { flex-wrap: wrap; }
-
-.theme-cats {
+.theme-block-head {
   display: flex;
-  gap: 8px;
-  margin: 16px 0 8px;
-  padding-bottom: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
 }
-.theme-cats::-webkit-scrollbar { display: none; }
-
-.theme-cat {
-  appearance: none;
-  border: 1px solid var(--pg-border);
-  background: transparent;
-  color: var(--pg-text-muted);
-  padding: 7px 16px;
-  border-radius: 999px;
-  font-size: 13.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.theme-cat:hover { background: var(--pg-surface-2); color: var(--pg-text); }
-.theme-cat.active {
-  background: var(--pg-accent);
-  border-color: var(--pg-accent);
-  color: var(--pg-on-accent);
-}
-
-.theme-cat-desc {
-  margin: 2px 0 14px;
-  font-size: 12.5px;
+.theme-block-head h4 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.04em;
   color: var(--pg-text-muted);
 }
 
-.theme-grid {
+/* ---- 上半：方案卡（图形为主，预览随当前配色 / 黑白实时渲染） ---- */
+
+.theme-styles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
-.theme-card {
+.sty-card {
   position: relative;
   appearance: none;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  font-family: inherit;
+  color: var(--pg-text);
   border: 2px solid var(--pg-border);
   background: transparent;
   border-radius: 14px;
-  padding: 6px;
   cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  transition: border-color 0.15s ease, transform 0.12s ease;
+  transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
 }
-.theme-card:hover { transform: translateY(-2px); }
-.theme-card.active {
+.sty-card:hover { transform: translateY(-2px); }
+.sty-card.active {
   border-color: var(--pg-accent);
   box-shadow: 0 0 0 3px var(--pg-accent-soft);
 }
 
-.theme-preview {
+.sty-name {
   display: block;
-  position: relative;
-  height: 62px;
-  border-radius: 9px;
-  overflow: hidden;
-  background-size: cover;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.tp-surface {
-  position: absolute;
-  left: 9px;
-  bottom: 9px;
-  width: 46%;
-  height: 14px;
-  border-radius: 5px;
-  border: 1px solid transparent;
-}
-
-.tp-accent {
-  position: absolute;
-  right: 9px;
-  top: 9px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-}
-
-.theme-card-name {
-  display: block;
-  margin: 7px 4px 2px;
+  padding: 6px 9px 7px;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--pg-text);
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 迷你窗口预览：底色 + 窗口（内含标题栏 / 标题 / 正文 / 按钮） */
+.mini {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 92px;
+  border-radius: 0;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid var(--pg-border);
+}
+.mini-win {
+  position: absolute;
+  inset: 8px 9px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+.mini--line .mini-win { box-shadow: none; }
+.mini--glass .mini-win {
+  -webkit-backdrop-filter: blur(4px) saturate(1.4);
+  backdrop-filter: blur(4px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.mini--cyber .mini-win { box-shadow: 0 0 14px rgba(255, 255, 255, 0.16); }
+.mini--line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 13px 13px,
+    linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 13px 13px;
+}
+.mini-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.10) 0 1px, transparent 1px 3px);
+}
+
+/* 窗口内的常见控件（两处预览共用） */
+.ui-tbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 17%;
+  border-bottom: 1px solid transparent;
+}
+.ui-dots {
+  position: absolute;
+  left: 7%;
+  top: 6.5%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  opacity: 0.55;
+}
+.ui-h1 {
+  position: absolute;
+  left: 7%;
+  top: 27%;
+  width: 52%;
+  height: 7%;
+  min-height: 4px;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+.ui-p1 {
+  position: absolute;
+  left: 7%;
+  top: 43%;
+  width: 68%;
+  height: 4.5%;
+  min-height: 3px;
+  border-radius: 2px;
+  opacity: 0.5;
+}
+.ui-p2 {
+  position: absolute;
+  left: 7%;
+  top: 53%;
+  width: 46%;
+  height: 4.5%;
+  min-height: 3px;
+  border-radius: 2px;
+  opacity: 0.36;
+}
+.ui-btn {
+  position: absolute;
+  left: 7%;
+  top: 66%;
+  width: 46%;
+  height: 23%;
+  min-height: 13px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+.ui-btn-label {
+  display: block;
+  width: 52%;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+/* ---- 下半：配色卡（对角线一切为二：左上白 / 右下黑） ---- */
+
+.theme-palettes {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pal-card {
+  position: relative;
+  appearance: none;
+  border: 2px solid var(--pg-border);
+  background: transparent;
+  border-radius: 12px;
+  padding: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+.pal-card:hover { transform: translateY(-2px); }
+.pal-card.active {
+  border-color: var(--pg-accent);
+  box-shadow: 0 0 0 2px var(--pg-accent-soft);
+}
+
+.pal-split {
+  position: relative;
+  display: block;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--pg-surface-2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.pal-half {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+/* 左上三角 = 白，右下三角 = 黑，合起来是一块完整预览 */
+.pal-half--light { clip-path: polygon(0 0, 100% 0, 0 100%); }
+.pal-half--dark { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+
+/* 一整个小窗口：两半同结构，被对角线裁开 */
+.pal-win {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  overflow: hidden;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.16);
+}
+
+.pal-name {
+  display: block;
+  margin-top: 5px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--pg-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pal-card.active .pal-name { color: var(--pg-text); font-weight: 600; }
+
+.pal-card .theme-check {
+  top: -7px;
+  right: -7px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  font-size: 10px;
+}
+
+/* 选中勾 */
 .theme-check {
   position: absolute;
   top: 10px;
@@ -678,15 +755,27 @@ main {
   opacity: 0;
   transform: scale(0.7);
   transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
 }
-.theme-card.active .theme-check { opacity: 1; transform: scale(1); }
+.sty-card.active .theme-check,
+.pal-card.active .theme-check { opacity: 1; transform: scale(1); }
 
 .theme-modal-foot {
-  margin-top: 18px;
+  margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--pg-border);
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 620px) {
+  .theme-modal { padding: 18px 16px 14px; border-radius: 16px; }
+  .theme-styles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .theme-palettes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mini { height: 84px; }
+}
+@media (max-width: 400px) {
+  .theme-palettes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* 设置面板里的主题入口按钮 */
@@ -699,37 +788,88 @@ main {
   color: var(--pg-text-muted);
 }
 
-/* ---------- 风格分类对主页卡片的差异化 ---------- */
+/* ============================================================
+   方案对主页的差异化（data-skin = solid | line | cyber | glass）
+   ============================================================ */
 
-html[data-skin^="line-"] .game-card,
-html[data-skin^="line-"] .loading-card,
-html[data-skin^="line-"] .empty-card {
-  background: transparent;
-  box-shadow: none;
+html[data-skin="line"] { --pg-radius: 8px; }
+html[data-skin="cyber"] { --pg-radius: 10px; }
+html[data-skin="glass"] { --pg-radius: 18px; }
+
+/* ---------- 线条：简约描边 + 淡色填充 ---------- */
+html[data-skin="line"] .game-card,
+html[data-skin="line"] .loading-card,
+html[data-skin="line"] .empty-card {
   border-width: 2px;
+  box-shadow: none;
 }
-
-html[data-skin^="line-"] .play-btn {
+html[data-skin="line"] .game-card:hover {
+  border-color: var(--pg-accent);
+  box-shadow: 0 0 0 1px var(--pg-accent-soft);
+}
+html[data-skin="line"] .play-btn {
   background: transparent;
   background-image: none;
   color: var(--pg-accent);
   border: 2px solid var(--pg-accent);
 }
-html[data-skin^="line-"] .play-btn:hover { background: var(--pg-accent-soft); }
-
-html[data-skin^="line-"] .icon-btn,
-html[data-skin^="line-"] .ghost-btn {
+html[data-skin="line"] .play-btn:hover { background: var(--pg-accent-soft); }
+html[data-skin="line"] .icon-btn,
+html[data-skin="line"] .ghost-btn {
   background: transparent;
+  border-width: 1.5px;
 }
+html[data-skin="line"] .icon-btn:hover,
+html[data-skin="line"] .ghost-btn:hover { background: var(--pg-surface-2); }
+html[data-skin="line"] .section-head h2 { letter-spacing: 0.02em; }
 
-html[data-skin^="cyber-"] .game-card {
-  border-color: color-mix(in srgb, var(--pg-accent) 45%, transparent);
+/* ---------- 赛博朋克：处处发光，高对比 ---------- */
+html[data-skin="cyber"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply;
+}
+html[data-theme="dark"][data-skin="cyber"] body::after {
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+  mix-blend-mode: normal;
+}
+html[data-skin="cyber"] .game-card {
+  border-color: var(--pg-border);
   box-shadow: inset 0 0 0 1px var(--pg-accent-soft), var(--pg-shadow);
 }
-
-html[data-skin^="glass"] .game-card {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), var(--pg-shadow);
+html[data-skin="cyber"] .game-card:hover {
+  border-color: var(--pg-accent);
+  box-shadow: inset 0 0 0 1px var(--pg-accent-soft), var(--pg-shadow-hover);
 }
-html[data-theme="dark"][data-skin^="glass"] .game-card {
+html[data-skin="cyber"] .play-btn,
+html[data-skin="cyber"] .icon-btn,
+html[data-skin="cyber"] .ghost-btn {
+  box-shadow: 0 0 14px var(--pg-accent-soft);
+}
+html[data-skin="cyber"] .play-btn {
+  text-shadow: 0 0 8px var(--pg-accent-soft);
+}
+html[data-skin="cyber"] .brand-name em {
+  text-shadow: 0 0 14px var(--pg-accent-soft);
+}
+html[data-skin="cyber"] .icon-btn {
+  border-color: var(--pg-border);
+  background: var(--pg-surface);
+}
+
+/* ---------- 液态玻璃：磨砂 + 内高光 ---------- */
+html[data-skin="glass"] .game-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), var(--pg-shadow);
+}
+html[data-theme="dark"][data-skin="glass"] .game-card {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), var(--pg-shadow);
+}
+html[data-skin="glass"] .icon-btn,
+html[data-skin="glass"] .ghost-btn,
+html[data-skin="glass"] .play-btn {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 6px 18px rgba(0, 0, 0, 0.10);
 }

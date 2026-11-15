@@ -216,24 +216,32 @@ canvas 不能把固定缓冲区交给 CSS 拉伸。早先棋盘按 576×576 分�
 |--------|------|--------|--------------|
 | 语言 | `zh` / `en` | `p4096:settings.lang` | `GamePlatform.i18n` / `settings.onChange` |
 | 深浅色 | `light` / `dark` / `system` | `p4096:settings.theme` | `<html data-theme>` + `GamePlatform.theme.onChange` |
-| 主题 | 配色包 id（4 大风格 × 15 套配色，见下表） | `p4096:settings.skin` | `--pg-*` CSS 变量 + `GamePlatform.themePacks` |
+| 主题方案 | `solid` 纯色 / `line` 线条 / `cyber` 赛博朋克 / `glass` 液态玻璃 | `p4096:settings.style` | `<html data-skin>` + `--pg-*` CSS 变量 |
+| 主题配色 | 15 套配色 id（见下表） | `p4096:settings.palette` | `<html data-palette>` + `--pg-*` CSS 变量 |
 | 减少动画 | `true` / `false` | `p4096:settings.reduceMotion` | `<html data-reduce-motion>` + `GamePlatform.ui.shouldReduceMotion()` |
 | 音效 | `true` / `false` | `p4096:settings.sound` | `GamePlatform.ui.isSoundEnabled()` |
 
-主题与深浅色是**两个正交维度**：每个配色包内含 light/dark 两套（即「黑白两种方案」），平台解析后写入 `--pg-*` CSS 变量，游戏用 CSS 变量或 `GamePlatform.themePacks.colors()` 取用即可自动跟随。详见 [docs/API.md](docs/API.md)。
+主题由**方案 × 配色 × 黑白**三个正交维度组成（4 × 15 × 2 = 120 种组合）：方案决定结构（填充 / 描边 / 辉光 / 磨砂），配色决定色相，黑白决定明暗。平台解析后写入 `--pg-*` CSS 变量，游戏用 CSS 变量或 `GamePlatform.themePacks.colors()` 取用即可自动跟随。详见 [docs/API.md](docs/API.md)。
 
-### 主题风格分类
+### 主题面板
 
-主页右上角 🎨 图标打开主题面板（二级菜单）：先选**风格**，再挑**配色**，最后定**黑白**。
+主页右上角有两个按钮：**主题**（🎨）打开主题面板，**黑白**（☀️/🌙）一键切换深浅。
 
-| 风格 | 视觉特征 | 配色 |
-|------|----------|------|
-| 纯色 Solid | 纯色底 + 单一强调色，卡片实心 | 曜石蓝 / 深海青 / 林间绿 / 落日橙 / 糖果粉 / 极简黑白 |
-| 线条 Outline | 无填充、2px 强描边，蓝图配色带网格底纹 | 墨线 / 工程蓝图 / 紫墨线 |
-| 赛博朋克 Cyberpunk | 暗底霓虹、辉光投影与扫描线 | 霓虹青 / 霓虹紫红 / 荧光绿 |
-| 液态玻璃 Liquid Glass | 半透明磨砂面板 + 背景彩色光晕 | 蓝玻璃 / 玫瑰玻璃 / 薄荷玻璃 |
+面板上下两块内容都是定死的，边选边预览：
 
-风格差异由 `<html data-skin>` 前缀驱动：`line-*` 走描边样式、`cyber-*` 加辉光与扫描线、`glass*` 加内高光与磨砂。强调色上的文字颜色由平台按亮度自动计算（`--pg-on-accent`），保证霓虹亮色按钮仍可读。
+- **主题方案**（上）：4 个固定方案，预览用当前配色 + 当前黑白实时渲染。
+- **配色**（下）：15 套固定配色，每块是一整个小窗口——标题栏、标题、正文、按钮一应俱全；窗口被一条对角线切成两半，左上走白色方案、右下走黑色方案，拼成同一个界面的两种明暗。
+
+| 方案 | 视觉特征 |
+|------|----------|
+| 纯色 Solid | 纯色底 + 单一强调色，面板实心 + 柔和投影 |
+| 线条 Outline | 简约描边 + 淡色填充，2px 强调色边框，按钮走描边 |
+| 赛博朋克 Cyberpunk | 与线条同骨架，但处处发光：霓虹描边、辉光、扫描线、高对比 |
+| 液态玻璃 Liquid Glass | 半透明磨砂面板 + 背景彩色光晕 + 内高光 |
+
+配色（15 套，与方案自由组合）：曜石蓝 / 深海青 / 林间绿 / 落日橙 / 糖果粉 / 极简灰 / 墨黑 / 工程蓝 / 紫罗兰 / 霓虹青 / 霓虹紫红 / 荧光绿 / 冰蓝 / 玫瑰粉 / 薄荷绿。
+
+方案差异由 `<html data-skin>`（`solid` / `line` / `cyber` / `glass`）驱动，配色写在 `<html data-palette>` 上。强调色上的文字颜色由平台按亮度自动计算（`--pg-on-accent`），保证霓虹亮色按钮仍可读；旧版的单一 `skin` 设置会自动迁移成「方案 + 配色」。
 
 设置持久化于 `localStorage`，主页设置面板可随时修改，所有已打开的游戏页面会实时响应。
 

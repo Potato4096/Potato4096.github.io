@@ -26,7 +26,7 @@ GamePlatform = {
   settings: { defaults, get, getAll, set, onChange },
   storage:  { get, set, remove, clear, keys },
   theme:    { get, getPref, onChange, apply },
-  themePacks: { list, get, getActive, colors, onChange, register },
+  themePacks: { styles, palettes, style, palette, derive, get, getActive, list, colors, onChange, register },
   i18n:     { getLang, t, onChange },
   ui:       { toast, requestFullscreen, exitFullscreen, isFullscreen, shouldReduceMotion, isSoundEnabled },
   events:   { on, off, emit },
@@ -47,8 +47,9 @@ GamePlatform = {
 GamePlatform.settings.defaults
 // {
 //   lang: 'zh',          // 'zh' | 'en'
-//   theme: 'system',     // 'light' | 'dark' | 'system'  —— 深浅模式
-//   skin: 'default',     // 主题外观包 id（见 themePacks）
+//   theme: 'system',     // 'light' | 'dark' | 'system'  —— 黑白方案
+//   style: 'solid',      // 'solid' | 'line' | 'cyber' | 'glass' —— 主题方案
+//   palette: 'obsidian', // 配色 id（15 套，见 themePacks）
 //   reduceMotion: false,
 //   sound: true
 // }
@@ -58,7 +59,7 @@ GamePlatform.settings.defaults
 
 ```js
 GamePlatform.settings.get('theme');   // 'system'
-GamePlatform.settings.getAll();       // { lang, theme, reduceMotion, sound }
+GamePlatform.settings.getAll();       // { lang, theme, style, palette, reduceMotion, sound }
 ```
 
 ### `settings.set(key, value)` / `settings.set(object)`
@@ -135,36 +136,27 @@ GamePlatform.theme.onChange(repaint);
 
 ---
 
-## 主题外观包 `GamePlatform.themePacks`
+## 主题 `GamePlatform.themePacks`
 
-全局**主题包（skin）系统**：与深浅模式正交——每个主题包内含 `light` / `dark` 两套配色与纹理，最终外观 = 主题包 × 深浅模式。主题包定义背景色/纹理、强调色/纹理等资源，平台自动写入 CSS 变量，游戏按需取用。
+全局主题由**三个正交维度**决定：
 
-### 包结构
+| 维度 | 取值 | 存储键 | 由谁驱动 |
+|------|------|--------|----------|
+| 方案（风格） | `solid` 纯色 / `line` 线条 / `cyber` 赛博朋克 / `glass` 液态玻璃 | `p4096:settings.style` | `<html data-skin>` |
+| 配色 | 15 套，见下表 | `p4096:settings.palette` | `<html data-palette>` |
+| 黑白 | `light` 白 / `dark` 黑 / `system` 跟随系统 | `p4096:settings.theme` | `<html data-theme>` |
 
-```js
-{
-  id: 'ocean',
-  name: { zh: '海洋', en: 'Ocean' },
-  light: {
-    bg: '#eef6fb',                  // 背景色
-    bgTexture: 'linear-gradient(...)', // 背景纹理 (CSS background-image 值，可 'none')
-    surface: '#ffffff', surface2: '#e2f0f8',
-    text: '#0f2e40', textMuted: '#4c6f85', border: '#c2dcea',
-    accent: '#0e9bc9',              // 强调色
-    accentTexture: 'linear-gradient(...)', // 强调色纹理 (CSS background-image 值)
-    accentHover: '#0b86ad', accentSoft: 'rgba(14,155,201,0.14)',
-    success: '#1a9e6f', warning: '#d9932e', danger: '#d8524f',
-    backdropFilter: 'blur(20px) saturate(1.6)' // 可选：毛玻璃滤镜（液态玻璃等），默认 'none'
-  },
-  dark: { /* 同结构 */ }
-}
-```
+最终外观 = **方案 × 配色 × 黑白**（4 × 15 × 2 = 120 种）。方案决定结构（填充 / 描边 / 辉光 / 磨砂），配色决定色相，黑白决定明暗；平台把解析结果写入 `--pg-*` CSS 变量。
 
-内置包：`default`（默认）、`ocean`（海洋）、`forest`（森林）、`sunset`（日落）、`candy`（糖果）、`glass`（液态玻璃）、`mono`（极简）。
+`<html>` 上同时暴露 `data-skin`（方案 id）、`data-palette`（配色 id）与 `data-skin-id`（组合，如 `cyber-cyan`）。
+
+### 配色（15 套固定）
+
+纯色系：`obsidian` 曜石蓝 · `ocean` 深海青 · `forest` 林间绿 · `sunset` 落日橙 · `candy` 糖果粉 · `mono` 极简灰 · `ink` 墨黑 · `blueprint` 工程蓝 · `violet` 紫罗兰 · `cyan` 霓虹青 · `magenta` 霓虹紫红 · `lime` 荧光绿 · `azure` 冰蓝 · `rose` 玫瑰粉 · `mint` 薄荷绿。
+
+每套配色只定义三个种子色：`accent`（白方案主色）、`neon`（黑方案荧光色）、`accent2`（渐变副色），其余底色 / 文字 / 描边由平台推导，因此同一配色在四种方案下都成立。
 
 ### CSS 变量（推荐用法）
-
-平台会把激活包按当前深浅模式解析后写入 `<html>`，CSS 直接引用即可自动跟随：
 
 | 变量 | 含义 |
 |------|------|
@@ -172,35 +164,39 @@ GamePlatform.theme.onChange(repaint);
 | `--pg-surface` / `--pg-surface-2` | 面板色 / 次级面板色 |
 | `--pg-text` / `--pg-text-muted` / `--pg-border` | 文字 / 弱化文字 / 边框 |
 | `--pg-accent` / `--pg-accent-hover` / `--pg-accent-soft` | 强调色 / 悬停 / 弱化底色 |
-| `--pg-accent-image` | 强调色纹理（按钮背景等） |
+| `--pg-accent-image` / `--pg-on-accent` | 强调色纹理 / 强调色上的前景色（按亮度自动选黑或白） |
 | `--pg-success` / `--pg-warning` / `--pg-danger` | 状态色 |
-| `--pg-font` / `--pg-radius` / `--pg-shadow` | 字体 / 圆角 / 阴影 |
-| `--pg-backdrop-filter` | 毛玻璃滤镜（液态玻璃等主题为 `blur(...)`，其余为 `none`） |
+| `--pg-font` / `--pg-radius` / `--pg-shadow` / `--pg-shadow-hover` | 字体 / 圆角 / 阴影 / 悬停阴影 |
+| `--pg-backdrop-filter` | 毛玻璃滤镜（液态玻璃为 `blur(...)`，其余 `none`） |
 
 ```css
 .my-panel { background: var(--pg-surface); color: var(--pg-text); }
-.my-btn   { background-color: var(--pg-accent); background-image: var(--pg-accent-image); }
+.my-btn   { background-color: var(--pg-accent); background-image: var(--pg-accent-image);
+            color: var(--pg-on-accent); }
 body      { background-color: var(--pg-bg); background-image: var(--pg-bg-image); }
+
+/* 方案级差异化：用 data-skin 选择器，不要按配色分支 */
+html[data-skin="line"] .my-panel { border-width: 2px; box-shadow: none; }
 ```
 
 ### JS API
 
 | 方法 | 说明 |
 |------|------|
-| `list()` | 所有外观包 id 数组 |
-| `categories()` | 风格分类数组：`[{ id, name:{zh,en}, desc:{zh,en} }]`（`solid` / `line` / `cyber` / `glass`） |
-| `byCategory(catId)` | 某分类下的包 id 列表 |
-| `categoryOf(id)` | 某个包所属分类 id |
-| `get(id?)` | 包定义；不传 id 返回当前激活包 |
-| `getActive()` | `{ id, name, category, mode, colors, bgTexture, accentTexture, backdropFilter, font }`（已按当前深浅模式解析） |
+| `styles()` | 方案数组 `[{ id, name:{zh,en}, desc:{zh,en} }]`（4 项固定） |
+| `palettes()` | 配色数组 `[{ id, name:{zh,en} }]`（15 项固定） |
+| `style(id)` / `palette(id)` | 取单个方案 / 配色定义 |
+| `derive(styleId, paletteId, mode)` | 解析任意组合：`{ style, palette, mode, colors, bgTexture, accentTexture, backdropFilter, shadowHover }`，做预览、拼图、局部取色都用它 |
+| `getActive()` | 当前组合（已按黑白解析）：`{ id, style, palette, name, mode, colors, bgTexture, accentTexture, backdropFilter }` |
+| `list()` | 全部组合 id `solid-obsidian` … `glass-mint`（60 项） |
+| `get(id?)` | 取某个组合定义（兼容旧包 id）；不传返回当前组合 |
 | `colors()` | 仅取当前已解析颜色表（canvas 取色常用） |
-| `onChange(fn)` | 订阅主题包变化，`fn(activeInfo)`；返回取消订阅函数 |
-| `register(pack)` | 运行时注册自定义主题包（需 `id` / `name` / `light` / `dark`，可带 `cat`） |
-
-内置 4 大风格、15 套配色：纯色（`default` 曜石蓝 / `ocean` 深海青 / `forest` 林间绿 / `sunset` 落日橙 / `candy` 糖果粉 / `mono` 极简黑白）、线条（`line-ink` 墨线 / `line-blueprint` 工程蓝图 / `line-violet` 紫墨线）、赛博朋克（`cyber-cyan` / `cyber-magenta` / `cyber-lime`）、液态玻璃（`glass` 蓝 / `glass-rose` 玫瑰 / `glass-mint` 薄荷）。风格差异由 `<html data-skin>` 前缀驱动（`line-*` 走描边、`cyber-*` 加辉光与扫描线、`glass*` 加磨砂与内高光），并额外提供 `--pg-on-accent`（强调色上的前景色，按亮度自动计算）。
+| `onChange(fn)` | 订阅外观变化，`fn(activeInfo)`；返回取消订阅函数 |
+| `categories()` / `byCategory()` / `categoryOf()` | 旧命名兼容：分别等价于 `styles()` / 全部配色 id / 组合所属方案 |
+| `register(pack)` | 运行时注册自定义配色（`id` / `name` / `light` / `dark`），注册后在四种方案下都直接使用自带 token |
 
 ```js
-// canvas 场景：取强调色绘制，并跟随主题包/深浅色变化重绘
+// canvas 场景：取强调色绘制，并跟随方案/配色/黑白变化重绘
 function repaint() {
   var c = GamePlatform.themePacks.colors();
   ctx.fillStyle = c.bg;
@@ -209,10 +205,18 @@ function repaint() {
   ctx.fillRect(0, 0, score * 10, 20);
 }
 GamePlatform.themePacks.onChange(repaint);
-GamePlatform.theme.onChange(repaint); // 深浅模式变化同样会触发
+GamePlatform.theme.onChange(repaint);
+
+// 预览某个组合（黑白两套）而不用真的切换主题
+var light = GamePlatform.themePacks.derive('cyber', 'lime', 'light');
+var dark  = GamePlatform.themePacks.derive('cyber', 'lime', 'dark');
 ```
 
-> `GamePlatform.theme.onChange` 在**深浅模式或主题包**变化时都会触发（外观变了就该重绘）；`themePacks.onChange` 只在主题包切换时触发。
+### 旧设置迁移
+
+1.0 版只存了单个 `skin`（如 `default` / `cyber-cyan` / `glass-rose`）。读取时会自动映射为「方案 + 配色」，无需手动迁移；`settings.get('skin')` 仍返回只读的组合 id（如 `glass-rose`）供旧代码使用。
+
+> `GamePlatform.theme.onChange` 在**黑白模式或方案/配色**变化时都会触发（外观变了就该重绘）；`themePacks.onChange` 只在方案或配色切换时触发。
 
 ---
 

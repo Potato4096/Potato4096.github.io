@@ -28,11 +28,12 @@
   var CHANNEL_NAME = 'p4096-platform';
 
   var DEFAULT_SETTINGS = {
-    lang: 'zh',            // 'zh' | 'en'
-    theme: 'system',       // 'light' | 'dark' | 'system'  —— 深浅模式
-    skin: 'default',       // 主题外观包 id —— 每个包内含深浅两套配色/纹理
-    reduceMotion: false,   // 减少动画
-    sound: true            // 全局音效开关
+    lang: 'zh',              // 'zh' | 'en'
+    theme: 'system',         // 'light' | 'dark' | 'system' —— 黑白方案
+    style: 'solid',          // 主题方案: 'solid' | 'line' | 'cyber' | 'glass'
+    palette: 'obsidian',     // 配色 id（15 套，见 THEME_PALETTES）
+    reduceMotion: false,     // 减少动画
+    sound: true              // 全局音效开关
   };
 
   /* ---------------------------------------------------------- */
@@ -91,6 +92,18 @@
     for (var k in DEFAULT_SETTINGS) {
       out[k] = (k in stored) ? stored[k] : DEFAULT_SETTINGS[k];
     }
+    // 兼容 1.0 的单一 skin id（'default' / 'cyber-cyan' / 'glass-rose' ...）
+    if (!('style' in stored) || !('palette' in stored)) {
+      var legacy = LEGACY_SKINS[stored.skin];
+      if (legacy) {
+        out.style = legacy[0];
+        out.palette = legacy[1];
+      }
+    }
+    if (!isStyle(out.style)) out.style = DEFAULT_SETTINGS.style;
+    if (!isPalette(out.palette)) out.palette = DEFAULT_SETTINGS.palette;
+    // 只读兼容字段：'solid-obsidian'
+    out.skin = out.style + '-' + out.palette;
     return out;
   }
 
@@ -105,6 +118,7 @@
       }
     }
     if (!changed.length) return;
+    delete next.skin; // 只读兼容字段，不落盘
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(next)); } catch (e) { /* quota */ }
     broadcast({ type: 'settings', keys: changed, source: source || 'self' });
     notifySettings(changed, source || 'self');
@@ -117,15 +131,16 @@
 
   function notifySettings(keys, source) {
     var s = readSettings();
+    var skinChanged = keys.indexOf('style') !== -1 || keys.indexOf('palette') !== -1;
     settingsListeners.forEach(function (fn) {
       try { fn(s, keys, source); } catch (e) { console.error('[GamePlatform]', e); }
     });
-    if (keys.indexOf('theme') !== -1 || keys.indexOf('skin') !== -1) {
+    if (keys.indexOf('theme') !== -1 || skinChanged) {
       themeListeners.forEach(function (fn) {
         try { fn(resolveTheme(s.theme), s.theme); } catch (e) { console.error('[GamePlatform]', e); }
       });
     }
-    if (keys.indexOf('skin') !== -1) {
+    if (skinChanged) {
       skinListeners.forEach(function (fn) {
         try { fn(themePacks.getActive()); } catch (e) { console.error('[GamePlatform]', e); }
       });
@@ -139,413 +154,242 @@
   }
 
   /* ---------------------------------------------------------- */
-  /* 主题外观包 (skin packs)                                     */
-  /* 每个包含 light/dark 两套配色与纹理，与深浅模式正交            */
+  /* 主题：方案（风格） × 配色 × 黑白                              */
+  /* 方案决定结构（填充 / 描边 / 辉光 / 磨砂），配色决定色相，       */
+  /* 黑白决定明暗 —— 三个维度正交，可任意组合                      */
   /* ---------------------------------------------------------- */
 
-  /* 主题风格分类：纯色 / 线条 / 赛博朋克 / 液态玻璃 */
-  var THEME_CATEGORIES = [
+  /* 4 种固定方案 */
+  var THEME_STYLES = [
     {
       id: 'solid',
       name: { zh: '纯色', en: 'Solid' },
-      desc: { zh: '纯色底 + 单一强调色，干净直接', en: 'Flat fills with a single accent — clean and direct' }
+      desc: { zh: '纯色底 + 单一强调色，干净直接', en: 'Flat fills with one accent — clean and direct' }
     },
     {
       id: 'line',
       name: { zh: '线条', en: 'Outline' },
-      desc: { zh: '无填充、强描边，工程图纸般的线稿感', en: 'No fills, strong strokes — a blueprint line-art feel' }
+      desc: { zh: '简约描边 + 淡色填充，线稿感', en: 'Minimal strokes over pale fills' }
     },
     {
       id: 'cyber',
       name: { zh: '赛博朋克', en: 'Cyberpunk' },
-      desc: { zh: '暗底霓虹、辉光与扫描线', en: 'Neon glow and scanlines over dark surfaces' }
+      desc: { zh: '霓虹描边 + 整体辉光，高对比', en: 'Neon strokes, glow everywhere, high contrast' }
     },
     {
       id: 'glass',
       name: { zh: '液态玻璃', en: 'Liquid Glass' },
-      desc: { zh: '半透明磨砂面板，背景透出彩色光晕', en: 'Frosted translucent panels over colorful light' }
+      desc: { zh: '半透明磨砂面板，透出彩色光晕', en: 'Frosted translucent panels over colored light' }
     }
   ];
 
-  var THEME_PACKS = {
-    /* ================= 纯色 Solid ================= */
-    'default': {
-      id: 'default',
-      cat: 'solid',
-      name: { zh: '曜石蓝', en: 'Obsidian Blue' },
-      light: {
-        bg: '#f6f7fb',
-        bgTexture: 'linear-gradient(160deg, #eef1ff 0%, #f6f7fb 45%, #fdf7ee 100%)',
-        surface: '#ffffff', surface2: '#eef0f6',
-        text: '#1c2333', textMuted: '#5b6474', border: '#d9dee8',
-        accent: '#4f6df5', accentHover: '#3d59e0', accentSoft: 'rgba(79, 109, 245, 0.12)',
-        accentTexture: 'linear-gradient(135deg, #4f6df5 0%, #7c5cf0 100%)',
-        success: '#22a06b', warning: '#e2a03f', danger: '#e5484d'
-      },
-      dark: {
-        bg: '#0f1219',
-        bgTexture: 'linear-gradient(160deg, #171c2a 0%, #0f1219 50%, #1a1420 100%)',
-        surface: '#1a202d', surface2: '#242c3c',
-        text: '#e9edf5', textMuted: '#98a2b3', border: '#2e3748',
-        accent: '#7c93ff', accentHover: '#93a6ff', accentSoft: 'rgba(124, 147, 255, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #7c93ff 0%, #a58bff 100%)',
-        success: '#2eae78', warning: '#e2a03f', danger: '#e56a63'
-      }
-    },
-    'ocean': {
-      id: 'ocean',
-      cat: 'solid',
-      name: { zh: '深海青', en: 'Deep Ocean' },
-      light: {
-        bg: '#eef6fb',
-        bgTexture: 'linear-gradient(160deg, #d9edf7 0%, #eef6fb 40%, #e7f6f2 100%)',
-        surface: '#ffffff', surface2: '#e2f0f8',
-        text: '#0f2e40', textMuted: '#4c6f85', border: '#c2dcea',
-        accent: '#0e9bc9', accentHover: '#0b86ad', accentSoft: 'rgba(14, 155, 201, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #0e9bc9 0%, #43c4e0 100%)',
-        success: '#1a9e6f', warning: '#d9932e', danger: '#d8524f'
-      },
-      dark: {
-        bg: '#0a1520',
-        bgTexture: 'linear-gradient(160deg, #0d2130 0%, #0a1520 55%, #0c2622 100%)',
-        surface: '#12222f', surface2: '#1b3040',
-        text: '#e4f1f8', textMuted: '#8fb0c2', border: '#274456',
-        accent: '#3ec0e4', accentHover: '#63d0ec', accentSoft: 'rgba(62, 192, 228, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #3ec0e4 0%, #5ce0c8 100%)',
-        success: '#2fb98a', warning: '#e2a545', danger: '#e56a63'
-      }
-    },
-    'forest': {
-      id: 'forest',
-      cat: 'solid',
-      name: { zh: '林间绿', en: 'Forest' },
-      light: {
-        bg: '#f0f5ec',
-        bgTexture: 'linear-gradient(160deg, #e3efdb 0%, #f0f5ec 45%, #f5f0e2 100%)',
-        surface: '#ffffff', surface2: '#e7f0e2',
-        text: '#22331f', textMuted: '#5c7254', border: '#cfdcc6',
-        accent: '#3f9a4f', accentHover: '#34833f', accentSoft: 'rgba(63, 154, 79, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #3f9a4f 0%, #7fbf5c 100%)',
-        success: '#2f9e5f', warning: '#d99a34', danger: '#d4544e'
-      },
-      dark: {
-        bg: '#121a12',
-        bgTexture: 'linear-gradient(160deg, #172417 0%, #121a12 55%, #1c2410 100%)',
-        surface: '#1b261b', surface2: '#243124',
-        text: '#e6f0e2', textMuted: '#93a88c', border: '#31422f',
-        accent: '#62c274', accentHover: '#7ed18c', accentSoft: 'rgba(98, 194, 116, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #62c274 0%, #a5d95c 100%)',
-        success: '#4cba6d', warning: '#e0ac4a', danger: '#e06b62'
-      }
-    },
-    'sunset': {
-      id: 'sunset',
-      cat: 'solid',
-      name: { zh: '落日橙', en: 'Sunset' },
-      light: {
-        bg: '#fdf3ec',
-        bgTexture: 'linear-gradient(160deg, #fde6d8 0%, #fdf3ec 45%, #f8e8ef 100%)',
-        surface: '#ffffff', surface2: '#f8e8dd',
-        text: '#3c2418', textMuted: '#8a6450', border: '#edd4c2',
-        accent: '#e8703a', accentHover: '#d15e2c', accentSoft: 'rgba(232, 112, 58, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #e8703a 0%, #f0a03c 100%)',
-        success: '#2a9d68', warning: '#e0a030', danger: '#d84848'
-      },
-      dark: {
-        bg: '#1c1210',
-        bgTexture: 'linear-gradient(160deg, #291713 0%, #1c1210 55%, #261420 100%)',
-        surface: '#2a1c18', surface2: '#37241e',
-        text: '#f6e9e2', textMuted: '#b89482', border: '#4a322a',
-        accent: '#f0854e', accentHover: '#f5a06c', accentSoft: 'rgba(240, 133, 78, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #f0854e 0%, #f5b25c 100%)',
-        success: '#3fae7a', warning: '#e7b14e', danger: '#e56b62'
-      }
-    },
-    'candy': {
-      id: 'candy',
-      cat: 'solid',
-      name: { zh: '糖果粉', en: 'Candy' },
-      light: {
-        bg: '#f9f0f8',
-        bgTexture: 'linear-gradient(160deg, #f6e4f4 0%, #f9f0f8 45%, #eef0fd 100%)',
-        surface: '#ffffff', surface2: '#f4e6f3',
-        text: '#3a2340', textMuted: '#7e5a88', border: '#e8d2e8',
-        accent: '#c2559c', accentHover: '#ab4688', accentSoft: 'rgba(194, 85, 156, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #c2559c 0%, #7b6ef0 100%)',
-        success: '#2aa476', warning: '#dd9a35', danger: '#d84f6d'
-      },
-      dark: {
-        bg: '#1a1220',
-        bgTexture: 'linear-gradient(160deg, #231530 0%, #1a1220 55%, #241428 100%)',
-        surface: '#271b30', surface2: '#33243d',
-        text: '#f2e8f5', textMuted: '#ab8fb5', border: '#453250',
-        accent: '#e074c0', accentHover: '#ea8fd0', accentSoft: 'rgba(224, 116, 192, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #e074c0 0%, #8f8dfa 100%)',
-        success: '#37b887', warning: '#e5ac4c', danger: '#e56b86'
-      }
-    },
-    'mono': {
-      id: 'mono',
-      cat: 'solid',
-      name: { zh: '极简黑白', en: 'Mono' },
-      light: {
-        bg: '#f2f2f2',
-        bgTexture: 'none',
-        surface: '#ffffff', surface2: '#e8e8e8',
-        text: '#1a1a1a', textMuted: '#666666', border: '#d4d4d4',
-        accent: '#333333', accentHover: '#111111', accentSoft: 'rgba(0, 0, 0, 0.08)',
-        accentTexture: 'none',
-        success: '#2a8a5b', warning: '#b8862a', danger: '#c04040'
-      },
-      dark: {
-        bg: '#141414',
-        bgTexture: 'none',
-        surface: '#1e1e1e', surface2: '#2a2a2a',
-        text: '#f0f0f0', textMuted: '#999999', border: '#3a3a3a',
-        accent: '#e8e8e8', accentHover: '#ffffff', accentSoft: 'rgba(255, 255, 255, 0.12)',
-        accentTexture: 'none',
-        success: '#4cb584', warning: '#cfa13f', danger: '#d06060'
-      }
-    },
+  /* 15 套固定配色：accent 浅色主色 / neon 深色荧光 / accent2 渐变副色 */
+  var THEME_PALETTES = [
+    { id: 'obsidian',  name: { zh: '曜石蓝', en: 'Obsidian Blue' }, accent: '#4f6df5', neon: '#7c93ff', accent2: '#7c5cf0' },
+    { id: 'ocean',     name: { zh: '深海青', en: 'Deep Ocean' },    accent: '#0e9bc9', neon: '#3ec0e4', accent2: '#43c4e0' },
+    { id: 'forest',    name: { zh: '林间绿', en: 'Forest' },        accent: '#3f9a4f', neon: '#62c274', accent2: '#7fbf5c' },
+    { id: 'sunset',    name: { zh: '落日橙', en: 'Sunset' },        accent: '#e8703a', neon: '#f0854e', accent2: '#f0a03c' },
+    { id: 'candy',     name: { zh: '糖果粉', en: 'Candy' },         accent: '#c2559c', neon: '#e074c0', accent2: '#7b6ef0' },
+    { id: 'mono',      name: { zh: '极简灰', en: 'Mono' },          accent: '#3f3f46', neon: '#d4d4d8', accent2: '#71717a' },
+    { id: 'ink',       name: { zh: '墨黑', en: 'Ink' },             accent: '#1b1e26', neon: '#e8eaee', accent2: '#4a4f5a' },
+    { id: 'blueprint', name: { zh: '工程蓝', en: 'Blueprint' },     accent: '#2563eb', neon: '#6ea8ff', accent2: '#0ea5e9' },
+    { id: 'violet',    name: { zh: '紫罗兰', en: 'Violet' },        accent: '#7c3aed', neon: '#c4b5fd', accent2: '#a855f7' },
+    { id: 'cyan',      name: { zh: '霓虹青', en: 'Neon Cyan' },     accent: '#00a6c0', neon: '#00ffd0', accent2: '#00b3ff' },
+    { id: 'magenta',   name: { zh: '霓虹紫红', en: 'Neon Magenta' },accent: '#d6006e', neon: '#ff2d95', accent2: '#a855f7' },
+    { id: 'lime',      name: { zh: '荧光绿', en: 'Neon Lime' },     accent: '#4d9c00', neon: '#a3ff2e', accent2: '#00d0a0' },
+    { id: 'azure',     name: { zh: '冰蓝', en: 'Ice Blue' },        accent: '#0a84ff', neon: '#64b5ff', accent2: '#5ac8fa' },
+    { id: 'rose',      name: { zh: '玫瑰粉', en: 'Rose' },          accent: '#d81b60', neon: '#ff7ab2', accent2: '#c86bff' },
+    { id: 'mint',      name: { zh: '薄荷绿', en: 'Mint' },          accent: '#0fae83', neon: '#4fe3bb', accent2: '#38bdf8' }
+  ];
 
-    /* ================= 线条 Outline ================= */
-    'line-ink': {
-      id: 'line-ink',
-      cat: 'line',
-      name: { zh: '墨线', en: 'Ink Line' },
-      light: {
-        bg: '#ffffff',
-        bgTexture: 'none',
-        surface: 'transparent', surface2: 'rgba(17, 19, 24, 0.05)',
-        text: '#111318', textMuted: '#565b66', border: '#1b1e26',
-        accent: '#1b1e26', accentHover: '#000000', accentSoft: 'rgba(17, 19, 24, 0.08)',
-        accentTexture: 'none',
-        success: '#1a7f4f', warning: '#a86b00', danger: '#c02b2b',
-        shadow: 'none'
-      },
-      dark: {
-        bg: '#0b0b0d',
-        bgTexture: 'none',
-        surface: 'transparent', surface2: 'rgba(255, 255, 255, 0.06)',
-        text: '#f4f5f7', textMuted: '#a0a5b0', border: '#e8eaee',
-        accent: '#f4f5f7', accentHover: '#ffffff', accentSoft: 'rgba(255, 255, 255, 0.12)',
-        accentTexture: 'none',
-        success: '#5fd39b', warning: '#e0b050', danger: '#ff8070',
-        shadow: 'none'
-      }
-    },
-    'line-blueprint': {
-      id: 'line-blueprint',
-      cat: 'line',
-      name: { zh: '工程蓝图', en: 'Blueprint' },
-      light: {
-        bg: '#f4f8ff',
-        bgTexture: 'linear-gradient(rgba(37, 99, 235, 0.10) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, rgba(37, 99, 235, 0.10) 1px, transparent 1px) 0 0 / 24px 24px',
-        surface: 'transparent', surface2: 'rgba(37, 99, 235, 0.07)',
-        text: '#0f2a4a', textMuted: '#4a6b8f', border: '#2f6fd0',
-        accent: '#2563eb', accentHover: '#1d4fd0', accentSoft: 'rgba(37, 99, 235, 0.12)',
-        accentTexture: 'none',
-        success: '#0f7a54', warning: '#a86700', danger: '#c02b2b',
-        shadow: 'none'
-      },
-      dark: {
-        bg: '#081426',
-        bgTexture: 'linear-gradient(rgba(120, 170, 255, 0.13) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, rgba(120, 170, 255, 0.13) 1px, transparent 1px) 0 0 / 24px 24px',
-        surface: 'transparent', surface2: 'rgba(120, 170, 255, 0.10)',
-        text: '#dbe8ff', textMuted: '#7d9cc4', border: '#5b8fd6',
-        accent: '#6ea8ff', accentHover: '#9cc4ff', accentSoft: 'rgba(110, 168, 255, 0.18)',
-        accentTexture: 'none',
-        success: '#4fd3a0', warning: '#e0b050', danger: '#ff8070',
-        shadow: 'none'
-      }
-    },
-    'line-violet': {
-      id: 'line-violet',
-      cat: 'line',
-      name: { zh: '紫墨线', en: 'Violet Line' },
-      light: {
-        bg: '#fcf7ff',
-        bgTexture: 'none',
-        surface: 'transparent', surface2: 'rgba(124, 58, 237, 0.07)',
-        text: '#2a1145', textMuted: '#6b4f8a', border: '#7c3aed',
-        accent: '#7c3aed', accentHover: '#6a2dd1', accentSoft: 'rgba(124, 58, 237, 0.12)',
-        accentTexture: 'none',
-        success: '#0f7a54', warning: '#a86700', danger: '#c02b2b',
-        shadow: 'none'
-      },
-      dark: {
-        bg: '#120d1d',
-        bgTexture: 'none',
-        surface: 'transparent', surface2: 'rgba(196, 181, 253, 0.10)',
-        text: '#ede6ff', textMuted: '#a08cbd', border: '#c4b5fd',
-        accent: '#c4b5fd', accentHover: '#ded3ff', accentSoft: 'rgba(196, 181, 253, 0.18)',
-        accentTexture: 'none',
-        success: '#4fd3a0', warning: '#e0b050', danger: '#ff8070',
-        shadow: 'none'
-      }
-    },
-
-    /* ================= 赛博朋克 Cyberpunk ================= */
-    'cyber-cyan': {
-      id: 'cyber-cyan',
-      cat: 'cyber',
-      name: { zh: '霓虹青', en: 'Neon Cyan' },
-      light: {
-        bg: '#eafaff',
-        bgTexture: 'radial-gradient(900px 600px at 10% -10%, rgba(0, 194, 224, 0.20) 0%, rgba(0, 194, 224, 0) 60%), linear-gradient(180deg, #eafaff 0%, #f4feff 100%)',
-        surface: 'rgba(255, 255, 255, 0.82)', surface2: 'rgba(0, 194, 224, 0.10)',
-        text: '#04222b', textMuted: '#3d6b7a', border: '#59d7ec',
-        accent: '#00a6c0', accentHover: '#008fa6', accentSoft: 'rgba(0, 166, 192, 0.15)',
-        accentTexture: 'linear-gradient(135deg, #00c2e0 0%, #00ffd0 100%)',
-        success: '#0f9d6a', warning: '#c07a00', danger: '#d02b3f',
-        shadow: '0 0 0 1px rgba(0, 194, 224, 0.20), 0 8px 26px rgba(0, 194, 224, 0.18)'
-      },
-      dark: {
-        bg: '#04121a',
-        bgTexture: 'radial-gradient(1000px 700px at 8% -10%, rgba(0, 255, 208, 0.16) 0%, rgba(0, 255, 208, 0) 55%), linear-gradient(180deg, #04121a 0%, #061c26 100%)',
-        surface: 'rgba(9, 32, 42, 0.88)', surface2: 'rgba(0, 255, 208, 0.08)',
-        text: '#c8fbff', textMuted: '#5fa8b8', border: '#0e6a80',
-        accent: '#00ffd0', accentHover: '#5cffe3', accentSoft: 'rgba(0, 255, 208, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #00ffd0 0%, #00b3ff 100%)',
-        success: '#39e6a0', warning: '#e0c050', danger: '#ff5c7a',
-        shadow: '0 0 0 1px rgba(0, 255, 208, 0.25), 0 0 26px rgba(0, 255, 208, 0.20)'
-      }
-    },
-    'cyber-magenta': {
-      id: 'cyber-magenta',
-      cat: 'cyber',
-      name: { zh: '霓虹紫红', en: 'Neon Magenta' },
-      light: {
-        bg: '#fff4f9',
-        bgTexture: 'radial-gradient(900px 600px at 10% -10%, rgba(255, 45, 149, 0.16) 0%, rgba(255, 45, 149, 0) 60%), linear-gradient(180deg, #fff4f9 0%, #fdf7ff 100%)',
-        surface: 'rgba(255, 255, 255, 0.85)', surface2: 'rgba(214, 0, 110, 0.08)',
-        text: '#33061c', textMuted: '#7a3a58', border: '#ff9ccb',
-        accent: '#d6006e', accentHover: '#b8005f', accentSoft: 'rgba(214, 0, 110, 0.13)',
-        accentTexture: 'linear-gradient(135deg, #ff2d95 0%, #a855f7 100%)',
-        success: '#0f9d6a', warning: '#c07a00', danger: '#d02b3f',
-        shadow: '0 0 0 1px rgba(255, 45, 149, 0.18), 0 8px 26px rgba(255, 45, 149, 0.16)'
-      },
-      dark: {
-        bg: '#12040d',
-        bgTexture: 'radial-gradient(1000px 700px at 8% -10%, rgba(255, 45, 149, 0.20) 0%, rgba(255, 45, 149, 0) 55%), radial-gradient(800px 600px at 110% 20%, rgba(168, 85, 247, 0.16) 0%, rgba(168, 85, 247, 0) 60%), linear-gradient(180deg, #12040d 0%, #1a0616 100%)',
-        surface: 'rgba(32, 10, 24, 0.90)', surface2: 'rgba(255, 45, 149, 0.09)',
-        text: '#ffd9ec', textMuted: '#b06a8f', border: '#7a1f4e',
-        accent: '#ff2d95', accentHover: '#ff6bb2', accentSoft: 'rgba(255, 45, 149, 0.18)',
-        accentTexture: 'linear-gradient(135deg, #ff2d95 0%, #a855f7 100%)',
-        success: '#39e6a0', warning: '#e0c050', danger: '#ff5c7a',
-        shadow: '0 0 0 1px rgba(255, 45, 149, 0.28), 0 0 26px rgba(255, 45, 149, 0.22)'
-      }
-    },
-    'cyber-lime': {
-      id: 'cyber-lime',
-      cat: 'cyber',
-      name: { zh: '荧光绿', en: 'Neon Lime' },
-      light: {
-        bg: '#f6ffe9',
-        bgTexture: 'radial-gradient(900px 600px at 10% -10%, rgba(124, 255, 46, 0.18) 0%, rgba(124, 255, 46, 0) 60%), linear-gradient(180deg, #f6ffe9 0%, #f9fff2 100%)',
-        surface: 'rgba(255, 255, 255, 0.85)', surface2: 'rgba(77, 156, 0, 0.09)',
-        text: '#152400', textMuted: '#4f6b28', border: '#a8e05a',
-        accent: '#4d9c00', accentHover: '#3f8000', accentSoft: 'rgba(77, 156, 0, 0.13)',
-        accentTexture: 'linear-gradient(135deg, #7cff2e 0%, #00d0a0 100%)',
-        success: '#0f9d6a', warning: '#c07a00', danger: '#d02b3f',
-        shadow: '0 0 0 1px rgba(124, 255, 46, 0.20), 0 8px 26px rgba(124, 255, 46, 0.16)'
-      },
-      dark: {
-        bg: '#0a1004',
-        bgTexture: 'radial-gradient(1000px 700px at 8% -10%, rgba(163, 255, 46, 0.14) 0%, rgba(163, 255, 46, 0) 55%), linear-gradient(180deg, #0a1004 0%, #0d1606 100%)',
-        surface: 'rgba(18, 26, 8, 0.90)', surface2: 'rgba(163, 255, 46, 0.08)',
-        text: '#eaffd0', textMuted: '#93b06a', border: '#3f6a10',
-        accent: '#a3ff2e', accentHover: '#c2ff70', accentSoft: 'rgba(163, 255, 46, 0.16)',
-        accentTexture: 'linear-gradient(135deg, #a3ff2e 0%, #00d0a0 100%)',
-        success: '#39e6a0', warning: '#e0c050', danger: '#ff5c7a',
-        shadow: '0 0 0 1px rgba(163, 255, 46, 0.25), 0 0 26px rgba(163, 255, 46, 0.20)'
-      }
-    },
-
-    /* ================= 液态玻璃 Liquid Glass ================= */
-    'glass': {
-      id: 'glass',
-      cat: 'glass',
-      name: { zh: '蓝玻璃', en: 'Blue Glass' },
-      light: {
-        bg: '#f2f6ff',
-        bgTexture: 'radial-gradient(1200px 800px at 12% -10%, rgba(126, 168, 255, 0.45) 0%, rgba(126, 168, 255, 0) 55%), radial-gradient(900px 700px at 110% 20%, rgba(255, 158, 196, 0.38) 0%, rgba(255, 158, 196, 0) 60%), radial-gradient(800px 600px at 50% 120%, rgba(140, 230, 200, 0.32) 0%, rgba(140, 230, 200, 0) 60%), linear-gradient(180deg, #f2f6ff 0%, #f8faff 100%)',
-        surface: 'rgba(255, 255, 255, 0.32)', surface2: 'rgba(255, 255, 255, 0.18)',
-        text: '#16202e', textMuted: '#5c6b80', border: 'rgba(255, 255, 255, 0.45)',
-        accent: '#0a84ff', accentHover: '#0071e3', accentSoft: 'rgba(10, 132, 255, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%)',
-        success: '#248a3d', warning: '#c77500', danger: '#d70015',
-        backdropFilter: 'blur(5px) saturate(1.4)',
-        shadow: '0 10px 30px rgba(60, 110, 200, 0.12)'
-      },
-      dark: {
-        bg: '#121b2e',
-        bgTexture: 'radial-gradient(1200px 800px at 10% -10%, rgba(64, 120, 255, 0.35) 0%, rgba(64, 120, 255, 0) 55%), radial-gradient(900px 700px at 115% 15%, rgba(160, 90, 255, 0.28) 0%, rgba(160, 90, 255, 0) 60%), radial-gradient(800px 600px at 55% 125%, rgba(40, 190, 180, 0.22) 0%, rgba(40, 190, 180, 0) 60%), linear-gradient(180deg, #121b2e 0%, #16203a 100%)',
-        surface: 'rgba(28, 34, 48, 0.35)', surface2: 'rgba(255, 255, 255, 0.07)',
-        text: '#eef2f8', textMuted: '#93a1b5', border: 'rgba(255, 255, 255, 0.12)',
-        accent: '#64b5ff', accentHover: '#8ac8ff', accentSoft: 'rgba(100, 181, 255, 0.18)',
-        accentTexture: 'linear-gradient(135deg, #4aa8ff 0%, #7d8cff 100%)',
-        success: '#30d158', warning: '#e6a700', danger: '#ff6961',
-        backdropFilter: 'blur(5px) saturate(1.4)',
-        shadow: '0 10px 30px rgba(0, 0, 0, 0.35)'
-      }
-    },
-    'glass-rose': {
-      id: 'glass-rose',
-      cat: 'glass',
-      name: { zh: '玫瑰玻璃', en: 'Rose Glass' },
-      light: {
-        bg: '#fff4f8',
-        bgTexture: 'radial-gradient(1200px 800px at 8% -10%, rgba(255, 120, 180, 0.40) 0%, rgba(255, 120, 180, 0) 55%), radial-gradient(900px 700px at 110% 15%, rgba(190, 120, 255, 0.30) 0%, rgba(190, 120, 255, 0) 60%), radial-gradient(800px 600px at 50% 120%, rgba(255, 200, 120, 0.24) 0%, rgba(255, 200, 120, 0) 60%), linear-gradient(180deg, #fff4f8 0%, #fff9fb 100%)',
-        surface: 'rgba(255, 255, 255, 0.34)', surface2: 'rgba(255, 255, 255, 0.20)',
-        text: '#33121f', textMuted: '#7d5a68', border: 'rgba(255, 255, 255, 0.50)',
-        accent: '#e0447f', accentHover: '#c93a70', accentSoft: 'rgba(224, 68, 127, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #ff7aae 0%, #c86bff 100%)',
-        success: '#248a3d', warning: '#c77500', danger: '#d70015',
-        backdropFilter: 'blur(5px) saturate(1.4)',
-        shadow: '0 10px 30px rgba(224, 68, 127, 0.12)'
-      },
-      dark: {
-        bg: '#1c0f17',
-        bgTexture: 'radial-gradient(1200px 800px at 10% -10%, rgba(255, 90, 160, 0.30) 0%, rgba(255, 90, 160, 0) 55%), radial-gradient(900px 700px at 115% 15%, rgba(150, 80, 255, 0.26) 0%, rgba(150, 80, 255, 0) 60%), radial-gradient(800px 600px at 55% 125%, rgba(255, 160, 90, 0.18) 0%, rgba(255, 160, 90, 0) 60%), linear-gradient(180deg, #1c0f17 0%, #24131f 100%)',
-        surface: 'rgba(48, 26, 38, 0.36)', surface2: 'rgba(255, 255, 255, 0.07)',
-        text: '#fbe9f1', textMuted: '#b891a2', border: 'rgba(255, 255, 255, 0.12)',
-        accent: '#ff7ab2', accentHover: '#ffa0c8', accentSoft: 'rgba(255, 122, 178, 0.18)',
-        accentTexture: 'linear-gradient(135deg, #ff6fa8 0%, #c07bff 100%)',
-        success: '#30d158', warning: '#e6a700', danger: '#ff6961',
-        backdropFilter: 'blur(5px) saturate(1.4)',
-        shadow: '0 10px 30px rgba(0, 0, 0, 0.35)'
-      }
-    },
-    'glass-mint': {
-      id: 'glass-mint',
-      cat: 'glass',
-      name: { zh: '薄荷玻璃', en: 'Mint Glass' },
-      light: {
-        bg: '#effcf7',
-        bgTexture: 'radial-gradient(1200px 800px at 10% -10%, rgba(110, 231, 190, 0.40) 0%, rgba(110, 231, 190, 0) 55%), radial-gradient(900px 700px at 112% 18%, rgba(120, 200, 255, 0.32) 0%, rgba(120, 200, 255, 0) 60%), radial-gradient(800px 600px at 50% 120%, rgba(255, 240, 160, 0.24) 0%, rgba(255, 240, 160, 0) 60%), linear-gradient(180deg, #effcf7 0%, #f7fffc 100%)',
-        surface: 'rgba(255, 255, 255, 0.34)', surface2: 'rgba(255, 255, 255, 0.20)',
-        text: '#0d2b23', textMuted: '#4f7268', border: 'rgba(255, 255, 255, 0.50)',
-        accent: '#0fae83', accentHover: '#0b9671', accentSoft: 'rgba(15, 174, 131, 0.14)',
-        accentTexture: 'linear-gradient(135deg, #22d3a6 0%, #38bdf8 100%)',
-        success: '#248a3d', warning: '#c77500', danger: '#d70015',
-        backdropFilter: 'blur(5px) saturate(1.4)',
-        shadow: '0 10px 30px rgba(15, 174, 131, 0.12)'
-      },
-      dark: {
-        bg: '#08181a',
-        bgTexture: 'radial-gradient(1200px 800px at 10% -10%, rgba(60, 220, 180, 0.24) 0%, rgba(60, 220, 180, 0) 55%), radial-gradient(900px 700px at 115% 15%, rgba(70, 140, 255, 0.22) 0%, rgba(70, 140, 255, 0) 60%), radial-gradient(800px 600px at 55% 125%, rgba(240, 200, 90, 0.14) 0%, rgba(240, 200, 90, 0) 60%), linear-gradient(180deg, #08181a 0%, #0b2024 100%)',
-        surface: 'rgba(18, 40, 40, 0.36)', surface2: 'rgba(255, 255, 255, 0.07)',
-        text: '#e6fbf5', textMuted: '#8fb5ab', border: 'rgba(255, 255, 255, 0.12)',
-        accent: '#4fe3bb', accentHover: '#7defcd', accentSoft: 'rgba(79, 227, 187, 0.18)',
-        accentTexture: 'linear-gradient(135deg, #3ee0b0 0%, #5cc8ff 100%)',
-        success: '#30d158', warning: '#e6a700', danger: '#ff6961',
-        backdropFilter: 'blur(5px) saturate(1.4)',
-        shadow: '0 10px 30px rgba(0, 0, 0, 0.35)'
-      }
-    }
+  /** 1.0 版单一 skin id -> [方案, 配色]，仅用于读取旧设置 */
+  var LEGACY_SKINS = {
+    'default': ['solid', 'obsidian'],
+    'ocean': ['solid', 'ocean'],
+    'forest': ['solid', 'forest'],
+    'sunset': ['solid', 'sunset'],
+    'candy': ['solid', 'candy'],
+    'mono': ['solid', 'mono'],
+    'line-ink': ['line', 'ink'],
+    'line-blueprint': ['line', 'blueprint'],
+    'line-violet': ['line', 'violet'],
+    'cyber-cyan': ['cyber', 'cyan'],
+    'cyber-magenta': ['cyber', 'magenta'],
+    'cyber-lime': ['cyber', 'lime'],
+    'glass': ['glass', 'azure'],
+    'glass-rose': ['glass', 'rose'],
+    'glass-mint': ['glass', 'mint']
   };
 
+  /* ---------- 颜色工具 ---------- */
+
+  function hex2rgb(hex) {
+    var h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return { r: 136, g: 136, b: 136 };
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16)
+    };
+  }
+
+  function rgb2hex(c) {
+    function p(n) {
+      var v = Math.round(Math.min(255, Math.max(0, n)));
+      return (v < 16 ? '0' : '') + v.toString(16);
+    }
+    return '#' + p(c.r) + p(c.g) + p(c.b);
+  }
+
+  /** 线性混色：t=0 取 a，t=1 取 b */
+  function mix(a, b, t) {
+    var A = hex2rgb(a), B = hex2rgb(b);
+    return rgb2hex({
+      r: A.r + (B.r - A.r) * t,
+      g: A.g + (B.g - A.g) * t,
+      b: A.b + (B.b - A.b) * t
+    });
+  }
+
+  function fade(hex, alpha) {
+    var c = hex2rgb(hex);
+    return 'rgba(' + c.r + ', ' + c.g + ', ' + c.b + ', ' + alpha + ')';
+  }
+
+  function findStyle(id) {
+    for (var i = 0; i < THEME_STYLES.length; i++) {
+      if (THEME_STYLES[i].id === id) return THEME_STYLES[i];
+    }
+    return null;
+  }
+
+  function findPalette(id) {
+    for (var i = 0; i < THEME_PALETTES.length; i++) {
+      if (THEME_PALETTES[i].id === id) return THEME_PALETTES[i];
+    }
+    return null;
+  }
+
+  function isStyle(id) { return !!findStyle(id); }
+  function isPalette(id) { return !!findPalette(id); }
+
+  /** 中性色阶：由配色的强调色推导出成套底色/文字/描边 */
+  function neutralScale(pal, mode) {
+    if (mode === 'dark') {
+      return {
+        bg: mix('#0b0f16', pal.accent, 0.06),
+        surface: mix('#171d28', pal.accent, 0.07),
+        surface2: mix('#212936', pal.accent, 0.09),
+        text: mix('#eef3fb', pal.accent, 0.05),
+        textMuted: mix('#9aa5b6', pal.accent, 0.10),
+        border: mix('#2d3543', pal.accent, 0.18),
+        accent: pal.neon,
+        accentHover: mix(pal.neon, '#ffffff', 0.18)
+      };
+    }
+    return {
+      bg: mix('#ffffff', pal.accent, 0.045),
+      surface: '#ffffff',
+      surface2: mix('#ffffff', pal.accent, 0.09),
+      text: mix('#111621', pal.accent, 0.10),
+      textMuted: mix('#5c6676', pal.accent, 0.10),
+      border: mix('#dde2ea', pal.accent, 0.22),
+      accent: pal.accent,
+      accentHover: mix(pal.accent, '#000000', 0.14)
+    };
+  }
+
+  /**
+   * 生成一套完整外观 token
+   * 方案（solid/line/cyber/glass） × 配色 × 黑白
+   */
+  function buildTokens(styleId, pal, mode) {
+    var n = neutralScale(pal, mode);
+    var dark = mode === 'dark';
+    var t = {
+      bg: n.bg,
+      bgTexture: 'none',
+      surface: n.surface,
+      surface2: n.surface2,
+      text: n.text,
+      textMuted: n.textMuted,
+      border: n.border,
+      accent: n.accent,
+      accentHover: n.accentHover,
+      accentSoft: fade(n.accent, dark ? 0.18 : 0.13),
+      accentTexture: 'linear-gradient(135deg, ' + n.accent + ' 0%, ' + pal.accent2 + ' 100%)',
+      success: dark ? '#3ecf8e' : '#1f9d63',
+      warning: dark ? '#e3b455' : '#c98a1e',
+      danger: dark ? '#ff6b6b' : '#d64545',
+      shadow: dark ? '0 10px 30px rgba(0, 0, 0, 0.36)' : '0 10px 30px rgba(15, 23, 42, 0.10)',
+      shadowHover: dark ? '0 18px 44px rgba(0, 0, 0, 0.50)' : '0 16px 40px rgba(15, 23, 42, 0.16)',
+      backdropFilter: 'none',
+      borderWidth: '1px'
+    };
+
+    if (styleId === 'line') {
+      /* 线条：近白/近黑底 + 淡色填充 + 明确描边 */
+      var lb = dark ? mix('#0a0c11', pal.accent, 0.04) : mix('#ffffff', pal.accent, 0.02);
+      var grid = fade(n.border, dark ? 0.16 : 0.13);
+      t.bg = lb;
+      t.bgTexture = 'linear-gradient(' + grid + ' 1px, transparent 1px) 0 0 / 26px 26px, ' +
+                    'linear-gradient(90deg, ' + grid + ' 1px, transparent 1px) 0 0 / 26px 26px';
+      t.surface = mix(lb, n.accent, dark ? 0.10 : 0.05);
+      t.surface2 = mix(lb, n.accent, dark ? 0.16 : 0.10);
+      t.border = mix(n.accent, lb, dark ? 0.28 : 0.22);
+      t.text = dark ? mix('#f5f7fb', pal.accent, 0.05) : mix('#0d1116', pal.accent, 0.12);
+      t.textMuted = dark ? mix('#a6b0bf', pal.accent, 0.10) : mix('#4d5765', pal.accent, 0.12);
+      t.accentTexture = 'none';
+      t.shadow = 'none';
+      t.shadowHover = 'none';
+      t.borderWidth = '2px';
+    } else if (styleId === 'cyber') {
+      /* 赛博朋克：线条骨架 + 霓虹描边 + 整体辉光，高对比 */
+      var cyberAccent = dark ? pal.neon : mix(pal.accent, '#000000', 0.06);
+      var glow = dark ? 0.26 : 0.18;
+      t.bg = dark ? mix('#04070c', pal.neon, 0.06) : mix('#ffffff', pal.neon, 0.05);
+      t.bgTexture =
+        'radial-gradient(1200px 720px at 8% -12%, ' + fade(pal.neon, dark ? 0.24 : 0.20) + ' 0%, transparent 58%), ' +
+        'radial-gradient(900px 620px at 108% 6%, ' + fade(pal.accent2, dark ? 0.20 : 0.14) + ' 0%, transparent 62%)';
+      t.surface = dark ? fade(mix('#0a121b', pal.neon, 0.10), 0.88) : 'rgba(255, 255, 255, 0.84)';
+      t.surface2 = fade(pal.neon, dark ? 0.10 : 0.09);
+      t.text = dark ? mix('#ffffff', pal.neon, 0.10) : mix('#05080e', pal.neon, 0.10);
+      t.textMuted = dark ? fade(pal.neon, 0.66) : mix('#49525f', pal.accent, 0.16);
+      t.border = fade(pal.neon, dark ? 0.48 : 0.58);
+      t.accent = cyberAccent;
+      t.accentHover = dark ? mix(pal.neon, '#ffffff', 0.20) : mix(pal.accent, '#000000', 0.20);
+      t.accentSoft = fade(cyberAccent, dark ? 0.20 : 0.14);
+      t.accentTexture = 'linear-gradient(135deg, ' + cyberAccent + ' 0%, ' + pal.neon + ' 100%)';
+      t.shadow = '0 0 0 1px ' + fade(pal.neon, 0.40) + ', 0 0 22px ' + fade(pal.neon, glow) +
+                 ', 0 12px 30px rgba(0, 0, 0, ' + (dark ? 0.36 : 0.14) + ')';
+      t.shadowHover = '0 0 0 1px ' + fade(pal.neon, 0.62) + ', 0 0 34px ' + fade(pal.neon, glow + 0.10) +
+                      ', 0 18px 42px rgba(0, 0, 0, ' + (dark ? 0.46 : 0.18) + ')';
+      t.borderWidth = '1px';
+    } else if (styleId === 'glass') {
+      /* 液态玻璃：彩色光晕 + 半透明磨砂 */
+      t.bg = dark ? mix('#101828', pal.accent, 0.10) : mix('#f4f7ff', pal.accent, 0.05);
+      t.bgTexture =
+        'radial-gradient(1100px 760px at 10% -10%, ' + fade(pal.accent, dark ? 0.38 : 0.44) + ' 0%, transparent 58%), ' +
+        'radial-gradient(900px 700px at 112% 12%, ' + fade(pal.accent2, dark ? 0.30 : 0.34) + ' 0%, transparent 60%), ' +
+        'radial-gradient(820px 620px at 48% 122%, ' + fade(pal.neon, dark ? 0.22 : 0.26) + ' 0%, transparent 62%)';
+      t.surface = dark ? 'rgba(30, 38, 54, 0.34)' : 'rgba(255, 255, 255, 0.32)';
+      t.surface2 = dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.20)';
+      t.text = dark ? '#eef2f9' : mix('#0e1622', pal.accent, 0.10);
+      t.textMuted = dark ? 'rgba(226, 234, 246, 0.72)' : mix('#55637a', pal.accent, 0.12);
+      t.border = dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.50)';
+      t.accentSoft = fade(n.accent, dark ? 0.20 : 0.16);
+      t.backdropFilter = 'blur(14px) saturate(1.5)';
+      t.shadow = dark ? '0 12px 34px rgba(0, 0, 0, 0.34)' : '0 12px 32px rgba(31, 58, 110, 0.12)';
+      t.shadowHover = dark ? '0 18px 46px rgba(0, 0, 0, 0.46)' : '0 18px 44px rgba(31, 58, 110, 0.18)';
+    } else {
+      /* 纯色：纯色底 + 单强调色（浅色渐变底） */
+      t.bgTexture = dark
+        ? 'linear-gradient(160deg, ' + mix(n.bg, pal.accent, 0.10) + ' 0%, ' + n.bg + ' 52%, ' + mix(n.bg, pal.accent2, 0.08) + ' 100%)'
+        : 'linear-gradient(160deg, ' + mix(n.bg, pal.accent, 0.10) + ' 0%, ' + n.bg + ' 48%, ' + mix(n.bg, pal.accent2, 0.07) + ' 100%)';
+    }
+    return t;
+  }
 
   /** pack 颜色键 -> CSS 自定义属性名 */
   var SKIN_VAR_MAP = {
@@ -564,8 +408,61 @@
     shadow: '--pg-shadow'
   };
 
-  function getPack(id) {
-    return THEME_PACKS[id] || THEME_PACKS[DEFAULT_SETTINGS.skin];
+  /** 运行时注册的自定义外观（旧 API 兼容，按配色 id 直接取整套 token） */
+  var CUSTOM_SKINS = Object.create(null);
+
+  var deriveCache = Object.create(null);
+
+  /** 解析一套外观快照：{ style, palette, mode, colors, bgTexture, accentTexture, backdropFilter, shadow } */
+  function deriveSkin(styleId, paletteId, mode) {
+    var st = findStyle(styleId) || findStyle('solid');
+    var pal = findPalette(paletteId) || findPalette('obsidian');
+    var m = (mode === 'light' || mode === 'dark') ? mode : resolveTheme(readSettings().theme);
+    var key = st.id + '|' + pal.id + '|' + m;
+    if (deriveCache[key]) return deriveCache[key];
+
+    var tokens;
+    var custom = CUSTOM_SKINS[pal.id];
+    if (custom) {
+      var cd = custom[m] || custom.light;
+      tokens = {};
+      tokens.bg = cd.bg;
+      tokens.bgTexture = cd.bgTexture || 'none';
+      tokens.surface = cd.surface;
+      tokens.surface2 = cd.surface2;
+      tokens.text = cd.text;
+      tokens.textMuted = cd.textMuted;
+      tokens.border = cd.border;
+      tokens.accent = cd.accent;
+      tokens.accentHover = cd.accentHover || cd.accent;
+      tokens.accentSoft = cd.accentSoft || 'transparent';
+      tokens.accentTexture = cd.accentTexture || 'none';
+      tokens.success = cd.success || '#22a06b';
+      tokens.warning = cd.warning || '#e2a03f';
+      tokens.danger = cd.danger || '#e5484d';
+      tokens.shadow = cd.shadow || 'none';
+      tokens.shadowHover = cd.shadow || 'none';
+      tokens.backdropFilter = cd.backdropFilter || 'none';
+    } else {
+      tokens = buildTokens(st.id, pal, m);
+    }
+
+    var colors = {};
+    for (var k in SKIN_VAR_MAP) colors[k] = tokens[k];
+
+    var out = {
+      id: st.id + '-' + pal.id,
+      style: st.id,
+      palette: pal.id,
+      mode: m,
+      colors: colors,
+      bgTexture: tokens.bgTexture || 'none',
+      accentTexture: tokens.accentTexture || 'none',
+      backdropFilter: tokens.backdropFilter || 'none',
+      shadowHover: tokens.shadowHover || tokens.shadow || 'none'
+    };
+    deriveCache[key] = out;
+    return out;
   }
 
   /** 按强调色亮度选前景色，保证霓虹/浅色强调色上的文字可读 */
@@ -581,19 +478,20 @@
     return L > 0.45 ? '#0b0f14' : '#ffffff';
   }
 
-  /** 把外观包(按当前深浅模式)写入 <html> 的 CSS 变量 */
-  function applySkinVars(root, packId, mode) {
-    var pack = getPack(packId);
-    var d = pack[mode] || pack.light;
+  /** 把一套外观写入 <html> 的 CSS 变量与 data 属性 */
+  function applySkinVars(root, styleId, paletteId, mode) {
+    var d = deriveSkin(styleId, paletteId, mode);
     for (var key in SKIN_VAR_MAP) {
-      if (d[key] != null) root.style.setProperty(SKIN_VAR_MAP[key], d[key]);
+      if (d.colors[key] != null) root.style.setProperty(SKIN_VAR_MAP[key], d.colors[key]);
     }
     root.style.setProperty('--pg-bg-image', d.bgTexture || 'none');
     root.style.setProperty('--pg-accent-image', d.accentTexture || 'none');
     root.style.setProperty('--pg-backdrop-filter', d.backdropFilter || 'none');
-    root.style.setProperty('--pg-on-accent', onAccentColor(d.accent));
-    if (d.font) root.style.setProperty('--pg-font', d.font);
-    root.setAttribute('data-skin', pack.id);
+    root.style.setProperty('--pg-on-accent', onAccentColor(d.colors.accent));
+    root.style.setProperty('--pg-shadow-hover', d.shadowHover);
+    root.setAttribute('data-skin', d.style);          // 方案（结构）
+    root.setAttribute('data-palette', d.palette);     // 配色（色相）
+    root.setAttribute('data-skin-id', d.id);          // 组合 id，便于调试
   }
 
   /* ---------------------------------------------------------- */
@@ -621,7 +519,7 @@
     if (s.reduceMotion) root.setAttribute('data-reduce-motion', '1');
     else root.removeAttribute('data-reduce-motion');
     if (!root.getAttribute('lang')) root.setAttribute('lang', s.lang === 'en' ? 'en' : 'zh-CN');
-    applySkinVars(root, s.skin, resolved);
+    applySkinVars(root, s.style, s.palette, resolved);
   }
 
   if (mediaQuery) {
@@ -644,7 +542,7 @@
   }
   global.addEventListener('storage', function (ev) {
     if (ev.key === SETTINGS_KEY) {
-      notifySettings(['lang', 'theme', 'reduceMotion', 'sound'], 'storage');
+      notifySettings(['lang', 'theme', 'style', 'palette', 'reduceMotion', 'sound'], 'storage');
     }
   });
 
@@ -821,62 +719,106 @@
   };
 
   /* ---------------------------------------------------------- */
-  /* 主题外观包 API                                              */
+  /* 主题 API：方案 × 配色 × 黑白                                 */
   /* ---------------------------------------------------------- */
 
   var themePacks = {
-    /** 所有外观包 id */
+    /** 全部方案（风格）：[{ id, name:{zh,en}, desc:{zh,en} }] */
+    styles: function () { return THEME_STYLES.slice(); },
+    /** 全部配色：[{ id, name:{zh,en} }] */
+    palettes: function () {
+      return THEME_PALETTES.map(function (p) { return { id: p.id, name: p.name }; });
+    },
+    /** 取方案定义 */
+    style: function (id) { return findStyle(id) || findStyle(DEFAULT_SETTINGS.style); },
+    /** 取配色定义 */
+    palette: function (id) { return findPalette(id) || findPalette(DEFAULT_SETTINGS.palette); },
+    /** 组合 id 列表：方案-配色（共 60 种，不含黑白） */
     list: function () {
-      return Object.keys(THEME_PACKS);
-    },
-    /** 取外观包定义；不传 id 则返回当前激活包 */
-    get: function (id) {
-      return getPack(id || readSettings().skin);
-    },
-    /**
-     * 当前激活包按当前深浅模式解析后的完整外观
-     * => { id, name, mode, colors: {...}, bgTexture, accentTexture, backdropFilter, font }
-     */
-    getActive: function () {
-      var pack = getPack(readSettings().skin);
-      var mode = resolveTheme(readSettings().theme);
-      var d = pack[mode] || pack.light;
-      var colors = {};
-      for (var key in SKIN_VAR_MAP) colors[key] = d[key];
-      return {
-        id: pack.id,
-        name: pack.name,
-        category: pack.cat || 'solid',
-        mode: mode,
-        colors: colors,
-        bgTexture: d.bgTexture || 'none',
-        accentTexture: d.accentTexture || 'none',
-        backdropFilter: d.backdropFilter || 'none',
-        font: d.font || null
-      };
-    },
-    /** 全部风格分类：[{ id, name:{zh,en}, desc:{zh,en} }] */
-    categories: function () {
-      return THEME_CATEGORIES.slice();
-    },
-    /** 某分类下的包 id 列表（按定义顺序） */
-    byCategory: function (catId) {
       var out = [];
-      for (var id in THEME_PACKS) {
-        if (THEME_PACKS[id].cat === catId) out.push(id);
-      }
+      THEME_STYLES.forEach(function (s) {
+        THEME_PALETTES.forEach(function (p) { out.push(s.id + '-' + p.id); });
+      });
       return out;
     },
-    /** 取某个包所属分类 id */
+    /**
+     * 解析任意组合，用于预览与自定义渲染：
+     * derive('cyber', 'cyan', 'dark') => { style, palette, mode, colors, bgTexture, ... }
+     */
+    derive: function (styleId, paletteId, mode) { return deriveSkin(styleId, paletteId, mode); },
+    /** 取某个组合的定义（兼容旧 API） */
+    get: function (id) {
+      var styleId = readSettings().style;
+      var paletteId = readSettings().palette;
+      if (id && LEGACY_SKINS[id]) {
+        styleId = LEGACY_SKINS[id][0];
+        paletteId = LEGACY_SKINS[id][1];
+      } else if (id && id.indexOf('-') > 0) {
+        var idx = id.indexOf('-');
+        var s = id.slice(0, idx), p = id.slice(idx + 1);
+        if (isStyle(s) && isPalette(p)) { styleId = s; paletteId = p; }
+      }
+      var st = findStyle(styleId) || findStyle('solid');
+      var pal = findPalette(paletteId) || findPalette('obsidian');
+      return {
+        id: st.id + '-' + pal.id,
+        style: st.id,
+        palette: pal.id,
+        name: {
+          zh: GP_NAME(st.name).zh + ' · ' + GP_NAME(pal.name).zh,
+          en: GP_NAME(st.name).en + ' · ' + GP_NAME(pal.name).en
+        },
+        light: deriveSkin(st.id, pal.id, 'light').colors,
+        dark: deriveSkin(st.id, pal.id, 'dark').colors
+      };
+    },
+    /**
+     * 当前激活外观（已按黑白方案解析）
+     * => { id, style, palette, name, mode, colors: {...}, bgTexture, accentTexture, backdropFilter, shadow }
+     */
+    getActive: function () {
+      var s = readSettings();
+      var mode = resolveTheme(s.theme);
+      var d = deriveSkin(s.style, s.palette, mode);
+      var st = findStyle(d.style);
+      var pal = findPalette(d.palette);
+      return {
+        id: d.id,
+        style: d.style,
+        palette: d.palette,
+        category: d.style,
+        name: {
+          zh: GP_NAME(st.name).zh + ' · ' + GP_NAME(pal.name).zh,
+          en: GP_NAME(st.name).en + ' · ' + GP_NAME(pal.name).en
+        },
+        mode: mode,
+        colors: d.colors,
+        bgTexture: d.bgTexture,
+        accentTexture: d.accentTexture,
+        backdropFilter: d.backdropFilter,
+        font: null
+      };
+    },
+    /** 兼容旧命名：方案列表 */
+    categories: function () { return THEME_STYLES.slice(); },
+    /** 兼容旧命名：某方案下可选配色（配色与方案正交，返回全部） */
+    byCategory: function () {
+      return THEME_PALETTES.map(function (p) { return p.id; });
+    },
+    /** 兼容旧命名：组合所属方案 */
     categoryOf: function (id) {
-      var pack = getPack(id);
-      return pack.cat || 'solid';
+      if (isStyle(id)) return id;
+      var hit = LEGACY_SKINS[id];
+      if (hit) return hit[0];
+      if (id && id.indexOf('-') > 0) {
+        var s = id.slice(0, id.indexOf('-'));
+        if (isStyle(s)) return s;
+      }
+      return readSettings().style;
     },
     /** 仅取当前已解析颜色表 (canvas 等场景常用) */
-    colors: function () {
-      return themePacks.getActive().colors;
-    },
-    /** 订阅外观包变化，fn(activeInfo)；返回取消订阅函数 */
+    colors: function () { return themePacks.getActive().colors; },
+    /** 订阅外观变化，fn(activeInfo)；返回取消订阅函数 */
     onChange: function (fn) {
       skinListeners.push(fn);
       return function () {
@@ -885,19 +827,30 @@
       };
     },
     /**
-     * 运行时注册自定义外观包
+     * 运行时注册自定义配色（兼容旧 API）
      * pack = { id, name: {zh,en}, light: {...}, dark: {...} }
-     * light/dark 字段同 THEME_PACKS 内置包（bg / bgTexture / accent / accentTexture ...）
+     * 注册后该配色在四种方案下都会直接使用 pack 自带的 light/dark token。
      */
     register: function (pack) {
       if (!pack || !pack.id || !pack.light || !pack.dark) {
         throw new Error('[GamePlatform] themePacks.register: pack needs id/light/dark');
       }
-      THEME_PACKS[pack.id] = pack;
-      if (readSettings().skin === pack.id) applyDocumentMeta();
+      CUSTOM_SKINS[pack.id] = pack;
+      deriveCache = Object.create(null);
+      if (!findPalette(pack.id)) {
+        THEME_PALETTES.push({ id: pack.id, name: pack.name || { zh: pack.id, en: pack.id }, accent: pack.light.accent, neon: pack.dark.accent, accent2: pack.light.accent2 || pack.light.accent });
+      }
+      if (readSettings().palette === pack.id) applyDocumentMeta();
       return pack;
     }
   };
+
+  /** 统一的 {zh,en} 取名（兼容字符串） */
+  function GP_NAME(map) {
+    if (!map) return { zh: '', en: '' };
+    if (typeof map === 'string') return { zh: map, en: map };
+    return { zh: map.zh || map.en || '', en: map.en || map.zh || '' };
+  }
 
   /* ---------------------------------------------------------- */
   /* 设置对象                                                    */

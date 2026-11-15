@@ -165,28 +165,29 @@ function fit(canvas, ctx, w, h) {          // w/h = 逻辑绘制尺寸，如 640
 
 ## 5. 主题与语言适配（必做）
 
-平台的外观由两个正交维度决定：**深浅模式**（light/dark/system）× **主题外观包**（skin，每个包含深浅两套配色与纹理）。平台会自动把解析结果应用到页面：
+平台的外观由三个正交维度决定：**方案**（solid/line/cyber/glass）× **配色**（15 套）× **黑白**（light/dark/system）。平台会自动把解析结果应用到页面：
 
 | 载体 | 内容 | 含义 |
 |------|------|------|
 | `<html data-theme>` | `light` / `dark` | **已解析**的深浅模式（`system` 会被解析为具体值） |
 | `<html data-theme-pref>` | `light` / `dark` / `system` | 深浅偏好原始值 |
-| `<html data-skin>` | 如 `ocean` | 当前主题外观包 id |
+| `<html data-skin>` | `solid` / `line` / `cyber` / `glass` | 当前主题方案（结构：填充 / 描边 / 辉光 / 磨砂） |
+| `<html data-palette>` | 如 `ocean` | 当前配色 id（色相） |
 | `<html data-lang>` | `zh` / `en` | 当前语言 |
 | `<html data-reduce-motion>` | `1` 或移除 | 减少动画 |
-| CSS 变量 `--pg-*` | 颜色/纹理/字体等 | 当前主题包 × 深浅模式解析后的资源 |
+| CSS 变量 `--pg-*` | 颜色/纹理/字体等 | 方案 × 配色 × 黑白解析后的资源 |
 
 **游戏必须遵守**：
 
-1. 颜色、纹理一律使用 `game-base.css` 语义化 CSS 变量（`--pg-bg` / `--pg-bg-image` / `--pg-text` / `--pg-accent` / `--pg-accent-image` / `--pg-surface` …），不要硬编码色值。这样任意主题包 + 深浅模式自动适配。
-2. 需要 JS 取色时（如 canvas 绘制、内联样式），用 `GamePlatform.themePacks.colors()` / `getActive()` 获取背景色、背景纹理、强调色、强调色纹理等资源，并订阅 `GamePlatform.themePacks.onChange`（主题包变化）与 `GamePlatform.theme.onChange`（深浅或主题包变化）重绘。
+1. 颜色、纹理一律使用 `game-base.css` 语义化 CSS 变量（`--pg-bg` / `--pg-bg-image` / `--pg-text` / `--pg-accent` / `--pg-accent-image` / `--pg-surface` …），不要硬编码色值。这样任意方案 × 配色 × 黑白都自动适配。
+2. 需要 JS 取色时（如 canvas 绘制、内联样式），用 `GamePlatform.themePacks.colors()` / `getActive()` 获取背景色、背景纹理、强调色、强调色纹理等资源，并订阅 `GamePlatform.themePacks.onChange`（方案或配色变化）与 `GamePlatform.theme.onChange`（黑白或方案/配色变化）重绘。
 3. 所有面向用户的文本提供中英双语，通过 `GamePlatform.i18n.t({ zh, en })` 取值，并监听 `GamePlatform.settings.onChange` 重渲染。
 4. 动画尊重减少动画设置：用 CSS 变量过渡即可被 `game-base.css` 自动压制；JS 动画请检查 `GamePlatform.ui.shouldReduceMotion()`。
 5. 音效尊重 `GamePlatform.ui.isSoundEnabled()`，关闭时不播放声音。
 
-### 主题外观包资源清单
+### 主题资源清单
 
-每个主题包（`light`/`dark` 各一套）定义：
+每种「方案 × 配色 × 黑白」组合解析出同一份资源：
 
 - **背景**：`bg` 背景色、`bgTexture` 背景纹理（CSS `background-image` 值，渐变/图案/`none`）
 - **强调**：`accent` 强调色、`accentTexture` 强调纹理、`accentHover`、`accentSoft`
@@ -195,7 +196,7 @@ function fit(canvas, ctx, w, h) {          // w/h = 逻辑绘制尺寸，如 640
 - **状态色**：`success`、`warning`、`danger`
 - **毛玻璃（可选）**：`backdropFilter`（CSS `backdrop-filter` 值，如 `blur(20px) saturate(1.6)`）。平台写入 `--pg-backdrop-filter`，`game-base.css` 的 `.pg-card` 等组件自动应用；未定义的包为 `none`，无任何影响
 
-完整结构与 API 见 [API.md](API.md#主题外观包-gameplatformthemepacks)。游戏也可用 `GamePlatform.themePacks.register()` 注册临时自定义包（一般仅特殊场景使用）。
+完整结构与 API 见 [API.md](API.md#主题-gameplatformthemepacks)。游戏也可用 `GamePlatform.themePacks.derive(style, palette, mode)` 自行取任意组合的颜色做预览；`register()` 可注册临时自定义配色（一般仅特殊场景使用）。
 
 ---
 
@@ -247,7 +248,7 @@ function fit(canvas, ctx, w, h) {          // w/h = 逻辑绘制尺寸，如 640
 - [ ] 入口文件存在且可独立打开运行
 - [ ] 已运行 `node scripts/generate-games-json.mjs` 更新注册表，`games.json` 随游戏一并提交
 - [ ] 刷新主页确认游戏已出现在游戏库
-- [ ] 各主题外观包（含深浅两套配色）下均可正常游玩，无硬编码颜色
+- [ ] 四种方案 × 若干配色 × 黑白下均可正常游玩，无硬编码颜色
 - [ ] 深色 / 浅色模式下均可正常游玩，无硬编码颜色
 - [ ] 中 / 英文切换正常
 - [ ] 减少动画开启时无大幅动效

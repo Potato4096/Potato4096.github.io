@@ -16,6 +16,7 @@
     </a>
     <nav class="header-actions">
       <button id="btn-lang" class="icon-btn" type="button" title="Language">中 / EN</button>
+      <button id="btn-scheme" class="icon-btn" type="button" title="Black / White" aria-label="Black or White">🌙</button>
       <button id="btn-theme" class="icon-btn" type="button" title="Theme" aria-label="Theme">🎨</button>
       <button id="btn-settings" class="icon-btn" type="button" title="Settings">⚙️</button>
     </nav>
@@ -109,29 +110,27 @@
     </div>
   </aside>
 
-  <!-- 主题面板（二级菜单）：风格分类 → 配色 → 黑白方案 -->
+  <!-- 主题面板（上：方案；下：配色） -->
   <div class="theme-backdrop" id="theme-backdrop" hidden></div>
   <section class="theme-modal" id="theme-modal" hidden role="dialog" aria-modal="true" aria-labelledby="theme-modal-title">
     <div class="theme-modal-head">
-      <div>
-        <h3 id="theme-modal-title">主题</h3>
-        <p class="theme-modal-sub" id="theme-modal-sub">风格 · 配色 · 黑白方案</p>
-      </div>
+      <h3 id="theme-modal-title">主题</h3>
       <button class="icon-btn" id="btn-close-theme" type="button" aria-label="Close">✕</button>
     </div>
 
-    <div class="theme-scheme">
-      <span class="theme-scheme-label" id="label-scheme">黑白方案</span>
-      <div class="segmented" id="seg-scheme">
-        <button type="button" data-value="light">☀️ <span id="lbl-scheme-light">白</span></button>
-        <button type="button" data-value="dark">🌙 <span id="lbl-scheme-dark">黑</span></button>
-        <button type="button" data-value="system">🖥️ <span id="lbl-scheme-system">跟随系统</span></button>
+    <section class="theme-block">
+      <div class="theme-block-head">
+        <h4 id="label-styles">主题方案</h4>
       </div>
-    </div>
+      <div class="theme-styles" id="theme-styles"></div>
+    </section>
 
-    <div class="theme-cats" id="theme-cats" role="tablist"></div>
-    <p class="theme-cat-desc" id="theme-cat-desc"></p>
-    <div class="theme-grid" id="theme-grid"></div>
+    <section class="theme-block">
+      <div class="theme-block-head">
+        <h4 id="label-palettes">配色</h4>
+      </div>
+      <div class="theme-palettes" id="theme-palettes"></div>
+    </section>
 
     <div class="theme-modal-foot">
       <button class="ghost-btn" id="btn-theme-reset" type="button">恢复默认主题</button>

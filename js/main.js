@@ -36,27 +36,26 @@
 
     // 主题面板文案
     document.getElementById('theme-modal-title').textContent = t('theme.title');
-    document.getElementById('theme-modal-sub').textContent = t('theme.sub');
-    document.getElementById('label-scheme').textContent = t('theme.scheme');
-    document.getElementById('lbl-scheme-light').textContent = t('theme.light');
-    document.getElementById('lbl-scheme-dark').textContent = t('theme.dark');
-    document.getElementById('lbl-scheme-system').textContent = t('theme.system');
+    document.getElementById('label-styles').textContent = t('theme.styles');
+    document.getElementById('label-palettes').textContent = t('theme.palettes');
     document.getElementById('skin-open-label').textContent = t('theme.open');
     document.getElementById('btn-theme-reset').textContent = t('theme.reset');
 
-    // 主题按钮图标
-    var pref = GP.settings.get('theme');
+    // 顶部按钮：主题（🎨）+ 黑白（☀️/🌙 独立按钮）
     var themeBtn = document.getElementById('btn-theme');
-    themeBtn.textContent = pref === 'dark' ? '🌙' : pref === 'light' ? '☀️' : '🎨';
     themeBtn.title = t('theme.title');
+    themeBtn.setAttribute('aria-label', t('theme.title'));
+
+    var schemeBtn = document.getElementById('btn-scheme');
+    var isDark = GP.theme.get() === 'dark';
+    schemeBtn.textContent = isDark ? '🌙' : '☀️';
+    schemeBtn.title = t('theme.toggleScheme');
+    schemeBtn.setAttribute('aria-label', t('theme.toggleScheme'));
+    schemeBtn.classList.toggle('is-dark', isDark);
 
     renderSegmented();
     renderThemeCurrent();
-    renderScheme();
-    if (!themeModal.hidden) {
-      renderThemeCats();
-      renderThemeGrid();
-    }
+    if (!themeModal.hidden) renderThemePanel();
   }
 
   /* ========== 游戏发现 ========== */
@@ -181,18 +180,14 @@
     });
   }
 
-  /* ========== 主题面板（二级菜单） ========== */
+  /* ========== 主题面板（上：方案，下：配色） ========== */
 
   var themeModal = document.getElementById('theme-modal');
   var themeBackdrop = document.getElementById('theme-backdrop');
-  var activeCat = null;
 
   function openThemeModal() {
-    if (!activeCat) activeCat = GP.themePacks.categoryOf(GP.settings.get('skin'));
     closePanel();
-    renderThemeCats();
-    renderThemeGrid();
-    renderScheme();
+    renderThemePanel();
     themeModal.hidden = false;
     themeBackdrop.hidden = false;
     requestAnimationFrame(function () {
@@ -210,70 +205,126 @@
     }, 180);
   }
 
-  /** 风格分类标签 */
-  function renderThemeCats() {
-    var wrap = document.getElementById('theme-cats');
-    var cats = GP.themePacks.categories();
-    wrap.innerHTML = '';
-    var current = null;
-    cats.forEach(function (cat) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'theme-cat' + (cat.id === activeCat ? ' active' : '');
-      btn.dataset.cat = cat.id;
-      btn.setAttribute('role', 'tab');
-      btn.textContent = GP.i18n.t(cat.name);
-      btn.addEventListener('click', function () {
-        activeCat = cat.id;
-        renderThemeCats();
-        renderThemeGrid();
-      });
-      wrap.appendChild(btn);
-      if (cat.id === activeCat) current = cat;
-    });
-    document.getElementById('theme-cat-desc').textContent = current ? GP.i18n.t(current.desc) : '';
+  /** #rrggbb -> rgba(r, g, b, a) */
+  function hexA(hex, a) {
+    var h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return 'rgba(136, 136, 136, ' + a + ')';
+    return 'rgba(' + parseInt(h.slice(0, 2), 16) + ', ' + parseInt(h.slice(2, 4), 16) + ', ' +
+      parseInt(h.slice(4, 6), 16) + ', ' + a + ')';
   }
 
-  /** 当前分类下的配色卡片 */
-  function renderThemeGrid() {
-    var grid = document.getElementById('theme-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
+  /** 预览窗口里的常见控件：标题栏 + 标题 + 两行正文 + 按钮（带"文字"） */
+  function uiKit(c, styleId) {
+    var btnBg = styleId === 'line' ? 'transparent' : c.accent;
+    var btnBorder = styleId === 'line' ? '2px solid ' + c.accent : '1px solid ' + c.accent;
+    var btnShadow = styleId === 'cyber' ? 'box-shadow:0 0 12px ' + c.accentSoft + ';' : '';
+    var label = styleId === 'line' ? c.accent : c.bg;
+    return '<i class="ui-tbar" style="background:' + c.surface2 + ';border-color:' + c.border + '"></i>' +
+      '<i class="ui-dots" style="background:' + c.textMuted +
+        ';box-shadow:5px 0 0 ' + c.textMuted + ',10px 0 0 ' + c.textMuted + '"></i>' +
+      '<i class="ui-h1" style="background:' + c.text + '"></i>' +
+      '<i class="ui-p1" style="background:' + c.textMuted + '"></i>' +
+      '<i class="ui-p2" style="background:' + c.textMuted + '"></i>' +
+      '<i class="ui-btn" style="background:' + btnBg + ';border:' + btnBorder + ';' + btnShadow + '">' +
+        '<i class="ui-btn-label" style="background:' + label + '"></i>' +
+      '</i>';
+  }
+
+  /** 迷你窗口预览：底色 + 窗口（按方案呈现填充 / 描边 / 辉光 / 磨砂） */
+  function miniPreview(styleId, d) {
+    var c = d.colors;
+    var wrapStyle = 'background-color:' + c.bg + ';background-image:' + d.bgTexture + ';';
+    if (styleId === 'cyber') {
+      wrapStyle += 'box-shadow:inset 0 0 0 1px ' + c.border + ',inset 0 0 26px ' + c.accentSoft + ';';
+    } else if (styleId === 'glass') {
+      wrapStyle += 'box-shadow:inset 0 1px 0 rgba(255,255,255,0.45);';
+    }
+    var winStyle = 'background:' + c.surface + ';border:' +
+      (styleId === 'line' ? '2px solid ' + c.accent : '1px solid ' + c.border) + ';';
+    return '<span class="mini mini--' + styleId + '" style="' + wrapStyle + '">' +
+      '<i class="mini-win" style="' + winStyle + '">' + uiKit(c, styleId) + '</i>' +
+      (styleId === 'cyber' ? '<i class="mini-scan"></i>' : '') +
+      '</span>';
+  }
+
+  /** 面板整体重绘（任何选择变化都会走这里，实现实时预览） */
+  function renderThemePanel() {
+    renderThemeStyles();
+    renderThemePalettes();
+  }
+
+  /** 上半部分：4 个固定方案，用当前配色 + 当前黑白渲染预览 */
+  function renderThemeStyles() {
+    var wrap = document.getElementById('theme-styles');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    var palId = GP.settings.get('palette');
     var mode = GP.theme.get();
-    var active = GP.settings.get('skin');
+    var active = GP.settings.get('style');
 
-    GP.themePacks.byCategory(activeCat).forEach(function (id) {
-      var pack = GP.themePacks.get(id);
-      var d = pack[mode] || pack.light;
-      var name = GP.i18n.t(pack.name || { zh: id, en: id });
-      var chip = (d.surface && d.surface !== 'transparent') ? d.surface : d.text;
-      var texture = (d.bgTexture && d.bgTexture !== 'none') ? d.bgTexture : 'none';
-
+    GP.themePacks.styles().forEach(function (st) {
+      var d = GP.themePacks.derive(st.id, palId, mode);
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'theme-card' + (id === active ? ' active' : '');
-      btn.title = name;
-      btn.dataset.skin = id;
+      btn.className = 'sty-card' + (st.id === active ? ' active' : '');
+      btn.dataset.style = st.id;
+      btn.title = GP.i18n.t(st.desc);
+      btn.setAttribute('aria-label', GP.i18n.t(st.name));
       btn.innerHTML =
-        '<span class="theme-preview" style="background-color:' + d.bg +
-          ';background-image:' + texture + '">' +
-          '<i class="tp-surface" style="background:' + chip + ';border-color:' + d.border + '"></i>' +
-          '<i class="tp-accent" style="background:' + d.accent + '"></i>' +
-        '</span>' +
-        '<span class="theme-card-name">' + escapeHtml(name) + '</span>' +
+        miniPreview(st.id, d) +
+        '<span class="sty-name">' + escapeHtml(GP.i18n.t(st.name)) + '</span>' +
         '<span class="theme-check" aria-hidden="true">✓</span>';
       btn.addEventListener('click', function () {
-        GP.settings.set('skin', id);
+        GP.settings.set('style', st.id);
       });
-      grid.appendChild(btn);
+      wrap.appendChild(btn);
     });
   }
 
-  /** 黑白方案（浅色 / 深色 / 跟随系统） */
-  function renderScheme() {
-    var pref = GP.settings.get('theme');
-    Array.prototype.forEach.call(document.querySelectorAll('#seg-scheme button'), function (btn) {
-      btn.classList.toggle('active', btn.dataset.value === pref);
+  /** 下半部分：15 套固定配色，每块对角线分割 —— 左上白、右下黑 */
+  function renderThemePalettes() {
+    var wrap = document.getElementById('theme-palettes');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    var styleId = GP.settings.get('style');
+    var active = GP.settings.get('palette');
+
+    GP.themePacks.palettes().forEach(function (pal) {
+      var L = GP.themePacks.derive(styleId, pal.id, 'light');
+      var D = GP.themePacks.derive(styleId, pal.id, 'dark');
+      var name = GP.i18n.t(pal.name);
+
+      // 两半画同一个窗口（同坐标、同控件），靠对角线裁剪拼成「一整个窗口」；
+      // 白方案用浅色 token，黑方案用深色 token
+      function half(kind, d) {
+        var c = d.colors;
+        var white = kind === 'light';
+        // 黑白两半用纯白 / 纯黑打底，只叠一层淡强调色光晕，保证一眼分清清白
+        var bg = 'background-color:' + (white ? '#ffffff' : '#000000') + ';' +
+          'background-image:radial-gradient(130% 95% at 12% 0%, ' +
+          hexA(c.accent, white ? 0.20 : 0.30) + ' 0%, rgba(0, 0, 0, 0) 62%);';
+        var win = 'background:' + c.surface + ';border:' +
+          (styleId === 'line' ? '2px solid ' + c.accent : '1px solid ' + c.border) + ';' +
+          (styleId === 'cyber' ? 'box-shadow:inset 0 0 14px ' + c.accentSoft + ';' : '');
+        return '<span class="pal-half pal-half--' + kind + '" style="' + bg + '">' +
+          '<i class="pal-win" style="' + win + '">' + uiKit(c, styleId) + '</i>' +
+        '</span>';
+      }
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pal-card' + (pal.id === active ? ' active' : '');
+      btn.dataset.palette = pal.id;
+      btn.title = name;
+      btn.innerHTML =
+        '<span class="pal-split">' + half('light', L) + half('dark', D) + '</span>' +
+        '<span class="pal-name">' + escapeHtml(name) + '</span>' +
+        '<span class="theme-check" aria-hidden="true">✓</span>';
+      btn.addEventListener('click', function () {
+        GP.settings.set('palette', pal.id);
+      });
+      wrap.appendChild(btn);
     });
   }
 
@@ -314,17 +365,14 @@
     renderThemeCurrent();
   }
 
-  /** 设置面板里显示当前主题名 */
+  /** 设置面板里显示当前组合：方案 · 配色 · 黑白 */
   function renderThemeCurrent() {
     var el = document.getElementById('skin-open-current');
     if (!el) return;
-    var pack = GP.themePacks.get(GP.settings.get('skin'));
-    var cats = GP.themePacks.categories();
-    var catName = '';
-    for (var i = 0; i < cats.length; i++) {
-      if (cats[i].id === (pack.cat || 'solid')) catName = GP.i18n.t(cats[i].name);
-    }
-    el.textContent = catName + ' · ' + GP.i18n.t(pack.name || { zh: pack.id, en: pack.id });
+    var st = GP.themePacks.style(GP.settings.get('style'));
+    var pal = GP.themePacks.palette(GP.settings.get('palette'));
+    var scheme = GP.theme.get() === 'dark' ? t('theme.dark') : t('theme.light');
+    el.textContent = GP.i18n.t(st.name) + ' · ' + GP.i18n.t(pal.name) + ' · ' + scheme;
   }
 
   function bindSettingsUI() {
@@ -342,25 +390,26 @@
       GP.settings.set('lang', next);
     });
 
-    // 主题入口：右上角图标 + 设置面板按钮，都打开主题二级菜单
+    // 主题入口：右上角图标 + 设置面板按钮，都打开主题面板
     document.getElementById('btn-theme').addEventListener('click', openThemeModal);
     document.getElementById('btn-open-theme').addEventListener('click', openThemeModal);
     document.getElementById('btn-close-theme').addEventListener('click', closeThemeModal);
     themeBackdrop.addEventListener('click', closeThemeModal);
 
-    // 黑白方案
-    document.getElementById('seg-scheme').addEventListener('click', function (ev) {
-      var btn = ev.target.closest('button');
-      if (btn) GP.settings.set('theme', btn.dataset.value);
+    // 黑白是独立按钮：直接在白 / 黑之间切换
+    document.getElementById('btn-scheme').addEventListener('click', function () {
+      var next = GP.theme.get() === 'dark' ? 'light' : 'dark';
+      GP.settings.set('theme', next);
+      GP.ui.toast(next === 'dark' ? t('theme.nowDark') : t('theme.nowLight'));
     });
 
-    // 恢复默认主题（只重置风格与黑白，不动语言等）
+    // 恢复默认主题（方案 + 配色 + 黑白，不动语言等）
     document.getElementById('btn-theme-reset').addEventListener('click', function () {
       GP.settings.set({
         theme: GP.settings.defaults.theme,
-        skin: GP.settings.defaults.skin
+        style: GP.settings.defaults.style,
+        palette: GP.settings.defaults.palette
       });
-      activeCat = 'solid';
       GP.ui.toast(t('theme.resetToast'));
     });
 
@@ -386,7 +435,8 @@
       GP.settings.set({
         lang: GP.settings.defaults.lang,
         theme: GP.settings.defaults.theme,
-        skin: GP.settings.defaults.skin,
+        style: GP.settings.defaults.style,
+        palette: GP.settings.defaults.palette,
         reduceMotion: GP.settings.defaults.reduceMotion,
         sound: GP.settings.defaults.sound
       });

@@ -156,52 +156,65 @@ html[data-reduce-motion="1"] *::after {
 }
 
 /* ============================================================
-   主题风格分类差异化（data-skin 前缀）
-   line-*   线条：无填充、粗描边
-   cyber-*  赛博朋克：霓虹描边 + 扫描线
-   glass*   液态玻璃：内高光 + 磨砂
+   主题方案差异化（<html data-skin> = solid | line | cyber | glass）
+   solid  纯色：填充 + 单强调色
+   line   线条：简约描边 + 淡色填充
+   cyber  赛博朋克：霓虹描边 + 辉光（处处发光、高对比）
+   glass  液态玻璃：半透明磨砂 + 内高光
    ============================================================ */
 
+html[data-skin="line"] { --pg-radius: 8px; }
+html[data-skin="cyber"] { --pg-radius: 10px; }
+html[data-skin="glass"] { --pg-radius: 16px; }
+
 /* ---------- 线条 Outline ---------- */
-html[data-skin^="line-"] .pg-card {
-  background: transparent;
-  box-shadow: none;
+html[data-skin="line"] .pg-card {
   border-width: 2px;
+  box-shadow: none;
 }
-html[data-skin^="line-"] .pg-btn {
+html[data-skin="line"] .pg-btn {
   background: transparent;
   background-image: none;
   color: var(--pg-accent);
   border: 2px solid var(--pg-accent);
 }
-html[data-skin^="line-"] .pg-btn:hover {
+html[data-skin="line"] .pg-btn:hover {
   background: var(--pg-accent-soft);
   background-image: none;
   color: var(--pg-accent);
 }
-html[data-skin^="line-"] .pg-btn--ghost {
-  border-width: 1px;
+html[data-skin="line"] .pg-btn--ghost {
+  border-width: 1.5px;
   border-color: var(--pg-border);
   color: var(--pg-text);
 }
-html[data-skin^="line-"] .pg-tag {
+html[data-skin="line"] .pg-tag {
   background: transparent;
   border: 1px solid var(--pg-accent);
 }
-html[data-skin^="line-"] .p4096-toast {
-  border: 1px solid var(--pg-text);
+html[data-skin="line"] .p4096-toast {
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  border: 2px solid var(--pg-text);
 }
 
 /* ---------- 赛博朋克 Cyberpunk ---------- */
-html[data-skin^="cyber-"] .pg-card {
-  border-color: color-mix(in srgb, var(--pg-accent) 50%, transparent);
+html[data-skin="cyber"] .pg-card {
   box-shadow: inset 0 0 0 1px var(--pg-accent-soft), var(--pg-shadow);
 }
-html[data-skin^="cyber-"] .pg-btn {
-  box-shadow: 0 0 16px var(--pg-accent-soft), 0 0 2px color-mix(in srgb, var(--pg-accent) 60%, transparent);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--pg-accent) 65%, transparent);
+html[data-skin="cyber"] .pg-btn {
+  box-shadow: 0 0 16px var(--pg-accent-soft), 0 0 3px var(--pg-border);
+  text-shadow: 0 0 10px var(--pg-accent-soft);
 }
-html[data-skin^="cyber-"] body::after {
+html[data-skin="cyber"] .pg-tag {
+  border: 1px solid var(--pg-border);
+  box-shadow: 0 0 10px var(--pg-accent-soft);
+}
+html[data-skin="cyber"] .p4096-toast {
+  border: 1px solid var(--pg-border);
+  box-shadow: 0 0 18px var(--pg-accent-soft);
+}
+html[data-skin="cyber"] body::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -209,17 +222,20 @@ html[data-skin^="cyber-"] body::after {
   pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.045) 0 1px, transparent 1px 3px);
 }
-html[data-theme="dark"][data-skin^="cyber-"] body::after {
+html[data-theme="dark"][data-skin="cyber"] body::after {
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
 }
 
 /* ---------- 液态玻璃 Liquid Glass ---------- */
-html[data-skin^="glass"] .pg-card {
+html[data-skin="glass"] .pg-card {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), var(--pg-shadow);
 }
-html[data-theme="dark"][data-skin^="glass"] .pg-card {
+html[data-theme="dark"][data-skin="glass"] .pg-card {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), var(--pg-shadow);
 }
-html[data-skin^="glass"] .pg-btn {
+html[data-skin="glass"] .pg-btn {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+html[data-skin="glass"] .pg-tag {
+  border: 1px solid var(--pg-border);
 }
