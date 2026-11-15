@@ -618,9 +618,9 @@ main {
 .ui-h1 {
   position: absolute;
   left: 7%;
-  top: 27%;
-  width: 52%;
-  height: 7%;
+  top: 22%;
+  width: 40%;
+  height: 6%;
   min-height: 4px;
   border-radius: 2px;
   opacity: 0.9;
@@ -628,9 +628,9 @@ main {
 .ui-p1 {
   position: absolute;
   left: 7%;
-  top: 43%;
-  width: 68%;
-  height: 4.5%;
+  top: 33%;
+  width: 52%;
+  height: 4%;
   min-height: 3px;
   border-radius: 2px;
   opacity: 0.5;
@@ -638,20 +638,20 @@ main {
 .ui-p2 {
   position: absolute;
   left: 7%;
-  top: 53%;
-  width: 46%;
-  height: 4.5%;
+  top: 41%;
+  width: 38%;
+  height: 4%;
   min-height: 3px;
   border-radius: 2px;
   opacity: 0.36;
 }
 .ui-btn {
   position: absolute;
-  left: 7%;
-  top: 66%;
-  width: 46%;
-  height: 23%;
-  min-height: 13px;
+  left: 6%;
+  top: 49%;
+  width: 28%;
+  height: 15%;
+  min-height: 11px;
   border-radius: 4px;
   display: flex;
   align-items: center;
