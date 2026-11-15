@@ -268,7 +268,7 @@
     return { kind: 'cactus', x: x, w: totalW, h: unitH, parts: parts };
   }
 
-  function makeBird() {
+  function makeBird(x) {
     var tops = [GROUND_Y - 118, GROUND_Y - 72, GROUND_Y - 40];
     var idx = Math.floor(Math.random() * tops.length);
     return { kind: 'bird', x: x, w: 38, h: 26, top: tops[idx], phase: Math.random() * 6.28 };
@@ -282,7 +282,7 @@
 
   function spawnObstacle() {
     var useBird = score >= 250 && Math.random() < 0.32;
-    var o = useBird ? makeBird() : makeCactus(W + 20);
+    var o = useBird ? makeBird(W + 20) : makeCactus(W + 20);
     obstacles.push(o);
     sinceSpawn = 0;
     obstacleGap = scheduleGap();
@@ -895,8 +895,13 @@
     if (!lastTs) lastTs = ts;
     var dt = Math.min((ts - lastTs) / 1000, 1 / 30);
     lastTs = ts;
-    if (state !== 'paused') update(dt);
-    draw();
+    // 单帧异常不应终结整个循环（否则画面会永久卡死）
+    try {
+      if (state !== 'paused') update(dt);
+      draw();
+    } catch (err) {
+      if (window.console && window.console.error) window.console.error('[dino-run]', err);
+    }
     requestAnimationFrame(frame);
   }
 
@@ -985,9 +990,7 @@
           updateHUD();
         } },
         { label: { zh: '立刻放一只翼龙', en: 'Spawn pterodactyl' }, run: function () {
-          var o = makeBird();
-          o.x = W + 10;
-          obstacles.push(o);
+          obstacles.push(makeBird(W + 10));
         } },
         { label: { zh: '清空障碍', en: 'Clear obstacles' }, run: function () { obstacles.length = 0; sinceSpawn = 0; } }
       ]
