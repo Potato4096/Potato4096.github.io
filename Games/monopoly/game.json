@@ -1,0 +1,27 @@
+{
+  "id": "monopoly",
+  "title": {
+    "zh": "大富翁",
+    "en": "Monopoly"
+  },
+  "description": {
+    "zh": "经典掷骰买地大富翁。40 格环形棋盘、8 组地产、铁路与公用事业、机会与命运卡、监狱与建房，支持 1~4 位真人混坐电脑同屏轮流对局。每回合开场镜头会直接切到当前玩家的区域，掷骰有滚动延迟与点数提示，棋子逐格跳跃前进；机会与命运会摊开一副牌随机抽一张，翻开后再生效。格子上不放分组色，只留业主色条与房屋方块，避免看混。对局进度自动存档，刷新或关掉页面后回来接着上一局。",
+    "en": "The classic dice-and-property board game: a 40-tile ring, eight colour groups, railroads and utilities, Chance and Community Chest, jail and building. One to four humans can share the table with CPUs, taking turns on the same screen. Each turn opens by cutting straight to the active player's area, the dice tumble with a deliberate delay before the total is announced, and tokens hop tile by tile. Chance and Community Chest fan out a deck, draw one card at random and reveal it before the effect lands. Tiles carry no group colours — only the owner strip and building blocks. Progress is saved automatically, so a refresh or a closed tab picks up where you left off."
+  },
+  "version": "1.1.0",
+  "author": "Potato4096",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "emoji": "🎲",
+  "tags": ["board", "strategy", "dice", "ai", "hotseat"],
+  "category": "strategy",
+  "players": "1-4",
+  "controls": {
+    "zh": "点击「掷骰子」行动；弹出的买地、建房按钮直接点击即可；点击棋盘任意格子可查看该地块详情；抽到机会或命运时点「知道了」收起卡牌；对局会自动保存，刷新后从上次的回合继续",
+    "en": "Click Roll dice to move. Use the on-screen buttons to buy or build. Click any tile on the board to inspect it. When a card is drawn, press Got it to continue. The game saves automatically and resumes from the same turn after a refresh."
+  },
+  "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate"],
+  "published": true,
+  "created": "2026-11-20",
+  "updated": "2026-11-21"
+}

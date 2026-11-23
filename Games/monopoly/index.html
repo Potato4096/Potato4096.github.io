@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>大富翁 · Potato4096 Arcade</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../platform/game-base.css">
+  <link rel="stylesheet" href="../../platform/cheat-kit.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pg-container mono">
+    <div class="pg-topbar">
+      <button class="pg-btn pg-btn--ghost" id="btn-back">← <span data-t="back">返回主页</span></button>
+      <div class="top-actions">
+        <span class="pg-tag" id="round-badge">第 1 / 30 回合</span>
+        <button class="pg-btn pg-btn--ghost" id="btn-rules" data-t="rulesBtn">规则</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-new" data-t="newGame">新对局</button>
+      </div>
+    </div>
+
+    <div class="mono-layout">
+      <aside class="mono-players panel-stack" id="players"></aside>
+
+      <main class="mono-main">
+        <section class="board-card pg-card">
+          <div class="board-head">
+            <div class="board-title">
+              <span class="board-kicker" data-t="boardKicker">对局棋盘</span>
+              <span class="board-sub" id="board-sub"></span>
+            </div>
+            <span class="board-swipe" data-t="boardSwipe">← 左右滑动查看整圈 →</span>
+            <div class="board-legend" id="board-legend"></div>
+          </div>
+          <div class="board-scroll">
+            <div class="board-wrap">
+              <canvas id="board" aria-label="大富翁棋盘"></canvas>
+              <div class="board-flash" id="board-flash" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="control-card pg-card">
+          <div class="dice-row">
+            <div class="dice" id="dice" aria-hidden="true"></div>
+            <div class="roll-total" id="roll-total" aria-live="polite"></div>
+            <div class="turn-box">
+              <div class="turn-name" id="turn-name">轮到玩家 1</div>
+              <div class="turn-sub" id="turn-sub">点击掷骰子开始行动</div>
+            </div>
+          </div>
+          <div class="actions" id="actions"></div>
+        </section>
+      </main>
+
+      <aside class="mono-side">
+        <div class="tile-card pg-card" id="tile-card"></div>
+
+        <section class="log-card pg-card">
+          <div class="log-head">
+            <span data-t="logTitle">对局记录</span>
+            <span class="pg-muted" id="log-round"></span>
+          </div>
+          <div class="log-list" id="log"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <!-- 开局配置 -->
+  <div class="mono-modal show" id="setup-modal">
+    <div class="modal-card pg-card setup-card">
+      <div class="setup-head">
+        <div class="setup-logo" aria-hidden="true">🎲</div>
+        <div>
+          <h2 data-t="setupTitle">大富翁</h2>
+          <p class="pg-muted" data-t="setupSub">选好人数就能开局，真人与电脑可以混坐同一张桌子。</p>
+        </div>
+      </div>
+
+      <div class="setup-row">
+        <div class="setup-label">
+          <span data-t="humans">真人玩家</span>
+          <small data-t="humansHint">同屏轮流操作</small>
+        </div>
+        <div class="stepper">
+          <button class="pg-btn pg-btn--ghost" data-step="humans" data-dir="-1" aria-label="减少真人">−</button>
+          <span class="stepper-val" id="humans-val">1</span>
+          <button class="pg-btn pg-btn--ghost" data-step="humans" data-dir="1" aria-label="增加真人">+</button>
+        </div>
+      </div>
+
+      <div class="setup-row">
+        <div class="setup-label">
+          <span data-t="computers">电脑玩家</span>
+          <small data-t="computersHint">由电脑自动决策</small>
+        </div>
+        <div class="stepper">
+          <button class="pg-btn pg-btn--ghost" data-step="computers" data-dir="-1" aria-label="减少电脑">−</button>
+          <span class="stepper-val" id="computers-val">3</span>
+          <button class="pg-btn pg-btn--ghost" data-step="computers" data-dir="1" aria-label="增加电脑">+</button>
+        </div>
+      </div>
+
+      <div class="setup-row">
+        <div class="setup-label">
+          <span data-t="difficulty">电脑难度</span>
+          <small data-t="difficultyHint">影响买地、保释与建房</small>
+        </div>
+        <div class="seg" id="diff-seg">
+          <button data-diff="easy" data-t="diffEasy">简单</button>
+          <button data-diff="medium" data-t="diffMedium">普通</button>
+          <button data-diff="hard" data-t="diffHard">困难</button>
+        </div>
+      </div>
+
+      <div class="setup-total" id="setup-total"></div>
+
+      <div class="setup-actions">
+        <button class="pg-btn" id="btn-start" data-t="start">开始游戏</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-clear" data-t="clearStats">清除记录</button>
+      </div>
+      <div class="setup-stats pg-muted" id="setup-stats"></div>
+    </div>
+  </div>
+
+  <!-- 抽卡 -->
+  <div class="mono-modal draw-modal" id="draw-modal">
+    <div class="draw-stage pg-card">
+      <div class="draw-head">
+        <span class="draw-kicker" id="draw-kicker">机会</span>
+        <span class="draw-hint" id="draw-hint">抽一张卡</span>
+      </div>
+      <div class="draw-deck" id="draw-deck"></div>
+      <p class="draw-text" id="draw-text"></p>
+      <button class="pg-btn draw-ok" id="btn-draw-ok" data-t="drawOk">知道了</button>
+    </div>
+  </div>
+
+  <!-- 规则 -->
+  <div class="mono-modal" id="rules-modal">
+    <div class="modal-card pg-card">
+      <div class="modal-head">
+        <h2 data-t="rulesTitle">玩法说明</h2>
+        <button class="pg-btn pg-btn--ghost" id="btn-rules-close" aria-label="关闭">✕</button>
+      </div>
+      <div class="rules-body" id="rules-body"></div>
+    </div>
+  </div>
+
+  <!-- 结算 -->
+  <div class="mono-modal" id="end-modal">
+    <div class="modal-card pg-card">
+      <div class="end-head">
+        <div class="end-crown" aria-hidden="true">🏆</div>
+        <h2 id="end-title"></h2>
+        <p class="pg-muted" id="end-sub"></p>
+      </div>
+      <div class="end-rank" id="end-rank"></div>
+      <div class="end-actions">
+        <button class="pg-btn" id="btn-again" data-t="again">再来一局</button>
+        <button class="pg-btn pg-btn--ghost" id="btn-home" data-t="back">返回主页</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../platform/game-api.js"></script>
+  <script src="../../platform/cheat-kit.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
