@@ -2,7 +2,7 @@
  * core/store.js - 按棋种分区的存档
  *
  * 平台 storage 是全游戏共用的，这里加 bg:<棋种>: 前缀，
- * 四个棋种的战绩、设置互不覆盖。全部走 GamePlatform.storage，
+ * 六个棋种的战绩、设置互不覆盖。全部走 GamePlatform.storage，
  * 因此和平台的其他存档一样跨会话保留。
  */
 (function (global) {

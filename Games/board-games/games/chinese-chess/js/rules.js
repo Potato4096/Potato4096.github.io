@@ -58,88 +58,114 @@
     return side === 'r' ? toY < fromY : toY > fromY;
   }
 
+  // 方向表提到模块级：避免每次生成着法都新建数组与闭包（AI 每节点都要跑）
+  var K_STEPS = [1, 0, -1, 0, 0, 1, 0, -1];
+  var A_STEPS = [1, 1, 1, -1, -1, 1, -1, -1];
+  var E_STEPS = [2, 2, 2, -2, -2, 2, -2, -2];
+  var H_STEPS = [
+    1, 2, 0, 1, 1, -2, 0, -1, -1, 2, 0, 1, -1, -2, 0, -1,
+    2, 1, 1, 0, 2, -1, 1, 0, -2, 1, -1, 0, -2, -1, -1, 0
+  ];
+  var R_DIRS = [1, 0, -1, 0, 0, 1, 0, -1];
+
   /** 伪合法着法（不检验己方将帅是否被将） */
   function pseudoMoves(board, x, y) {
     var p = board[y][x];
     if (!p) return [];
     var moves = [];
     var s = p.s;
+    var t = p.t;
+    var i, tx, ty, q;
 
-    function tryAdd(tx, ty) {
-      if (!inBoard(tx, ty)) return false;
-      var q = board[ty][tx];
-      if (!q) { moves.push({ x: tx, y: ty }); return true; }
-      if (q.s !== s) moves.push({ x: tx, y: ty });
-      return false; // 被棋子挡住
-    }
-
-    if (p.t === 'K') {
+    if (t === 'K') {
       // 帅/将：九宫内直走一步
-      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
-        var tx = x + d[0], ty = y + d[1];
-        if (inPalace(tx, ty, s)) tryAdd(tx, ty);
-      });
-    } else if (p.t === 'A') {
+      for (i = 0; i < 8; i += 2) {
+        tx = x + K_STEPS[i]; ty = y + K_STEPS[i + 1];
+        if (!inPalace(tx, ty, s)) continue;
+        q = board[ty][tx];
+        if (!q || q.s !== s) moves.push({ x: tx, y: ty });
+      }
+    } else if (t === 'A') {
       // 仕/士：九宫内斜走一步
-      [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(function (d) {
-        var tx = x + d[0], ty = y + d[1];
-        if (inPalace(tx, ty, s)) tryAdd(tx, ty);
-      });
-    } else if (p.t === 'E') {
+      for (i = 0; i < 8; i += 2) {
+        tx = x + A_STEPS[i]; ty = y + A_STEPS[i + 1];
+        if (!inPalace(tx, ty, s)) continue;
+        q = board[ty][tx];
+        if (!q || q.s !== s) moves.push({ x: tx, y: ty });
+      }
+    } else if (t === 'E') {
       // 相/象：田字，塞象眼、不过河
-      [[2, 2], [2, -2], [-2, 2], [-2, -2]].forEach(function (d) {
-        var tx = x + d[0], ty = y + d[1];
-        if (!inBoard(tx, ty)) return;
-        if (!ownSide(ty, s)) return; // 不过河
-        if (board[y + d[1] / 2][x + d[0] / 2]) return; // 塞象眼
-        tryAdd(tx, ty);
-      });
-    } else if (p.t === 'H') {
+      for (i = 0; i < 8; i += 2) {
+        tx = x + E_STEPS[i]; ty = y + E_STEPS[i + 1];
+        if (!inBoard(tx, ty)) continue;
+        if (!ownSide(ty, s)) continue; // 不过河
+        if (board[y + E_STEPS[i + 1] / 2][x + E_STEPS[i] / 2]) continue; // 塞象眼
+        q = board[ty][tx];
+        if (!q || q.s !== s) moves.push({ x: tx, y: ty });
+      }
+    } else if (t === 'H') {
       // 马：日字，蹩马腿
-      [
-        [1, 2, 0, 1], [1, -2, 0, -1], [-1, 2, 0, 1], [-1, -2, 0, -1],
-        [2, 1, 1, 0], [2, -1, 1, 0], [-2, 1, -1, 0], [-2, -1, -1, 0]
-      ].forEach(function (m) {
-        var tx = x + m[0], ty = y + m[1];
-        if (!inBoard(tx, ty)) return;
-        if (board[y + m[3]][x + m[2]]) return; // 蹩马腿
-        tryAdd(tx, ty);
-      });
-    } else if (p.t === 'R') {
-      // 车：直线滑行
-      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
-        var tx = x, ty = y;
+      for (i = 0; i < 32; i += 4) {
+        tx = x + H_STEPS[i]; ty = y + H_STEPS[i + 1];
+        if (!inBoard(tx, ty)) continue;
+        if (board[y + H_STEPS[i + 3]][x + H_STEPS[i + 2]]) continue; // 蹩马腿
+        q = board[ty][tx];
+        if (!q || q.s !== s) moves.push({ x: tx, y: ty });
+      }
+    } else if (t === 'R') {
+      // 车：直线滑行，遇子即止（可吃第一枚敌子）
+      for (i = 0; i < 8; i += 2) {
+        var rdx = R_DIRS[i], rdy = R_DIRS[i + 1];
+        tx = x; ty = y;
         for (;;) {
-          tx += d[0]; ty += d[1];
+          tx += rdx; ty += rdy;
           if (!inBoard(tx, ty)) break;
-          if (!tryAdd(tx, ty)) break;
+          q = board[ty][tx];
+          if (!q) { moves.push({ x: tx, y: ty }); continue; }
+          if (q.s !== s) moves.push({ x: tx, y: ty });
+          break;
         }
-      });
-    } else if (p.t === 'C') {
+      }
+    } else if (t === 'C') {
       // 炮：不吃子走直线；吃子须隔恰好一枚棋子（炮架），目标为炮架后第一枚棋子
-      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
-        var tx = x, ty = y;
-        for (;;) { // 不吃子行进
-          tx += d[0]; ty += d[1];
-          if (!inBoard(tx, ty)) return;
-          if (board[ty][tx]) break;
+      for (i = 0; i < 8; i += 2) {
+        var cdx = R_DIRS[i], cdy = R_DIRS[i + 1];
+        tx = x; ty = y;
+        var screen = false;
+        for (;;) { // 不吃子行进，直到碰到第一枚棋子（炮架）
+          tx += cdx; ty += cdy;
+          if (!inBoard(tx, ty)) break;
+          q = board[ty][tx];
+          if (q) { screen = true; break; }
           moves.push({ x: tx, y: ty });
         }
-        // tx,ty 为第一枚挡路棋子（炮架），向后找第一枚棋子作为吃子目标
-        var cx = tx + d[0], cy = ty + d[1];
-        for (;;) {
-          if (!inBoard(cx, cy)) return;
-          if (board[cy][cx]) break;
-          cx += d[0]; cy += d[1];
+        if (!screen) continue;
+        for (;;) { // 炮架之后的第一枚棋子才是可吃目标
+          tx += cdx; ty += cdy;
+          if (!inBoard(tx, ty)) break;
+          q = board[ty][tx];
+          if (q) {
+            if (q.s !== s) moves.push({ x: tx, y: ty });
+            break;
+          }
         }
-        if (board[cy][cx].s !== s) moves.push({ x: cx, y: cy });
-      });
-    } else if (p.t === 'P') {
+      }
+    } else if (t === 'P') {
       // 兵/卒：向前一步；过河后可横走；永不后退
-      tryAdd(x, y + (s === 'r' ? -1 : 1));
+      ty = y + (s === 'r' ? -1 : 1);
+      if (inBoard(x, ty)) {
+        q = board[ty][x];
+        if (!q || q.s !== s) moves.push({ x: x, y: ty });
+      }
       if (!ownSide(y, s)) {
-        tryAdd(x - 1, y);
-        tryAdd(x + 1, y);
+        if (x > 0) {
+          q = board[y][x - 1];
+          if (!q || q.s !== s) moves.push({ x: x - 1, y: y });
+        }
+        if (x < COLS - 1) {
+          q = board[y][x + 1];
+          if (!q || q.s !== s) moves.push({ x: x + 1, y: y });
+        }
       }
     }
     return moves;

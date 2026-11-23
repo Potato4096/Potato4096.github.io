@@ -5,15 +5,15 @@
     "en": "Board Games"
   },
   "description": {
-    "zh": "国际象棋、中国象棋、五子棋、围棋四种经典棋类合为一体。大厅选棋种、就地选模式，双人对弈或三档人机随时开局；四种棋共用同一套棋谱、战绩、音效与主题，切换棋种不用回首页。",
-    "en": "Chess, Xiangqi, Gomoku and Go in one app. Pick a board and a mode in the lobby, then play locally or against one of three AI levels. Shared move record, stats, sound and theming across all four."
+    "zh": "国际象棋、中国象棋、五子棋、围棋、斗兽棋、飞行棋六种经典棋类合为一体。大厅选棋种、就地选模式，双人对弈或三档人机随时开局；六种棋共用同一套棋谱、战绩、音效与主题，切换棋种不用回首页。",
+    "en": "Chess, Xiangqi, Gomoku, Go, Jungle and Ludo in one app. Pick a board and a mode in the lobby, then play locally or against one of three AI levels. Shared move record, stats, sound and theming across all six."
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Potato4096",
   "entry": "index.html",
   "icon": "assets/icon.svg",
   "emoji": "♟",
-  "tags": ["board", "strategy", "chess", "xiangqi", "gomoku", "go", "ai", "collection"],
+  "tags": ["board", "strategy", "chess", "xiangqi", "gomoku", "go", "jungle", "ludo", "ai", "collection"],
   "category": "strategy",
   "players": "1-2",
   "controls": {
@@ -23,5 +23,5 @@
   "api": ["settings", "storage", "i18n", "theme", "toast", "sound", "reduceMotion", "navigate"],
   "published": true,
   "created": "2026-11-11",
-  "updated": "2026-11-11"
+  "updated": "2026-11-20"
 }

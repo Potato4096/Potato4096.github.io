@@ -7,7 +7,7 @@
  *   #/go/ai/hard          人机（难度 easy|medium|hard）
  *
  * 每个棋种是一个独立模块（games/<id>/js/view.js），进入时才加载，
- * 返回大厅即卸载并释放监听，四个棋种互不干扰。
+ * 返回大厅即卸载并释放监听，六个棋种互不干扰。
  */
 (function (global) {
   'use strict';
