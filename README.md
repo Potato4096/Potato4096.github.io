@@ -2,7 +2,7 @@
 
 **在线游玩：[https://potato4096.github.io/](https://potato4096.github.io/)**
 
-一个轻量的静态在线游戏平台，代码托管于公共仓库 [Potato4096/Potato4096.github.io](https://github.com/Potato4096/Potato4096.github.io)，通过 GitHub Pages 发布。设计目标：**每个游戏独立开发、独立配置，主页自动发现并展示，全局设置跨游戏共享**。
+一个轻量的静态在线游戏平台，代码托管于公共仓库 [Potato4096/Potato4096.github.io](https://github.com/Potato4096/Potato4096.github.io)，通过 GitHub Pages 发布。设计目标：**每个游戏独立开发、独立配置，主页按统一清单读取配置并展示，全局设置跨游戏共享**。
 
 欢迎参与贡献游戏！玩法很简单：**Fork → 新建分支 → 添加游戏 → 发起 Pull Request**。
 
@@ -70,13 +70,16 @@
 
    开发前请完整阅读 **[docs/GAME_SPEC.md](docs/GAME_SPEC.md)**（目录与配置规范、主题适配要求、发布检查清单）。
 
-4. **更新游戏注册表**：
+4. **登记到 `games.json`**：在列表末尾追加你的配置文件相对路径：
 
-   ```bash
-   node scripts/generate-games-json.mjs
+   ```json
+   [
+     "Games/2048/game.json",
+     "Games/my-game/game.json"
+   ]
    ```
 
-   该脚本会扫描 `Games/` 目录并校验各游戏的 `game.json`，重新生成 `games.json` 全局注册表（主页据此展示游戏）。
+   主页按这份清单逐个读取 `game.json` 渲染卡片：清单里没有的目录不会出现在游戏库；路径写错或配置缺字段的游戏会被跳过，不影响其他游戏。
 
 5. **本地测试**（需要静态服务器）：
 
@@ -111,7 +114,7 @@ Potato4096.github.io/
 ├── index.html                 # 平台首页（游戏发现 + 全局设置）
 ├── 404.html                   # GitHub Pages 错误页（自动生效）
 ├── .nojekyll                  # 禁用 Jekyll，纯静态发布
-├── games.json                 # ★ 游戏全局注册表（脚本生成，随游戏一并提交）
+├── games.json                 # ★ 游戏清单（手动维护，每项一个 game.json 的相对路径）
 ├── css/
 │   └── style.css              # 首页样式（含深浅主题）
 ├── js/
@@ -130,8 +133,6 @@ Potato4096.github.io/
 │       └── js/
 │           ├── audio.js       #   WebAudio 合成音效
 │           └── game.js        #   游戏逻辑（IIFE）
-├── scripts/
-│   └── generate-games-json.mjs # 游戏注册表生成脚本
 └── docs/
     ├── GAME_SPEC.md           # ★ 游戏开发规范
     └── API.md                 # ★ GamePlatform API 文档
@@ -207,7 +208,7 @@ canvas 不能把固定缓冲区交给 CSS 拉伸。早先棋盘按 576×576 分�
 
 ## 它是怎么工作的
 
-1. **游戏发现（注册表）**：主页读取 `games.json` 全局注册表拿到游戏列表。注册表由 `node scripts/generate-games-json.mjs` 生成——脚本扫描 `Games/` 目录、校验各游戏的 `game.json` 后输出清单。**无需构建步骤**，新增游戏后重新运行脚本并提交 `games.json` 即可。
+1. **游戏发现（清单）**：主页读取 `games.json` —— 一个手动维护的 JSON 数组，每项是某个 `game.json` 的相对路径。**无需构建步骤**，新增游戏时在数组里追加一行、把 `games.json` 与游戏目录一并提交即可。
 2. **读取配置**：主页对每个游戏目录请求 `game.json`，用其中的标题、简介、标签、图标等渲染成卡片。配置损坏或缺字段的游戏会被跳过，不影响其他游戏。
 3. **跳转入口**：点击卡片 → 跳转到 `Games/<id>/<entry>`（默认 `index.html`）。
 4. **全局协调**：主页与所有游戏共享同一份全局设置（语言 / 深浅主题 / 减少动画 / 音效），存于 `localStorage`，跨页面、跨标签页实时同步。游戏通过 `GamePlatform` API 读取并响应变化。
@@ -253,7 +254,7 @@ canvas 不能把固定缓冲区交给 CSS 拉伸。早先棋盘按 576×576 分�
 
 - `.nojekyll`：禁用 Jekyll 处理，纯静态资源原样发布
 - `404.html`：GitHub Pages 自动用于所有错误路径（资源引用为 `/` 根绝对路径）
-- 合并新增游戏的 PR 后，确认 `games.json` 注册表已包含该游戏（PR 中应同时提交）
+- 合并新增游戏的 PR 后，确认 `games.json` 清单里已登记该游戏的 `game.json` 路径（PR 中应同时提交）
 - 站点内文档链接（`docs/*.md`）在 Pages 上以纯文本展示，完整渲染效果见 GitHub 仓库页面
 
 ## 文档

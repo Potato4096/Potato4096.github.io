@@ -1,74 +1,20 @@
-{
-  "generatedAt": "2026-11-15T07:42:31.703Z",
-  "count": 17,
-  "games": [
-    {
-      "id": "2048",
-      "dir": "Games/2048"
-    },
-    {
-      "id": "arena-survivor",
-      "dir": "Games/arena-survivor"
-    },
-    {
-      "id": "board-games",
-      "dir": "Games/board-games"
-    },
-    {
-      "id": "brick-breaker",
-      "dir": "Games/brick-breaker"
-    },
-    {
-      "id": "dino-run",
-      "dir": "Games/dino-run"
-    },
-    {
-      "id": "doudizhu",
-      "dir": "Games/doudizhu"
-    },
-    {
-      "id": "fishing",
-      "dir": "Games/fishing"
-    },
-    {
-      "id": "gold-miner",
-      "dir": "Games/gold-miner"
-    },
-    {
-      "id": "happy-bird",
-      "dir": "Games/happy-bird"
-    },
-    {
-      "id": "island-commander",
-      "dir": "Games/island-commander"
-    },
-    {
-      "id": "minesweeper",
-      "dir": "Games/minesweeper"
-    },
-    {
-      "id": "number-guess",
-      "dir": "Games/number-guess"
-    },
-    {
-      "id": "penalty-shootout",
-      "dir": "Games/penalty-shootout"
-    },
-    {
-      "id": "ping-pong",
-      "dir": "Games/ping-pong"
-    },
-    {
-      "id": "reaction-test",
-      "dir": "Games/reaction-test"
-    },
-    {
-      "id": "sliding-puzzle",
-      "dir": "Games/sliding-puzzle"
-    },
-    {
-      "id": "super-jump",
-      "dir": "Games/super-jump"
-    }
-  ]
-}
+[
+  "Games/2048/game.json",
+  "Games/arena-survivor/game.json",
+  "Games/board-games/game.json",
+  "Games/brick-breaker/game.json",
+  "Games/dino-run/game.json",
+  "Games/doudizhu/game.json",
+  "Games/fishing/game.json",
+  "Games/gold-miner/game.json",
+  "Games/happy-bird/game.json",
+  "Games/island-commander/game.json",
+  "Games/minesweeper/game.json",
+  "Games/monopoly/game.json",
+  "Games/number-guess/game.json",
+  "Games/penalty-shootout/game.json",
+  "Games/ping-pong/game.json",
+  "Games/reaction-test/game.json",
+  "Games/sliding-puzzle/game.json",
+  "Games/super-jump/game.json"
+]

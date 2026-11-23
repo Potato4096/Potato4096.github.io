@@ -1,6 +1,6 @@
 /**
  * Potato4096 Arcade - 首页主逻辑
- * 职责: 游戏发现(读取 games.json 注册表) → 渲染卡片 → 跳转入口；全局设置面板
+ * 职责: 游戏发现(读取 games.json 清单) → 渲染卡片 → 跳转入口；全局设置面板
  */
 (function () {
   'use strict';
@@ -74,27 +74,64 @@
     });
   }
 
-  /** 读取 games.json 全局注册表（node scripts/generate-games-json.mjs 生成） */
-  function discoverGames() {
-    return fetchJson('games.json').then(function (data) {
-      var list = (data && data.games) || [];
-      return list.map(function (item) {
-        return typeof item === 'string' ? { id: item, dir: 'Games/' + item } : item;
-      });
+  /**
+   * 把 games.json 的清单项解析成 { id, dir, configPath }。
+   *
+   * games.json 是手动维护的列表，每项为某个 game.json 的相对路径：
+   *   ["Games/2048/game.json", ...]
+   * 为减少手写负担，也接受只写到目录（Games/2048）或只写 id（2048），
+   * 以及旧版的 { games: [{ id, dir }] } 结构。
+   */
+  function normalizeEntries(data) {
+    var list = Array.isArray(data) ? data : ((data && data.games) || []);
+    var seen = {};
+    var out = [];
+
+    list.forEach(function (item) {
+      var raw = typeof item === 'string'
+        ? item
+        : (item && (item.dir || item.config || item.id));
+      if (!raw) return;
+
+      raw = String(raw).trim().replace(/^\.?\//, '').replace(/\/+$/, '');
+      if (!raw) return;
+
+      var configPath = /\.json$/i.test(raw)
+        ? raw
+        : (/^Games\//i.test(raw) ? raw : 'Games/' + raw) + '/game.json';
+      if (seen[configPath]) {
+        console.warn('[Arcade] duplicate entry skipped:', configPath);
+        return;
+      }
+      seen[configPath] = true;
+
+      var dir = configPath.replace(/\/[^/]+$/, '');
+      out.push({ id: dir.split('/').pop(), dir: dir, configPath: configPath });
     });
+
+    return out;
   }
 
-  /** 读取每个游戏的 game.json 配置（主程序读取配置文件） */
+  /** 读取 games.json 清单（手动维护，每项一个 game.json 的相对路径） */
+  function discoverGames() {
+    return fetchJson('games.json').then(normalizeEntries);
+  }
+
+  /** 逐个读取配置文件；缺失、损坏或 published:false 的游戏跳过，不影响其他卡片 */
   function loadGameConfigs(list) {
     var tasks = list.map(function (item) {
-      return fetchJson(item.dir + '/game.json').then(function (config) {
+      return fetchJson(item.configPath).then(function (config) {
         if (config.published === false) {
           console.info('[Arcade] hidden (published:false)', item.id);
           return null;
         }
-        return { id: config.id || item.id, dir: item.dir, config: config };
+        var id = config.id || item.id;
+        if (config.id && config.id !== item.id) {
+          console.warn('[Arcade] id 与目录名不一致:', item.dir, 'game.json 声明为', config.id);
+        }
+        return { id: id, dir: item.dir, config: config };
       }).catch(function (err) {
-        console.warn('[Arcade] skip', item.id, err);
+        console.warn('[Arcade] skip', item.configPath, err);
         return null;
       });
     });
