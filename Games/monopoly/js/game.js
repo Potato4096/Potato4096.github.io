@@ -40,6 +40,7 @@
       roundBadge: '第 {n} / {max} 回合',
       turnFocus: '轮到 {name}',
       turnFocusHint: '镜头正在对准你的位置',
+      tripleJail: '{name} 连续三次双数，被送进监狱',
       rollTotal: '{n} 点',
       rollUnit: '点',
       drawChance: '机会',
@@ -224,6 +225,7 @@
       roundBadge: 'Round {n} / {max}',
       turnFocus: '{name}’s turn',
       turnFocusHint: 'Camera is homing in on you',
+      tripleJail: '{name} rolled three doubles in a row and goes to jail',
       rollTotal: '{n}',
       rollUnit: '',
       drawChance: 'Chance',
@@ -315,7 +317,7 @@
       endTitle: '{name} wins!',
       endTitleYou: 'You win!',
       endSubWin: 'Everyone else went bankrupt · {n} rounds',
-      endSubSettle: 'Round limit reached · settled by net worth',
+      endSubSettle: 'Round limit ({n}) reached · settled by net worth',
       rankWorth: 'Net worth',
       again: 'Play again',
 
@@ -448,6 +450,7 @@
     rolling: false,
     ended: false,
     drawDone: null,
+    drawCard: null,
     focusing: false,
     token: 0,
     timers: [],
@@ -488,6 +491,7 @@
     G.token += 1;
     G.focusing = false;
     G.drawDone = null;
+    G.drawCard = null;
     closeModal('draw-modal');
   }
 
@@ -646,6 +650,15 @@
     st.maxRounds = num(st.maxRounds, D.MAX_ROUNDS);
     st.seq = num(st.seq, 0);
     st.over = false;
+
+    // 买地阶段必须有对应的 pending，否则界面上没有可点的按钮，会卡死
+    if (st.phase === 'buy') {
+      var pd = st.pending;
+      var pendOk = pd && pd.kind === 'buy' && pd.playerId === st.turn &&
+        typeof pd.pos === 'number' && pd.pos >= 0 && pd.pos < total &&
+        typeof pd.price === 'number' && pd.price >= 0;
+      if (!pendOk) { clearSave(); return false; }
+    }
 
     if (saved.config) {
       var h = parseInt(saved.config.humans, 10);
@@ -876,9 +889,12 @@
       var sum = res.roll.dice[0] + res.roll.dice[1];
       showRollTotal(sum, function () {
         if (res.roll.jailed) {
+          // 三连双数：先讲清楚"为什么突然进监狱"，再结束回合
           handleEvents(res.events);
+          G.preview = -1;
           renderAll();
-          schedule(function () { G.busy = false; endTurnAndContinue(); }, 820);
+          flashBoard(t('tripleJail', { name: current().name }), 'loss', G.reduceMotion ? 900 : 1500);
+          schedule(function () { G.busy = false; endTurnAndContinue(); }, G.reduceMotion ? 700 : 1500);
           return;
         }
         moveSteps(res.roll.steps, function (stepEvents) {
@@ -1058,6 +1074,7 @@
     }
 
     G.drawDone = done;
+    G.drawCard = { id: card.card, deck: deckName };
     openModal('draw-modal');
 
     // 洗牌 → 抽中一张 → 翻开 → 揭示内容
@@ -1083,9 +1100,20 @@
   function closeDraw() {
     var fn = G.drawDone;
     G.drawDone = null;
+    G.drawCard = null;
     if (!fn) return;
     closeModal('draw-modal');
     schedule(fn, 220);
+  }
+
+  /** 语言在抽卡途中被切换时，把已经显示出来的标题与卡面文字同步成新语言 */
+  function syncDrawText() {
+    var d = G.drawCard;
+    if (!d || !$('draw-modal').classList.contains('show')) return;
+    $('draw-kicker').textContent = d.deck === 'chance' ? t('drawChance') : t('drawChest');
+    if (!$('draw-text').classList.contains('show')) return;
+    $('draw-hint').textContent = t('drawKicker');
+    $('draw-text').textContent = cardText(d.id);
   }
 
   function endTurnAndContinue() {
@@ -1736,10 +1764,15 @@
     if (!G.state || G.state.over) return;
     var p = current();
     if (!p || !p.alive || p.isAi || G.busy) return;
-    if (G.state.phase !== 'roll' || pos !== p.pos) return;
+    // 规则允许在自己回合、掷骰之前对任意自有地产建房/卖房，
+    // 所以不限制必须站在该格上——只要地块属于当前玩家即可。
+    if (G.state.phase !== 'roll') return;
 
     var tile = D.TILES[pos];
     if (tile.type !== 'property') return;
+
+    var mine = G.state.owners[pos] === p.id;
+    if (!mine && pos !== p.pos) return;
 
     var wrap = el('div', 'tile-actions');
     var cb = R.canBuild(G.state, pos, p.id);
@@ -1755,10 +1788,10 @@
         onClick: function () { doSell(pos); }
       }));
     }
-    if (!wrap.children.length) {
+    if (!wrap.children.length && mine) {
       if (G.state.houses[pos] >= 5) {
         wrap.appendChild(el('span', 'tile-hint', t('maxHotel')));
-      } else if (G.state.owners[pos] === p.id && tile.group && R.ownsGroup(G.state, p.id, tile.group)) {
+      } else if (tile.group && R.ownsGroup(G.state, p.id, tile.group)) {
         if (cb.reason === 'even') wrap.appendChild(el('span', 'tile-hint', t('groupHint')));
         else if (cb.reason === 'cash') wrap.appendChild(el('span', 'tile-hint', t('notEnough')));
       }
@@ -1895,8 +1928,9 @@
     $('btn-rules-close').addEventListener('click', function () { closeModal('rules-modal'); });
     $('btn-draw-ok').addEventListener('click', closeDraw);
     $('btn-new').addEventListener('click', function () {
-      clearTimers();
-      G.busy = false;
+      // 只负责打开设置弹窗：当前对局继续在弹窗后面跑。
+      // 真正的重置放到 startGame() 里做，否则中途打开又按 Esc 关掉，
+      // 定时器已经被清掉，棋盘会永久停在「处理中…」。
       renderSetup();
       openModal('setup-modal');
     });
@@ -2049,6 +2083,7 @@
         renderSetup();
         renderRules();
         renderAll();
+        syncDrawText();
       }
     });
     GP.theme.onChange(syncTheme);
