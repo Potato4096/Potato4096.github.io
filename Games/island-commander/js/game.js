@@ -725,7 +725,8 @@
       var afford = canAfford(u);
       var full = armyCount() >= armyCap();
       var cls = 'cmd-card' + (!needOk ? ' locked' : (afford && !full ? '' : ' disabled'));
-      var costTxt = !needOk ? t('needBld') + ' ' + t(UNITS[u.need]) : fmtCost(u);
+      // u.need 是建筑 key（range / stable / workshop），要查 BUILDINGS 才拿得到名字
+      var costTxt = !needOk ? t('needBld') + ' ' + t(BUILDINGS[u.need]) : fmtCost(u);
       html += '<button class="' + cls + '" data-act="train" data-key="' + key + '">' +
         '<span class="card-name">' + t(u) + ' ×' + G.units[key] + '</span>' +
         '<span class="card-cost">' + costTxt + '</span>' +
