@@ -1908,6 +1908,12 @@
       nodes[i].textContent = t(key);
     }
     document.documentElement.lang = lang() === 'en' ? 'en' : 'zh-CN';
+    // 抽卡面板的标题/提示是 HTML 里的静态默认值，没开抽卡时也要跟着语言走
+    var drawModal = $('draw-modal');
+    if (!drawModal || !drawModal.classList.contains('show')) {
+      $('draw-kicker').textContent = t('drawChance');
+      $('draw-hint').textContent = t('drawKicker');
+    }
   }
 
   function syncTheme() {

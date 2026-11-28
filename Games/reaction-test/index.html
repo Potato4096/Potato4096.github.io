@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reaction Test · Potato4096 Arcade</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <link rel="stylesheet" href="../../platform/game-base.css">
   <link rel="stylesheet" href="../../platform/cheat-kit.css">
   <style>
@@ -196,6 +197,23 @@
         });
         el.badge.textContent = GamePlatform.settings.get('lang') === 'en' ? 'EN' : '中文';
         renderStats();
+        applyArenaText();
+      }
+
+      /* 场内的标题/副标题由状态驱动，不是 data-t 节点，切语言时按当前状态重写一遍 */
+      function applyArenaText() {
+        if (state === 'idle') {
+          el.title.textContent = t('idleTitle');
+          el.sub.textContent = t('idleSub');
+        } else if (state === 'waiting') {
+          el.title.textContent = t('waitTitle');
+          el.sub.textContent = t('waitSub');
+        } else if (state === 'go') {
+          el.title.textContent = t('goTitle');
+          el.sub.textContent = t('goSub');
+        } else if (state === 'result') {
+          el.sub.textContent = t('resultSub');
+        }
       }
 
       function setState(next, opts) {
@@ -255,6 +273,17 @@
       }
 
       el.arena.addEventListener('click', onArenaClick);
+
+      /* 切到别的标签页时，变绿的一瞬间是看不到的，这一局直接作废：
+         否则回来一测就是几千毫秒，白白拉低平均成绩。 */
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) return;
+        if (state === 'waiting' || state === 'go') {
+          if (timer) { clearTimeout(timer); timer = null; }
+          setState('idle');
+        }
+      });
+
       document.getElementById('btn-back').addEventListener('click', function () {
         GamePlatform.navigate.goHome();
       });

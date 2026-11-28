@@ -8,7 +8,7 @@
     "zh": "测试你的反应速度！等待颜色变绿的瞬间立刻点击，看看你的最快记录是多少毫秒。",
     "en": "Test your reflexes! Click the instant the color turns green and see your fastest record in milliseconds."
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Potato4096",
   "entry": "index.html",
   "emoji": "⚡",
@@ -30,7 +30,7 @@
   ],
   "published": true,
   "created": "2026-11-01",
-  "updated": "2026-11-01",
+  "updated": "2026-11-28",
   "controls": {
     "zh": "等待变绿后立即点击；点击「清除记录」重置成绩",
     "en": "Click as soon as it turns green; Clear Records resets stats"

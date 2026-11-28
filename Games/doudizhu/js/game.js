@@ -251,6 +251,9 @@
     token: 0,
     roundIndex: 0,
     curtainOpen: false,
+    /* 浮层当前展示的内容类型：切语言时按类型就地重绘，避免已打开的面板留中文 */
+    overlayKind: null,
+    overlayArgs: null,
     aiTimer: null
   };
 
@@ -547,6 +550,17 @@
       en: 'Dou Dizhu · Potato4096 Arcade'
     });
     renderActions();
+    syncOverlayText();
+    if (G.curtainOpen) syncCurtain();
+  }
+
+  /* 切语言时，已打开的开局面板 / 结算面板要就地重绘（它们由 JS 生成，不吃 data-t） */
+  function syncOverlayText() {
+    if (!G.overlayKind || !el.overlay.classList.contains('is-open')) return;
+    if (G.overlayKind === 'mode') showModeOverlay();
+    else if (G.overlayKind === 'result' && G.overlayArgs) {
+      showResult(G.overlayArgs.win, G.overlayArgs.spring);
+    }
   }
 
   /* ============================================================
@@ -591,6 +605,8 @@
     G.viewSeat = isAI(G.turn) ? firstHuman() : G.turn;
 
     el.overlay.classList.remove('is-open');
+    G.overlayKind = null;
+    G.overlayArgs = null;
     setTurnUI();
   }
 
@@ -826,6 +842,8 @@
    * 浮层
    * ========================================================== */
   function showModeOverlay() {
+    G.overlayKind = 'mode';
+    G.overlayArgs = null;
     el.overlayTitle.textContent = t('chooseMode');
     var body = el.overlayBody;
     body.innerHTML = '';
@@ -884,6 +902,8 @@
   }
 
   function showResult(landlordWin, spring) {
+    G.overlayKind = 'result';
+    G.overlayArgs = { win: landlordWin, spring: spring };
     el.overlayTitle.textContent = landlordWin ? t('landlordWin') : t('farmerWin');
     var body = el.overlayBody;
     body.innerHTML = '';
