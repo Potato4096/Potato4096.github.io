@@ -38,7 +38,12 @@
       en: 'Controls: Arrows / A-D to move, Space / Up / W to jump, Esc / P to pause. On-screen buttons on touch devices.'
     },
     fullscreen: { zh: '全屏', en: 'Fullscreen' },
-    pauseBtn: { zh: '暂停', en: 'Pause' }
+    pauseBtn: { zh: '暂停', en: 'Pause' },
+    level: { zh: '关卡', en: 'Level' },
+    nextLevel: { zh: '下一关', en: 'Next level' },
+    allClear: { zh: '全部通关！', en: 'All Clear!' },
+    levelPick: { zh: '选择关卡', en: 'Select level' },
+    locked: { zh: '未解锁', en: 'Locked' }
   };
   function t(k) { return GamePlatform.i18n.t(STR[k] || { zh: k, en: k }); }
 
@@ -112,7 +117,9 @@
   }
 
   // ---------- game state ----------
-  var L = SJ.Level.build();
+  var L = SJ.Level.build(0);
+  var levelIndex = 0;       // 当前关卡下标（0 起）
+  var unlocked = 1;         // 已解锁的关卡数（1 起）
   var gameState = 'menu';
   var player, enemies, coins, pops, particles, bumps;
   var camX = 0;
@@ -158,12 +165,24 @@
     flagY = L.flag.topY;
   }
 
-  function startGame() {
+  /** 切换到第 i 关：只重建关卡实体，分数与生命由调用方维持 */
+  function loadLevel(i) {
+    var n = typeof i === 'number' ? (i | 0) : 0;
+    if (n < 0) n = 0;
+    if (n > SJ.Level.count - 1) n = SJ.Level.count - 1;
+    levelIndex = n;
+    L = SJ.Level.build(n);
+    resetLevel();
+    updateHUD();
+    renderLevelPick();
+  }
+
+  function startGame(fromLevel) {
     score = 0;
     coinCount = 0;
     lives = 3;
     SJ.Input.state.jumpQueued = false;
-    resetLevel();
+    loadLevel(typeof fromLevel === 'number' ? fromLevel : 0);
     gameState = 'playing';
     showOverlay(null);
     updateHUD();
@@ -201,14 +220,49 @@
     score += 1500 + lives * 300;
     SJ.Audio.play('clear');
     saveBest();
+
+    var isLast = levelIndex >= SJ.Level.count - 1;
+    if (!isLast) unlockLevel(levelIndex + 1);
     updateHUD();
+
     setTimeout(function () {
       if (gameState !== 'levelclear') return;
-      document.getElementById('clear-score').textContent = String(score);
-      document.getElementById('clear-coins').textContent = String(coinCount);
-      document.getElementById('clear-best').textContent = String(best);
-      showOverlay('ov-clear');
+      showClearScreen(isLast);
     }, 900);
+  }
+
+  /** 通关面板：最后一关改称「全部通关」，并收起「下一关」按钮 */
+  function showClearScreen(isLast) {
+    var title = document.getElementById('clear-title');
+    if (title) title.textContent = isLast ? t('allClear') : t('levelClear');
+    var sub = document.getElementById('clear-sub');
+    if (sub) {
+      sub.textContent = t('level') + ' ' + (levelIndex + 1) + ' / ' + SJ.Level.count +
+        ' · ' + GamePlatform.i18n.t(L.name);
+    }
+    document.getElementById('btn-next-level').hidden = isLast;
+    document.getElementById('clear-score').textContent = String(score);
+    document.getElementById('clear-coins').textContent = String(coinCount);
+    document.getElementById('clear-best').textContent = String(best);
+    showOverlay('ov-clear');
+  }
+
+  /** 记录最新解锁进度（unlocked 是"已解锁关卡数"，1 起） */
+  function unlockLevel(index) {
+    var need = index + 1;
+    if (need <= unlocked) return;
+    unlocked = Math.min(SJ.Level.count, need);
+    GamePlatform.storage.set('unlocked', unlocked);
+    renderLevelPick();
+  }
+
+  function nextLevel() {
+    if (levelIndex >= SJ.Level.count - 1) return;
+    SJ.Input.state.jumpQueued = false;
+    loadLevel(levelIndex + 1);
+    gameState = 'playing';
+    showOverlay(null);
+    SJ.Audio.play('start');
   }
 
   function gameOver() {
@@ -436,8 +490,8 @@
       return;
     }
 
-    // flag
-    if (player.x + player.w > L.flag.x && player.x < L.flag.x + TILE &&
+    // flag（用 >= 判定：旗杆底座那一格会把玩家正好卡在右边缘等于旗杆的位置）
+    if (player.x + player.w >= L.flag.x && player.x < L.flag.x + TILE &&
         player.y + player.h > L.flag.topY && player.y < L.flag.bottomY) {
       winLevel();
       updateEffects(dt);
@@ -798,6 +852,28 @@
     document.getElementById('hud-score').textContent = String(score);
     document.getElementById('hud-coins').textContent = String(coinCount);
     document.getElementById('hud-lives').textContent = String(Math.max(0, lives));
+    var lv = document.getElementById('hud-level');
+    if (lv) lv.textContent = (levelIndex + 1) + '/' + SJ.Level.count;
+  }
+
+  /** 菜单上的关卡按钮：已解锁的可点，未解锁的置灰 */
+  function renderLevelPick() {
+    var box = document.getElementById('level-pick');
+    if (!box) return;
+    box.innerHTML = '';
+    for (var i = 0; i < SJ.Level.count; i++) {
+      (function (idx) {
+        var locked = idx > unlocked - 1;
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'level-chip' + (locked ? ' is-locked' : '') + (idx === levelIndex ? ' is-current' : '');
+        b.textContent = String(idx + 1);
+        b.title = GamePlatform.i18n.t(SJ.Level.defs[idx].name) + (locked ? ' · ' + t('locked') : '');
+        b.disabled = locked;
+        if (!locked) b.onclick = function () { startGame(idx); };
+        box.appendChild(b);
+      })(i);
+    }
   }
 
   function showOverlay(id) {
@@ -812,6 +888,8 @@
       el.textContent = t(el.getAttribute('data-i18n'));
     });
     document.getElementById('menu-best').textContent = String(best);
+    renderLevelPick();
+    updateHUD();
   }
 
   function bindUI() {
@@ -842,6 +920,7 @@
       GamePlatform.navigate.goHome();
     };
     document.getElementById('btn-again-clear').onclick = function () { startGame(); };
+    document.getElementById('btn-next-level').onclick = function () { nextLevel(); };
     document.getElementById('btn-home-clear').onclick = function () {
       GamePlatform.navigate.goHome();
     };
@@ -878,6 +957,9 @@
   // ---------- boot ----------
   function boot() {
     best = GamePlatform.storage.get('bestScore', 0);
+    var saved = parseInt(GamePlatform.storage.get('unlocked', 1), 10);
+    if (!isFinite(saved) || saved < 1) saved = 1;
+    unlocked = Math.min(SJ.Level.count, saved);
     rebuildPal();
     initClouds();
     resetLevel();
@@ -913,11 +995,9 @@
     return GamePlatform.i18n ? GamePlatform.i18n.t(m) : m.zh;
   }
 
-  // 单关卡构建，L 无 index/name 时回落到关卡下标 0（展示为第 1 关）
+  // 当前关卡序号（1 起），供修改器展示
   function cheatLevelNo() {
-    if (L && L.index != null) return L.index;
-    if (L && L.name) return L.name;
-    return 1;
+    return levelIndex + 1;
   }
 
   function cheatToFlag() {
@@ -1001,6 +1081,16 @@
       actions: [
         { label: { zh: '传到旗杆', en: 'Teleport to flag' }, run: cheatToFlag,
           toast: { zh: '已传送到旗杆前', en: 'Teleported to the flag' } },
+        { label: { zh: '跳到下一关', en: 'Skip to next level' }, run: function () {
+          if (gameState !== 'playing' && gameState !== 'paused') return;
+          if (levelIndex >= SJ.Level.count - 1) return;
+          nextLevel();
+        }, toast: { zh: '已跳到下一关', en: 'Skipped to the next level' } },
+        { label: { zh: '解锁全部关卡', en: 'Unlock all levels' }, run: function () {
+          unlocked = SJ.Level.count;
+          GamePlatform.storage.set('unlocked', unlocked);
+          renderLevelPick();
+        }, toast: { zh: '全部关卡已解锁', en: 'All levels unlocked' } },
         { label: { zh: '清空敌人', en: 'Clear enemies' }, run: cheatClearEnemies,
           toast: { zh: '敌人已清空', en: 'Enemies cleared' } },
         { label: { zh: '收集全部金币', en: 'Collect all coins' }, run: cheatAllCoins,

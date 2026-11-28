@@ -5,10 +5,10 @@
     "en": "Super Jump"
   },
   "description": {
-    "zh": "像素风横版跳跃游戏。踩扁小怪、顶出金币、躲开陷阱，一路跑到旗杆终点。支持键盘与触屏操作，自动保存最高分。",
-    "en": "A pixel-art side-scrolling platformer. Stomp enemies, bump blocks, dodge pits and race to the flagpole. Keyboard & touch controls, best score auto-saved."
+    "zh": "像素风横版跳跃游戏。踩扁小怪、顶出金币、躲开陷阱，一路跑到旗杆终点。共六个关卡：草原起步、管道迷宫、断崖飞跃、阶梯王国、浮空回廊、终局冲刺，通关后自动解锁下一关，也可以从主菜单直接选关。支持键盘与触屏操作，自动保存最高分与解锁进度。",
+    "en": "A pixel-art side-scrolling platformer. Stomp enemies, bump blocks, dodge pits and race to the flagpole. Six stages — Meadow Start, Pipe Maze, Canyon Leap, Stair Kingdom, Sky Gallery and Final Rush — each unlocking the next on completion, with stage select from the title screen. Keyboard & touch controls, best score and progress auto-saved."
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Potato4096",
   "entry": "index.html",
   "icon": "assets/icon.svg",
@@ -17,11 +17,11 @@
   "category": "action",
   "players": 1,
   "controls": {
-    "zh": "←→/AD 移动，空格/↑/W 跳跃，Esc/P 暂停；触屏设备提供屏幕按钮",
-    "en": "Arrows/A-D to move, Space/Up/W to jump, Esc/P to pause; on-screen buttons on touch devices"
+    "zh": "←→/AD 移动，空格/↑/W 跳跃，Esc/P 暂停；触屏设备提供屏幕按钮；主菜单可点数字选关，通关面板点「下一关」继续",
+    "en": "Arrows/A-D to move, Space/Up/W to jump, Esc/P to pause; on-screen buttons on touch devices; pick a stage from the numbered buttons on the title screen, then Next level on the clear screen"
   },
   "api": ["settings", "storage", "i18n", "theme", "themePacks", "toast", "sound", "reduceMotion", "navigate", "fullscreen"],
   "published": true,
   "created": "2026-11-01",
-  "updated": "2026-11-01"
+  "updated": "2026-11-28"
 }

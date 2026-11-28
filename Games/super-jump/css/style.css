@@ -72,7 +72,113 @@
 
 .overlay .panel {
   width: min(420px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
   text-align: center;
+}
+
+/* ---------- 选关 ---------- */
+.level-pick-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--pg-text-muted);
+}
+
+.level-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 0 16px;
+}
+
+.level-chip {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--pg-border);
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+
+.level-chip:hover:not(:disabled) {
+  background: var(--pg-accent-soft);
+  border-color: var(--pg-accent);
+}
+
+.level-chip.is-current {
+  border-color: var(--pg-accent);
+  color: var(--pg-accent);
+}
+
+.level-chip.is-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.clear-sub {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--pg-text-muted);
+}
+
+/* 小屏 / 矮屏：把菜单压扁，保证「开始游戏」不被挤出可视区 */
+@media (max-width: 560px), (max-height: 430px) {
+  /* 手机上画布只有 200px 高，弹层改成覆盖整个视口，避免按钮被裁掉 */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    padding: 24px 20px;
+  }
+
+  .game-title {
+    font-size: 21px;
+    margin-bottom: 4px;
+  }
+
+  .overlay .tagline {
+    display: none;
+  }
+
+  .best-line {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .result-line {
+    margin: 2px 0;
+    font-size: 14px;
+  }
+
+  .level-pick-label {
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  .level-pick {
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .level-chip {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  .clear-sub {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
 }
 
 .game-title {
